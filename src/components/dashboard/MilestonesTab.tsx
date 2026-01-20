@@ -1,13 +1,18 @@
 
 import { useEffect, useState } from 'react';
 import { getProjectMilestones, type Milestone, MilestoneStatus } from '../../services/milestones';
-import { Calendar, CheckCircle, Circle, Clock } from 'lucide-react';
+import { Calendar, CheckCircle, Circle, Clock, Upload, CheckSquare } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Badge } from '../ui/Badge';
+import { useRoleStore } from '../../services/mockRole';
+import SubmitMilestoneModal from './SubmitMilestoneModal';
 
 export default function MilestonesTab({ projectId }: { projectId: string }) {
     const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [loading, setLoading] = useState(true);
+    const { currentRole } = useRoleStore();
+    const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+    const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
 
     useEffect(() => {
         getProjectMilestones(projectId).then((data) => {
@@ -44,6 +49,16 @@ export default function MilestonesTab({ projectId }: { projectId: string }) {
         }
     }
 
+    const handleContractorSubmit = (id: string) => {
+        alert(`Opening submission form for Milestone ${id}`);
+        // TODO: Open Modal
+    };
+
+    const handleConsultantVerify = (id: string) => {
+        alert(`Verifying Milestone ${id}`);
+        // TODO: Verification Logic
+    };
+
     return (
         <div className="bg-white shadow rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-6">Project Milestones</h3>
@@ -70,6 +85,29 @@ export default function MilestonesTab({ projectId }: { projectId: string }) {
                                                 </Badge>
                                             </p>
                                             <p className="text-sm text-gray-500 mt-1">{milestone.description}</p>
+
+                                            {/* ROLE BASED ACTIONS */}
+                                            <div className="mt-3">
+                                                {currentRole === 'CONTRACTOR' && (milestone.status === MilestoneStatus.PENDING || milestone.status === MilestoneStatus.IN_PROGRESS) && (
+                                                    <button
+                                                        onClick={() => handleContractorSubmit(milestone.id)}
+                                                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+                                                    >
+                                                        <Upload className="h-3 w-3 mr-1.5" />
+                                                        Submit Report
+                                                    </button>
+                                                )}
+
+                                                {currentRole === 'CONSULTANT' && (milestone.status === MilestoneStatus.IN_PROGRESS) && (
+                                                    <button
+                                                        onClick={() => handleConsultantVerify(milestone.id)}
+                                                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+                                                    >
+                                                        <CheckSquare className="h-3 w-3 mr-1.5" />
+                                                        Verify Work
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="text-right text-sm whitespace-nowrap text-gray-500">
                                             <div className="flex items-center justify-end">
