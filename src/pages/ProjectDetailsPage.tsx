@@ -5,6 +5,8 @@ import { getProject, type Project, ProjectStatus } from '../services/projects';
 import { ChevronRight, ArrowLeft, Calendar, MapPin, DollarSign, Clock, Users } from 'lucide-react';
 import { cn } from '../lib/utils';
 import MilestonesTab from '../components/dashboard/MilestonesTab';
+import AnalyticsTab from '../components/dashboard/AnalyticsTab';
+import PersonnelTab from '../components/dashboard/PersonnelTab';
 
 export default function ProjectDetailsPage() {
     const { id } = useParams<{ id: string }>();
@@ -171,11 +173,13 @@ export default function ProjectDetailsPage() {
                 </div>
             )}
 
-            {/* Placeholders for other tabs */}
-            {(activeTab === 'Personnel' || activeTab === 'Analytics') && (
-                <div className="p-12 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                    <p className="text-gray-500">{activeTab} view is under construction.</p>
-                </div>
+            {activeTab === 'Analytics' && (
+                <AnalyticsTab project={project} />
+            )}
+
+            {/* Personnel Tab */}
+            {activeTab === 'Personnel' && (
+                <PersonnelTab project={project} />
             )}
         </div>
     );

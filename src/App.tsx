@@ -7,6 +7,8 @@ import DashboardHome from './pages/DashboardHome';
 import ProjectListPage from './pages/ProjectListPage';
 import CreateProjectPage from './pages/CreateProjectPage';
 import ProjectDetailsPage from './pages/ProjectDetailsPage';
+import ConsultantListPage from './pages/ConsultantListPage';
+import ConsultantDetailPage from './pages/ConsultantDetailPage';
 
 function App() {
   return (
@@ -24,6 +26,8 @@ function App() {
           <Route path="projects" element={<ProjectListPage />} />
           <Route path="projects/new" element={<CreateProjectPage />} />
           <Route path="projects/:id" element={<ProjectDetailsPage />} />
+          <Route path="consultants" element={<ConsultantListPage />} />
+          <Route path="consultants/:id" element={<ConsultantDetailPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
