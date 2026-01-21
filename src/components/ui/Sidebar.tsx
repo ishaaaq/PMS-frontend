@@ -1,5 +1,5 @@
 
-import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, Flag, DollarSign, ChevronDown, Plus, Search, Shield } from 'lucide-react';
+import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, Flag, DollarSign, ChevronDown, Plus, Search, Shield, ShieldCheck } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { useRoleStore, type UserRole } from '../../services/mockRole';
@@ -10,14 +10,15 @@ export default function Sidebar() {
 
     const essentials = [
         { name: 'Dashboard', href: '/dashboard', icon: Home },
-        { name: 'Contractor', href: '/dashboard/contractors', icon: Users },
-        { name: 'Notification', href: '/dashboard/notifications', icon: Bell },
+        { name: 'Consultants', href: '/dashboard/consultants', icon: ShieldCheck },
+        { name: 'Contractors', href: '/dashboard/contractors', icon: Users },
+        { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
     ];
 
     const projectMenu = [
         { name: 'Analytics', href: '/dashboard/analytics', icon: PieChart },
-        { name: 'Report', href: '/dashboard/reports', icon: FileText },
+        { name: 'Reports', href: '/dashboard/reports', icon: FileText },
         { name: 'Milestones', href: '/dashboard/milestones', icon: Flag },
         { name: 'Users', href: '/dashboard/users', icon: Users },
         { name: 'Budget', href: '/dashboard/budget', icon: DollarSign },
