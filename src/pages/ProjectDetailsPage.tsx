@@ -2,9 +2,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProject, type Project, ProjectStatus } from '../services/projects';
-import { ChevronRight, ArrowLeft, Calendar, MapPin, DollarSign, Clock, Users } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Calendar, MapPin, DollarSign, Clock, Users, ShieldCheck, Star } from 'lucide-react';
 import { cn } from '../lib/utils';
 import MilestonesTab from '../components/dashboard/MilestonesTab';
+import AnalyticsTab from '../components/dashboard/AnalyticsTab';
+import PersonnelTab from '../components/dashboard/PersonnelTab';
 
 export default function ProjectDetailsPage() {
     const { id } = useParams<{ id: string }>();
@@ -41,10 +43,20 @@ export default function ProjectDetailsPage() {
 
                 <div className="md:flex md:items-center md:justify-between">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">{project.title}</h2>
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-2xl font-bold text-gray-900">{project.title}</h2>
+                            <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Admin View</span>
+                        </div>
                     </div>
-                    <div>
-                        <button className="bg-indigo-600 text-white px-4 py-2 rounded-md font-medium text-sm hover:bg-indigo-700">
+                    <div className="flex gap-3">
+                        <button
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-700 shadow-lg shadow-green-100 flex items-center transition-all active:scale-95"
+                            onClick={() => alert('Disbursement Authorized!')}
+                        >
+                            <ShieldCheck className="h-4 w-4 mr-2" />
+                            Authorize Disbursement
+                        </button>
+                        <button className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-50 transition-all active:scale-95">
                             Manage Project
                         </button>
                     </div>
@@ -71,7 +83,7 @@ export default function ProjectDetailsPage() {
                 </div>
             </div>
 
-            {/* Content Switcher */}
+            {/* Details Content */}
             {activeTab === 'Details' && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column: Info */}
@@ -161,6 +173,21 @@ export default function ProjectDetailsPage() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Admin Action: Rate Consultant */}
+                        <div className="bg-indigo-50 shadow-sm border border-indigo-100 rounded-lg p-6">
+                            <h3 className="text-sm font-bold text-indigo-900 uppercase mb-4 flex items-center">
+                                <Star className="h-4 w-4 mr-2 text-indigo-500" /> Rate Consultant Performance
+                            </h3>
+                            <div className="flex gap-2 mb-4">
+                                {[1, 2, 3, 4, 5].map(s => (
+                                    <button key={s} className="hover:scale-110 transition-transform">
+                                        <Star className="h-6 w-6 text-indigo-200 hover:text-yellow-400 fill-current" />
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="text-[10px] text-indigo-400 font-medium">Evaluation is required upon project completion to maintain consultant quality standards.</p>
+                        </div>
                     </div>
                 </div>
             )}
@@ -171,11 +198,13 @@ export default function ProjectDetailsPage() {
                 </div>
             )}
 
-            {/* Placeholders for other tabs */}
-            {(activeTab === 'Personnel' || activeTab === 'Analytics') && (
-                <div className="p-12 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                    <p className="text-gray-500">{activeTab} view is under construction.</p>
-                </div>
+            {activeTab === 'Analytics' && (
+                <AnalyticsTab project={project} />
+            )}
+
+            {/* Personnel Tab */}
+            {activeTab === 'Personnel' && (
+                <PersonnelTab project={project} />
             )}
         </div>
     );
