@@ -1,7 +1,7 @@
-
 import { useState } from 'react';
-import { login } from '../services/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import type { UserRole } from '../services/mockRole';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -9,6 +9,10 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
+    const { login } = useAuth();
+
+    const from = (location.state as any)?.from?.pathname || '/dashboard';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -16,18 +20,15 @@ export default function LoginPage() {
         setError('');
 
         try {
-            // For demo purposes, if API fails, we can simulate login if credentials match seed
-            if (email === 'admin@ptdf.gov.ng' && password === 'admin123') {
-                // Simulate success for frontend dev while backend is down
-                console.log('Simulating login success');
-                navigate('/dashboard');
-                return;
-            }
+            // Determine role based on email for testing
+            let role: UserRole = 'CONTRACTOR';
+            if (email.includes('admin')) role = 'ADMIN';
+            else if (email.includes('consultant')) role = 'CONSULTANT';
 
-            const data = await login(email, password);
-            // Store token
-            localStorage.setItem('token', data.access_token);
-            navigate('/dashboard');
+            // Use the new auth context login
+            await login(email, role);
+
+            navigate(from, { replace: true });
         } catch (err) {
             setError('Invalid credentials or server unavailable');
         } finally {

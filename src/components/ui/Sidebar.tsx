@@ -1,28 +1,31 @@
-
-import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, Flag, DollarSign, ChevronDown, Plus, Search, Shield, ShieldCheck } from 'lucide-react';
+import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, Flag, DollarSign, ChevronDown, Plus, Search, Shield, ShieldCheck, LogOut } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { useRoleStore, type UserRole } from '../../services/mockRole';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function Sidebar() {
     const location = useLocation();
-    const { currentRole, setRole } = useRoleStore();
+    const { user, logout } = useAuth();
+    const currentRole = user?.role || 'CONTRACTOR';
 
     const essentials = [
-        { name: 'Dashboard', href: '/dashboard', icon: Home },
-        { name: 'Consultants', href: '/dashboard/consultants', icon: ShieldCheck },
-        { name: 'Contractors', href: '/dashboard/contractors', icon: Users },
-        { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
-        { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+        { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+        { name: 'Consultants', href: '/dashboard/consultants', icon: ShieldCheck, roles: ['ADMIN'] },
+        { name: 'Contractors', href: '/dashboard/contractors', icon: Users, roles: ['ADMIN', 'CONSULTANT'] },
+        { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+        { name: 'Settings', href: '/dashboard/settings', icon: Settings, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
     ];
 
     const projectMenu = [
-        { name: 'Analytics', href: '/dashboard/analytics', icon: PieChart },
-        { name: 'Reports', href: '/dashboard/reports', icon: FileText },
-        { name: 'Milestones', href: '/dashboard/milestones', icon: Flag },
-        { name: 'Users', href: '/dashboard/users', icon: Users },
-        { name: 'Budget', href: '/dashboard/budget', icon: DollarSign },
+        { name: 'Analytics', href: '/dashboard/analytics', icon: PieChart, roles: ['ADMIN', 'CONSULTANT'] },
+        { name: 'Reports', href: '/dashboard/reports', icon: FileText, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+        { name: 'Milestones', href: '/dashboard/milestones', icon: Flag, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+        { name: 'Users', href: '/dashboard/users', icon: Users, roles: ['ADMIN'] },
+        { name: 'Budget', href: '/dashboard/budget', icon: DollarSign, roles: ['ADMIN'] },
     ];
+
+    const filteredEssentials = essentials.filter(item => item.roles.includes(currentRole));
+    const filteredProjectMenu = projectMenu.filter(item => item.roles.includes(currentRole));
 
     const NavItem = ({ item }: { item: any }) => {
         const isActive = location.pathname === item.href;
@@ -62,34 +65,13 @@ export default function Sidebar() {
                     </div>
                 </div>
 
-                {/* MOCK ROLE SWITCHER */}
-                <div className="px-4 mt-2 mb-2">
-                    <div className="p-2 bg-blue-50 rounded-md border border-blue-100">
-                        <p className="text-xs font-semibold text-blue-700 mb-2 uppercase">Viewing As:</p>
-                        <div className="flex flex-col space-y-1">
-                            {(['ADMIN', 'CONSULTANT', 'CONTRACTOR'] as UserRole[]).map((role) => (
-                                <button
-                                    key={role}
-                                    onClick={() => setRole(role)}
-                                    className={cn(
-                                        "text-xs px-2 py-1 rounded-md text-left flex items-center",
-                                        currentRole === role ? "bg-blue-600 text-white" : "hover:bg-blue-200 text-blue-800"
-                                    )}
-                                >
-                                    <Shield className="h-3 w-3 mr-2" />
-                                    {role}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
 
                 <div className="flex-1 flex flex-col overflow-y-auto pt-2 pb-4">
                     <div className="px-4 mb-2">
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Essentials</p>
                     </div>
                     <nav className="flex-1 space-y-1 mb-6">
-                        {essentials.map((item) => (
+                        {filteredEssentials.map((item) => (
                             <NavItem key={item.name} item={item} />
                         ))}
                     </nav>
@@ -98,7 +80,7 @@ export default function Sidebar() {
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">This project</p>
                     </div>
                     <nav className="flex-1 space-y-1 mb-6">
-                        {projectMenu.map((item) => (
+                        {filteredProjectMenu.map((item) => (
                             <NavItem key={item.name} item={item} />
                         ))}
                     </nav>
@@ -121,15 +103,24 @@ export default function Sidebar() {
                 </div>
 
                 <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
-                    <Link to="/auth/login" className="flex-shrink-0 w-full group block">
+                    <div className="flex items-center justify-between w-full">
                         <div className="flex items-center">
-                            <div className="h-9 w-9 rounded-full bg-gray-300 flex items-center justify-center text-sm font-medium text-white">IA</div>
+                            <div className="h-9 w-9 rounded-full bg-indigo-600 flex items-center justify-center text-sm font-medium text-white">
+                                {user?.name.split(' ').map(n => n[0]).join('') || 'IA'}
+                            </div>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Ishaq Abdullahi</p>
-                                <p className="text-xs font-medium text-gray-500 group-hover:text-gray-700">Super admin</p>
+                                <p className="text-sm font-medium text-gray-700">{user?.name || 'Ishaq Abdullahi'}</p>
+                                <p className="text-xs font-medium text-gray-500 capitalize">{user?.role.toLowerCase() || 'Super admin'}</p>
                             </div>
                         </div>
-                    </Link>
+                        <button
+                            onClick={logout}
+                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                            title="Logout"
+                        >
+                            <LogOut className="h-5 w-5" />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
