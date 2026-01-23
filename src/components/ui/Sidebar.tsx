@@ -1,5 +1,5 @@
 
-import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, Flag, DollarSign, ChevronDown, Plus, Search, Shield, ShieldCheck } from 'lucide-react';
+import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, DollarSign, ChevronDown, Plus, Search, Shield, ShieldCheck, FolderKanban } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { useRoleStore, type UserRole } from '../../services/mockRole';
@@ -8,21 +8,31 @@ export default function Sidebar() {
     const location = useLocation();
     const { currentRole, setRole } = useRoleStore();
 
-    const essentials = [
-        { name: 'Dashboard', href: '/dashboard', icon: Home },
-        { name: 'Consultants', href: '/dashboard/consultants', icon: ShieldCheck },
-        { name: 'Contractors', href: '/dashboard/contractors', icon: Users },
-        { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
-        { name: 'Settings', href: '/dashboard/settings', icon: Settings },
-    ];
+    // Role-based navigation items
+    const getEssentials = () => {
+        const base = [
+            { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+            { name: 'Projects', href: '/dashboard/projects', icon: FolderKanban, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+            { name: 'Consultants', href: '/dashboard/consultants', icon: ShieldCheck, roles: ['ADMIN'] },
+            { name: 'Contractors', href: '/dashboard/contractors', icon: Users, roles: ['ADMIN', 'CONSULTANT'] },
+            { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+            { name: 'Settings', href: '/dashboard/settings', icon: Settings, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+        ];
+        return base.filter(item => item.roles.includes(currentRole));
+    };
 
-    const projectMenu = [
-        { name: 'Analytics', href: '/dashboard/analytics', icon: PieChart },
-        { name: 'Reports', href: '/dashboard/reports', icon: FileText },
-        { name: 'Milestones', href: '/dashboard/milestones', icon: Flag },
-        { name: 'Users', href: '/dashboard/users', icon: Users },
-        { name: 'Budget', href: '/dashboard/budget', icon: DollarSign },
-    ];
+    const getProjectMenu = () => {
+        const base = [
+            { name: 'Analytics', href: '/dashboard/analytics', icon: PieChart, roles: ['ADMIN'] },
+            { name: 'Reports', href: '/dashboard/reports', icon: FileText, roles: ['ADMIN', 'CONSULTANT'] },
+            { name: 'Users', href: '/dashboard/users', icon: Users, roles: ['ADMIN'] },
+            { name: 'Budget', href: '/dashboard/budget', icon: DollarSign, roles: ['ADMIN'] },
+        ];
+        return base.filter(item => item.roles.includes(currentRole));
+    };
+
+    const essentials = getEssentials();
+    const projectMenu = getProjectMenu();
 
     const NavItem = ({ item }: { item: any }) => {
         const isActive = location.pathname === item.href;
@@ -94,14 +104,18 @@ export default function Sidebar() {
                         ))}
                     </nav>
 
-                    <div className="px-4 mb-2">
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">This project</p>
-                    </div>
-                    <nav className="flex-1 space-y-1 mb-6">
-                        {projectMenu.map((item) => (
-                            <NavItem key={item.name} item={item} />
-                        ))}
-                    </nav>
+                    {projectMenu.length > 0 && (
+                        <>
+                            <div className="px-4 mb-2">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">This project</p>
+                            </div>
+                            <nav className="flex-1 space-y-1 mb-6">
+                                {projectMenu.map((item) => (
+                                    <NavItem key={item.name} item={item} />
+                                ))}
+                            </nav>
+                        </>
+                    )}
 
                     <div className="px-4 mb-2 flex items-center justify-between">
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">All Projects</p>

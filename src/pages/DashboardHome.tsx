@@ -1,11 +1,27 @@
 
-import { Folder, AlertTriangle, CheckCircle, Clock, MapPin, TrendingUp, Filter, Download, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Folder, AlertTriangle, CheckCircle, Clock, MapPin, TrendingUp, Filter, Download, ArrowUpRight, ArrowDownRight, Users, FileCheck, Bell, Briefcase } from 'lucide-react';
+import { useRoleStore } from '../services/mockRole';
+import { useNavigate } from 'react-router-dom';
 
-const stats = [
+const adminStats = [
     { name: 'Total Projects', stat: '124', icon: Folder, color: 'text-blue-600', bg: 'bg-blue-100', change: '+12%', changeType: 'increase' },
     { name: 'Active Consultants', stat: '42', icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100', change: '+3', changeType: 'increase' },
     { name: 'Pending Approvals', stat: '8', icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100', change: '-2', changeType: 'decrease' },
     { name: 'Completion Rate', stat: '78%', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100', change: '+5.4%', changeType: 'increase' },
+];
+
+const consultantStats = [
+    { name: 'Assigned Projects', stat: '5', icon: Folder, color: 'text-blue-600', bg: 'bg-blue-100', change: '+1', changeType: 'increase' },
+    { name: 'My Contractors', stat: '12', icon: Users, color: 'text-purple-600', bg: 'bg-purple-100', change: '+2', changeType: 'increase' },
+    { name: 'Pending Verifications', stat: '4', icon: FileCheck, color: 'text-yellow-600', bg: 'bg-yellow-100', change: '-1', changeType: 'decrease' },
+    { name: 'Avg. Project Progress', stat: '68%', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100', change: '+8%', changeType: 'increase' },
+];
+
+const contractorStats = [
+    { name: 'Active Assignments', stat: '3', icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-100', change: '+1', changeType: 'increase' },
+    { name: 'Pending Submissions', stat: '2', icon: FileCheck, color: 'text-yellow-600', bg: 'bg-yellow-100', change: '0', changeType: 'neutral' },
+    { name: 'Notifications', stat: '5', icon: Bell, color: 'text-red-600', bg: 'bg-red-100', change: '+3', changeType: 'increase' },
+    { name: 'Your Rating', stat: '4.5⭐', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100', change: '+0.2', changeType: 'increase' },
 ];
 
 const riskAlerts = [
@@ -14,16 +30,50 @@ const riskAlerts = [
     { id: 3, project: 'Bridge Expansion', location: 'Enugu', intensity: 'Low', reason: 'Weather Delay', time: '1d ago' },
 ];
 
+const pendingVerifications = [
+    { id: 1, contractor: 'Adamu Construction Ltd', project: 'Lagos ICT Hub', milestone: 'Foundation Complete', progress: 85, submitted: '2 hours ago' },
+    { id: 2, contractor: 'BuildRight Nigeria', project: 'Kaduna Skills Academy', milestone: 'Roofing Phase', progress: 60, submitted: '5 hours ago' },
+    { id: 3, contractor: 'Premier Builders', project: 'Enugu Road', milestone: 'Asphalt Laying', progress: 45, submitted: '1 day ago' },
+];
+
+const contractorTasks = [
+    { id: 1, project: 'Lagos ICT Hub', section: 'Electrical Wiring', deadline: '2026-02-15', status: 'in_progress' },
+    { id: 2, project: 'Lagos ICT Hub', section: 'Interior Finishing', deadline: '2026-03-01', status: 'pending' },
+    { id: 3, project: 'Kaduna Skills Academy', section: 'Plumbing', deadline: '2026-02-28', status: 'in_progress' },
+];
+
 const zones = ['North Central', 'North East', 'North West', 'South East', 'South South', 'South West'];
 
 export default function DashboardHome() {
+    const { currentRole } = useRoleStore();
+    const navigate = useNavigate();
+
+    const getStats = () => {
+        switch (currentRole) {
+            case 'CONSULTANT': return consultantStats;
+            case 'CONTRACTOR': return contractorStats;
+            default: return adminStats;
+        }
+    };
+
+    const getTitle = () => {
+        switch (currentRole) {
+            case 'CONSULTANT': return { title: 'Consultant Dashboard', subtitle: 'Monitor your assigned projects and contractors' };
+            case 'CONTRACTOR': return { title: 'Contractor Dashboard', subtitle: 'Track your assignments and submissions' };
+            default: return { title: 'Nationwide Dashboard', subtitle: 'Overview of PTDF projects and performance across Nigeria.' };
+        }
+    };
+
+    const stats = getStats();
+    const { title, subtitle } = getTitle();
+
     return (
         <div className="space-y-8">
             {/* Header */}
             <div className="md:flex md:items-center md:justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">Nationwide Dashboard</h2>
-                    <p className="mt-1 text-sm text-gray-500">Overview of PTDF projects and performance across Nigeria.</p>
+                    <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">{title}</h2>
+                    <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
                 </div>
                 <div className="mt-4 flex gap-3 md:mt-0">
                     <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
@@ -140,8 +190,8 @@ export default function DashboardHome() {
                                 </p>
                                 <div className="mt-3 flex items-center justify-between">
                                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${alert.intensity === 'High' ? 'bg-red-100 text-red-700' :
-                                            alert.intensity === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                                                'bg-blue-100 text-blue-700'
+                                        alert.intensity === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                                            'bg-blue-100 text-blue-700'
                                         }`}>
                                         {alert.intensity} Risk
                                     </span>
@@ -156,61 +206,215 @@ export default function DashboardHome() {
                 </div>
             </div>
 
-            {/* Bottom Section: Recent Activity & Top Contractors */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-900 mb-6">Nationwide Project Clusters</h3>
-                    <div className="space-y-4">
-                        {zones.map(zone => (
-                            <div key={zone} className="group cursor-pointer">
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className="text-sm font-medium text-gray-700">{zone}</span>
-                                    <span className="text-xs text-gray-500 font-bold">{Math.floor(Math.random() * 20) + 5} Projects</span>
+            {/* Bottom Section - Role Specific */}
+            {currentRole === 'ADMIN' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h3 className="text-lg font-bold text-gray-900 mb-6">Nationwide Project Clusters</h3>
+                        <div className="space-y-4">
+                            {zones.map(zone => (
+                                <div key={zone} className="group cursor-pointer">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">{zone}</span>
+                                        <span className="text-xs text-gray-500 font-bold">{Math.floor(Math.random() * 20) + 5} Projects</span>
+                                    </div>
+                                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                        <div
+                                            className="bg-indigo-500 h-full rounded-full transition-all duration-1000 group-hover:bg-indigo-400"
+                                            style={{ width: `${Math.random() * 60 + 20}%` }}
+                                        ></div>
+                                    </div>
                                 </div>
-                                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                    <div
-                                        className="bg-indigo-500 h-full rounded-full transition-all duration-1000 group-hover:bg-indigo-400"
-                                        style={{ width: `${Math.random() * 60 + 20}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-900 mb-6">Top Performing Contractors</h3>
-                    <div className="overflow-hidden">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead>
-                                <tr>
-                                    <th className="px-3 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Contractor</th>
-                                    <th className="px-3 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Avg Rating</th>
-                                    <th className="px-3 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Projects</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {[
-                                    { name: 'BuildRight Construction', rating: 4.9, count: 12 },
-                                    { name: 'Quantum Solutions', rating: 4.7, count: 8 },
-                                    { name: 'GreenEnergy Ltd', rating: 4.5, count: 5 },
-                                    { name: 'Aether Innovations', rating: 4.2, count: 10 }
-                                ].map((c, i) => (
-                                    <tr key={i} className="hover:bg-gray-50 transition-colors cursor-pointer">
-                                        <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{c.name}</td>
-                                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <div className="flex items-center">
-                                                <span className="text-yellow-500 mr-1">⭐</span> {c.rating}
-                                            </div>
-                                        </td>
-                                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 font-bold">{c.count}</td>
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h3 className="text-lg font-bold text-gray-900 mb-6">Top Performing Contractors</h3>
+                        <div className="overflow-hidden">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th className="px-3 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Contractor</th>
+                                        <th className="px-3 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Avg Rating</th>
+                                        <th className="px-3 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Projects</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {[
+                                        { name: 'BuildRight Construction', rating: 4.9, count: 12 },
+                                        { name: 'Quantum Solutions', rating: 4.7, count: 8 },
+                                        { name: 'GreenEnergy Ltd', rating: 4.5, count: 5 },
+                                        { name: 'Aether Innovations', rating: 4.2, count: 10 }
+                                    ].map((c, i) => (
+                                        <tr key={i} className="hover:bg-gray-50 transition-colors cursor-pointer">
+                                            <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{c.name}</td>
+                                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <div className="flex items-center">
+                                                    <span className="text-yellow-500 mr-1">⭐</span> {c.rating}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 font-bold">{c.count}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
+
+            {currentRole === 'CONSULTANT' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Pending Verifications */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                                <FileCheck className="h-5 w-5 mr-2 text-yellow-500" />
+                                Pending Verifications
+                            </h3>
+                            <span className="text-xs font-bold text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+                                {pendingVerifications.length} Pending
+                            </span>
+                        </div>
+                        <div className="space-y-4">
+                            {pendingVerifications.map(item => (
+                                <div key={item.id} className="p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h4 className="font-bold text-sm text-gray-900">{item.contractor}</h4>
+                                            <p className="text-xs text-gray-500 mt-0.5">{item.project} • {item.milestone}</p>
+                                        </div>
+                                        <span className="text-[10px] text-gray-400">{item.submitted}</span>
+                                    </div>
+                                    <div className="mt-3">
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span className="text-gray-500">Progress</span>
+                                            <span className="font-bold text-gray-700">{item.progress}%</span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                            <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${item.progress}%` }}></div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => navigate('/dashboard/projects/project-1')}
+                                        className="mt-3 w-full py-2 text-xs font-bold text-purple-600 border border-purple-200 rounded-lg hover:bg-purple-50 transition-colors"
+                                    >
+                                        Review Submission
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* My Contractors */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                                <Users className="h-5 w-5 mr-2 text-purple-500" />
+                                My Contractors
+                            </h3>
+                            <button
+                                onClick={() => navigate('/dashboard/contractors')}
+                                className="text-xs font-bold text-purple-600 hover:text-purple-800"
+                            >
+                                View All →
+                            </button>
+                        </div>
+                        <div className="space-y-3">
+                            {[
+                                { name: 'Adamu Construction Ltd', project: 'Lagos ICT Hub', status: 'active', progress: 75 },
+                                { name: 'BuildRight Nigeria', project: 'Kaduna Skills Academy', status: 'active', progress: 60 },
+                                { name: 'Premier Builders', project: 'Enugu Road', status: 'pending', progress: 45 },
+                            ].map((contractor, i) => (
+                                <div key={i} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 border border-gray-100">
+                                    <div className="flex items-center">
+                                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                                            {contractor.name.charAt(0)}
+                                        </div>
+                                        <div className="ml-3">
+                                            <p className="text-sm font-medium text-gray-900">{contractor.name}</p>
+                                            <p className="text-xs text-gray-500">{contractor.project}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${contractor.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                                            }`}>
+                                            {contractor.status}
+                                        </span>
+                                        <p className="text-xs text-gray-500 mt-1">{contractor.progress}% complete</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {currentRole === 'CONTRACTOR' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* My Assignments */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                                <Briefcase className="h-5 w-5 mr-2 text-blue-500" />
+                                My Assignments
+                            </h3>
+                        </div>
+                        <div className="space-y-4">
+                            {contractorTasks.map(task => (
+                                <div key={task.id} className="p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h4 className="font-bold text-sm text-gray-900">{task.section}</h4>
+                                            <p className="text-xs text-gray-500 mt-0.5">{task.project}</p>
+                                        </div>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                                            }`}>
+                                            {task.status.replace('_', ' ')}
+                                        </span>
+                                    </div>
+                                    <div className="mt-3 flex items-center justify-between">
+                                        <span className="text-xs text-gray-500">Deadline: {task.deadline}</span>
+                                        <button
+                                            onClick={() => navigate('/dashboard/projects/project-1')}
+                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-800"
+                                        >
+                                            Submit Progress →
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Recent Notifications */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                                <Bell className="h-5 w-5 mr-2 text-red-500" />
+                                Recent Notifications
+                            </h3>
+                            <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-full">5 New</span>
+                        </div>
+                        <div className="space-y-3">
+                            {[
+                                { type: 'action', message: 'Submit progress report for Electrical Wiring', time: '2 hours ago' },
+                                { type: 'info', message: 'New materials delivered to Lagos ICT Hub site', time: '5 hours ago' },
+                                { type: 'warning', message: 'Deadline approaching for Plumbing section', time: '1 day ago' },
+                            ].map((notification, i) => (
+                                <div key={i} className={`p-3 rounded-lg border-l-4 ${notification.type === 'action' ? 'border-red-500 bg-red-50' :
+                                        notification.type === 'warning' ? 'border-yellow-500 bg-yellow-50' :
+                                            'border-blue-500 bg-blue-50'
+                                    }`}>
+                                    <p className="text-sm text-gray-900">{notification.message}</p>
+                                    <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
