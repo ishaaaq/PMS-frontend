@@ -1,4 +1,4 @@
-import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, Flag, DollarSign, ChevronDown, Plus, Search, Shield, ShieldCheck, LogOut } from 'lucide-react';
+import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, Flag, DollarSign, ChevronDown, Plus, Search, Shield, ShieldCheck, LogOut, Briefcase } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,9 +9,11 @@ export default function Sidebar() {
     const currentRole = user?.role || 'CONTRACTOR';
 
     const essentials = [
-        { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+        { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['ADMIN', 'CONTRACTOR'] },
+        { name: 'Dashboard', href: '/dashboard/consultant', icon: Home, roles: ['CONSULTANT'] },
         { name: 'Consultants', href: '/dashboard/consultants', icon: ShieldCheck, roles: ['ADMIN'] },
-        { name: 'Contractors', href: '/dashboard/contractors', icon: Users, roles: ['ADMIN', 'CONSULTANT'] },
+        { name: 'Contractors', href: '/dashboard/contractors', icon: Users, roles: ['ADMIN'] },
+        { name: 'My Projects', href: '/dashboard/consultant/projects', icon: Briefcase, roles: ['CONSULTANT'] },
         { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
     ];

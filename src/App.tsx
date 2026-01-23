@@ -11,6 +11,10 @@ import ConsultantDetailPage from './pages/ConsultantDetailPage';
 import BudgetPage from './pages/BudgetPage';
 import ReportsPage from './pages/ReportsPage';
 import UsersPage from './pages/UsersPage';
+// Consultant Pages
+import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
+import ConsultantProjectList from './pages/consultant/ConsultantProjectList';
+
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import type { UserRole } from './services/mockRole';
@@ -36,6 +40,17 @@ function DevRoleSwitcher() {
   );
 }
 
+
+function RoleBasedRedirect() {
+  const { user } = useAuth();
+
+  if (user?.role === 'CONSULTANT') {
+    return <ConsultantDashboard />;
+  }
+  // Default to Admin/Standard view for now
+  return <DashboardHome />;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -53,7 +68,31 @@ function App() {
               <DashboardLayout />
             </ProtectedRoute>
           }>
-            <Route index element={<DashboardHome />} />
+            {/* Split Dashboard Home based on Role */}
+            <Route index element={
+              <RoleBasedRedirect />
+            } />
+
+            {/* Admin Dashboard */}
+            <Route path="admin" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <DashboardHome />
+              </ProtectedRoute>
+            } />
+
+            {/* Consultant Routes */}
+            <Route path="consultant" element={
+              <ProtectedRoute allowedRoles={['CONSULTANT']}>
+                <ConsultantDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="consultant/projects" element={
+              <ProtectedRoute allowedRoles={['CONSULTANT']}>
+                <ConsultantProjectList />
+              </ProtectedRoute>
+            } />
+
+            {/* Shared/Admin Routes (Legacy - will strictly separate later) */}
             <Route path="projects" element={<ProjectListPage />} />
             <Route path="projects/new" element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
