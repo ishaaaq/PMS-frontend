@@ -14,6 +14,7 @@ import UsersPage from './pages/UsersPage';
 // Consultant Pages
 import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
 import ConsultantProjectList from './pages/consultant/ConsultantProjectList';
+import SubmissionQueue from './components/consultant/SubmissionQueue';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -89,6 +90,11 @@ function App() {
             <Route path="consultant/projects" element={
               <ProtectedRoute allowedRoles={['CONSULTANT']}>
                 <ConsultantProjectList />
+              </ProtectedRoute>
+            } />
+            <Route path="consultant/verification-queue" element={
+              <ProtectedRoute allowedRoles={['CONSULTANT']}>
+                <SubmissionQueue />
               </ProtectedRoute>
             } />
 
