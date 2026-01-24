@@ -14,7 +14,11 @@ import UsersPage from './pages/UsersPage';
 // Consultant Pages
 import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
 import ConsultantProjectList from './pages/consultant/ConsultantProjectList';
+import ConsultantProjectDetails from './pages/consultant/ConsultantProjectDetails';
 import SubmissionQueue from './components/consultant/SubmissionQueue';
+import ConsultantContractors from './pages/consultant/ConsultantContractors';
+import ConsultantNotifications from './pages/consultant/ConsultantNotifications';
+import ConsultantReports from './pages/consultant/ConsultantReports';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -92,9 +96,29 @@ function App() {
                 <ConsultantProjectList />
               </ProtectedRoute>
             } />
+            <Route path="consultant/projects/:id" element={
+              <ProtectedRoute allowedRoles={['CONSULTANT']}>
+                <ConsultantProjectDetails />
+              </ProtectedRoute>
+            } />
             <Route path="consultant/verification-queue" element={
               <ProtectedRoute allowedRoles={['CONSULTANT']}>
                 <SubmissionQueue />
+              </ProtectedRoute>
+            } />
+            <Route path="consultant/contractors" element={
+              <ProtectedRoute allowedRoles={['CONSULTANT']}>
+                <ConsultantContractors />
+              </ProtectedRoute>
+            } />
+            <Route path="consultant/notifications" element={
+              <ProtectedRoute allowedRoles={['CONSULTANT']}>
+                <ConsultantNotifications />
+              </ProtectedRoute>
+            } />
+            <Route path="consultant/reports" element={
+              <ProtectedRoute allowedRoles={['CONSULTANT']}>
+                <ConsultantReports />
               </ProtectedRoute>
             } />
 

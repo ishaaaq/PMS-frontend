@@ -1,4 +1,4 @@
-import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, Flag, DollarSign, ChevronDown, Plus, Search, Shield, ShieldCheck, LogOut, Briefcase } from 'lucide-react';
+import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, Flag, DollarSign, ChevronDown, Plus, Search, ShieldCheck, LogOut, Briefcase } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,6 +14,7 @@ export default function Sidebar() {
         { name: 'Consultants', href: '/dashboard/consultants', icon: ShieldCheck, roles: ['ADMIN'] },
         { name: 'Contractors', href: '/dashboard/contractors', icon: Users, roles: ['ADMIN'] },
         { name: 'My Projects', href: '/dashboard/consultant/projects', icon: Briefcase, roles: ['CONSULTANT'] },
+        { name: 'My Contractors', href: '/dashboard/consultant/contractors', icon: Users, roles: ['CONSULTANT'] },
         { name: 'Verifications', href: '/dashboard/consultant/verification-queue', icon: ShieldCheck, roles: ['CONSULTANT'] },
         { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
