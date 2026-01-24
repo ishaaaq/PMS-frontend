@@ -12,6 +12,12 @@ import ConsultantDetailPage from './pages/ConsultantDetailPage';
 import BudgetPage from './pages/BudgetPage';
 import ReportsPage from './pages/ReportsPage';
 import UsersPage from './pages/UsersPage';
+import ContractorLayout from './layouts/ContractorLayout';
+import ContractorDashboard from './pages/contractor/ContractorDashboard';
+import ContractorAssignmentsPage from './pages/contractor/ContractorAssignmentsPage';
+import ContractorMessagesPage from './pages/contractor/ContractorMessagesPage';
+import ContractorProfilePage from './pages/contractor/ContractorProfilePage';
+import ContractorDocumentsPage from './pages/contractor/ContractorDocumentsPage';
 
 function App() {
   return (
@@ -35,9 +41,20 @@ function App() {
           <Route path="reports" element={<ReportsPage />} />
           <Route path="users" element={<UsersPage />} />
         </Route>
+
+        {/* Contractor Routes */}
+        <Route path="/contractor" element={<ContractorLayout />}>
+          <Route path="dashboard" element={<ContractorDashboard />} />
+          <Route path="projects" element={<ContractorAssignmentsPage />} />
+          <Route path="messages" element={<ContractorMessagesPage />} />
+          <Route path="profile" element={<ContractorProfilePage />} />
+          <Route path="documents" element={<ContractorDocumentsPage />} />
+          <Route index element={<Navigate to="/contractor/dashboard" replace />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
 }
 
 export default App;
+

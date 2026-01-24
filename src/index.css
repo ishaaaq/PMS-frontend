@@ -4,7 +4,55 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    @apply transition-colors duration-200;
+  }
+  
   body {
     @apply bg-gray-50 text-gray-900;
+    @apply dark:bg-gray-900 dark:text-gray-100;
+  }
+
+  /* Smooth transitions for theme changes */
+  * {
+    @apply transition-colors duration-200;
+  }
+}
+
+@layer components {
+  /* Card component dark mode */
+  .card {
+    @apply bg-white border-gray-200;
+    @apply dark:bg-gray-800 dark:border-gray-700;
+  }
+  
+  /* Input fields dark mode */
+  input, select, textarea {
+    @apply dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400;
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    @apply dark:ring-indigo-400 dark:border-transparent;
+  }
+}
+
+/* Custom scrollbar for dark mode */
+@layer utilities {
+  .dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .dark ::-webkit-scrollbar-track {
+    background: #1f2937;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 4px;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
   }
 }
