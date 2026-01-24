@@ -12,6 +12,8 @@ import ConsultantDetailPage from './pages/ConsultantDetailPage';
 import BudgetPage from './pages/BudgetPage';
 import ReportsPage from './pages/ReportsPage';
 import UsersPage from './pages/UsersPage';
+import ContractorManagementPage from './pages/ContractorManagementPage';
+import ContractorDetailPage from './pages/ContractorDetailPage';
 import ContractorLayout from './layouts/ContractorLayout';
 import ContractorDashboard from './pages/contractor/ContractorDashboard';
 import ContractorAssignmentsPage from './pages/contractor/ContractorAssignmentsPage';
@@ -40,6 +42,8 @@ function App() {
           <Route path="budget" element={<BudgetPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="users" element={<UsersPage />} />
+          <Route path="contractors" element={<ContractorManagementPage />} />
+          <Route path="contractors/:id" element={<ContractorDetailPage />} />
         </Route>
 
         {/* Contractor Routes */}
