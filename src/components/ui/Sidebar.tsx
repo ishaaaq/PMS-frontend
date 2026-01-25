@@ -17,8 +17,7 @@ export default function Sidebar() {
     ];
 
     const projectMenu = [
-        { name: 'Analytics', href: '/dashboard/analytics', icon: PieChart },
-        { name: 'Reports', href: '/dashboard/reports', icon: FileText },
+        { name: 'Analytics & Reports', href: '/dashboard/reports', icon: PieChart },
         { name: 'Milestones', href: '/dashboard/milestones', icon: Flag },
         { name: 'Users', href: '/dashboard/users', icon: Users },
         { name: 'Budget', href: '/dashboard/budget', icon: DollarSign },
@@ -31,34 +30,40 @@ export default function Sidebar() {
                 to={item.href}
                 className={cn(
                     isActive
-                        ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white',
-                    'group flex items-center px-3 py-2 text-sm font-medium rounded-md mx-2'
+                        ? 'bg-ptdf-primary/10 text-ptdf-primary dark:text-emerald-400 border-r-2 border-ptdf-primary'
+                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white',
+                    'group flex items-center px-3 py-2.5 text-sm font-medium transition-all duration-200 mx-2 rounded-l-lg rounded-r-none'
                 )}
             >
                 <item.icon className={cn(
-                    isActive ? 'text-purple-700 dark:text-purple-300' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400',
-                    "mr-3 flex-shrink-0 h-5 w-5"
+                    isActive ? 'text-ptdf-primary dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-300',
+                    "mr-3 flex-shrink-0 h-5 w-5 transition-colors"
                 )} aria-hidden="true" />
-                {item.name}
+                <span className={isActive ? 'font-semibold' : ''}>{item.name}</span>
             </Link>
         );
     };
 
     return (
-        <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-gray-200/50 dark:border-gray-700/30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl z-50">
             <div className="flex-1 flex flex-col min-h-0">
-                <div className="flex items-center h-16 flex-shrink-0 px-4 border-b border-gray-100 dark:border-gray-700">
-                    <span className="text-xl font-bold text-gray-900 dark:text-white">PTDF</span>
+                <div className="flex items-center h-16 flex-shrink-0 px-6 border-b border-gray-100 dark:border-gray-800">
+                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-ptdf-primary to-emerald-400">
+                        PTDF PMS
+                    </span>
                 </div>
 
                 {/* Search Placeholder */}
-                <div className="px-4 mt-4 mb-2">
-                    <div className="relative rounded-md shadow-sm">
+                <div className="px-4 mt-6 mb-4">
+                    <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                            <Search className="h-4 w-4 text-gray-400 group-focus-within:text-ptdf-primary transition-colors" />
                         </div>
-                        <input type="text" className="focus:ring-purple-500 focus:border-purple-500 block w-full pl-10 sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-100 py-2" placeholder="Search anything" />
+                        <input
+                            type="text"
+                            className="block w-full pl-10 sm:text-sm border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 text-gray-900 dark:text-gray-100 py-2.5 focus:ring-2 focus:ring-ptdf-primary/20 focus:border-ptdf-primary transition-all"
+                            placeholder="Search projects..."
+                        />
                     </div>
                 </div>
 
@@ -103,30 +108,16 @@ export default function Sidebar() {
                         ))}
                     </nav>
 
-                    <div className="px-4 mb-2 flex items-center justify-between">
-                        <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">All Projects</p>
-                        <Plus className="h-4 w-4 text-gray-400 dark:text-gray-500 cursor-pointer" />
-                    </div>
-                    {/* Placeholder for project list */}
-                    <div className="px-4 space-y-2">
-                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 py-1">
-                            <span className="flex items-center"><MapPin className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" /> PMS development</span>
-                            <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                        </div>
-                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 py-1">
-                            <span className="flex items-center"><MapPin className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" /> Office construction</span>
-                            <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                        </div>
-                    </div>
+
                 </div>
 
-                <div className="flex-shrink-0 flex border-t border-gray-200 dark:border-gray-700 p-4">
-                    <Link to="/auth/login" className="flex-shrink-0 w-full group block">
+                <div className="flex-shrink-0 flex border-t border-gray-200/50 dark:border-gray-700/30 p-4">
+                    <Link to="/auth/login" className="flex-shrink-0 w-full group block p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <div className="flex items-center">
-                            <div className="h-9 w-9 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-sm font-medium text-white">IA</div>
+                            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-ptdf-primary to-emerald-400 flex items-center justify-center text-sm font-bold text-white shadow-glow-sm">IA</div>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white">Ishaq Abdullahi</p>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">Super admin</p>
+                                <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white">Ishaq Abdullahi</p>
+                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Super admin</p>
                             </div>
                         </div>
                     </Link>

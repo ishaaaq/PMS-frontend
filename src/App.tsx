@@ -12,8 +12,12 @@ import ConsultantDetailPage from './pages/ConsultantDetailPage';
 import BudgetPage from './pages/BudgetPage';
 import ReportsPage from './pages/ReportsPage';
 import UsersPage from './pages/UsersPage';
+import UserDetailPage from './pages/UserDetailPage';
 import ContractorManagementPage from './pages/ContractorManagementPage';
 import ContractorDetailPage from './pages/ContractorDetailPage';
+import SettingsPage from './pages/SettingsPage';
+import NotificationsPage from './pages/NotificationsPage';
+import MilestonesPage from './pages/MilestonesPage';
 import ContractorLayout from './layouts/ContractorLayout';
 import ContractorDashboard from './pages/contractor/ContractorDashboard';
 import ContractorAssignmentsPage from './pages/contractor/ContractorAssignmentsPage';
@@ -42,8 +46,12 @@ function App() {
           <Route path="budget" element={<BudgetPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="users" element={<UsersPage />} />
+          <Route path="users/:id" element={<UserDetailPage />} />
           <Route path="contractors" element={<ContractorManagementPage />} />
           <Route path="contractors/:id" element={<ContractorDetailPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="milestones" element={<MilestonesPage />} />
         </Route>
 
         {/* Contractor Routes */}
@@ -61,4 +69,3 @@ function App() {
 }
 
 export default App;
-
