@@ -1,27 +1,39 @@
-
-import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, Flag, DollarSign, ChevronDown, Plus, Search, Shield, ShieldCheck } from 'lucide-react';
+import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, Flag, DollarSign, ChevronDown, Plus, Search, ShieldCheck, LogOut, Briefcase } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { useRoleStore, type UserRole } from '../../services/mockRole';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function Sidebar() {
     const location = useLocation();
-    const { currentRole, setRole } = useRoleStore();
+    const { user, logout } = useAuth();
+    const currentRole = user?.role || 'CONTRACTOR';
 
     const essentials = [
-        { name: 'Dashboard', href: '/dashboard', icon: Home },
-        { name: 'Consultants', href: '/dashboard/consultants', icon: ShieldCheck },
-        { name: 'Contractors', href: '/dashboard/contractors', icon: Users },
-        { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
-        { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+        { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['ADMIN', 'CONTRACTOR'] },
+        { name: 'Dashboard', href: '/dashboard/consultant', icon: Home, roles: ['CONSULTANT'] },
+        { name: 'Consultants', href: '/dashboard/consultants', icon: ShieldCheck, roles: ['ADMIN'] },
+        { name: 'Contractors', href: '/dashboard/contractors', icon: Users, roles: ['ADMIN'] },
+        { name: 'My Projects', href: '/dashboard/consultant/projects', icon: Briefcase, roles: ['CONSULTANT'] },
+        { name: 'My Contractors', href: '/dashboard/consultant/contractors', icon: Users, roles: ['CONSULTANT'] },
+        { name: 'Verifications', href: '/dashboard/consultant/verification-queue', icon: ShieldCheck, roles: ['CONSULTANT'] },
+        { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+        { name: 'Settings', href: '/dashboard/settings', icon: Settings, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
     ];
 
     const projectMenu = [
+        { name: 'Analytics', href: '/dashboard/analytics', icon: PieChart, roles: ['ADMIN', 'CONSULTANT'] },
+        { name: 'Reports', href: '/dashboard/reports', icon: FileText, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+        { name: 'Milestones', href: '/dashboard/milestones', icon: Flag, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+        { name: 'Users', href: '/dashboard/users', icon: Users, roles: ['ADMIN'] },
+        { name: 'Budget', href: '/dashboard/budget', icon: DollarSign, roles: ['ADMIN'] },
         { name: 'Analytics & Reports', href: '/dashboard/reports', icon: PieChart },
         { name: 'Milestones', href: '/dashboard/milestones', icon: Flag },
         { name: 'Users', href: '/dashboard/users', icon: Users },
         { name: 'Budget', href: '/dashboard/budget', icon: DollarSign },
     ];
+
+    const filteredEssentials = essentials.filter(item => item.roles.includes(currentRole));
+    const filteredProjectMenu = projectMenu.filter(item => item.roles.includes(currentRole));
 
     const NavItem = ({ item }: { item: any }) => {
         const isActive = location.pathname === item.href;
@@ -94,7 +106,7 @@ export default function Sidebar() {
                         <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Essentials</p>
                     </div>
                     <nav className="flex-1 space-y-1 mb-6">
-                        {essentials.map((item) => (
+                        {filteredEssentials.map((item) => (
                             <NavItem key={item.name} item={item} />
                         ))}
                     </nav>
@@ -103,7 +115,7 @@ export default function Sidebar() {
                         <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">This project</p>
                     </div>
                     <nav className="flex-1 space-y-1 mb-6">
-                        {projectMenu.map((item) => (
+                        {filteredProjectMenu.map((item) => (
                             <NavItem key={item.name} item={item} />
                         ))}
                     </nav>
@@ -120,7 +132,14 @@ export default function Sidebar() {
                                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Super admin</p>
                             </div>
                         </div>
-                    </Link>
+                        <button
+                            onClick={logout}
+                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                            title="Logout"
+                        >
+                            <LogOut className="h-5 w-5" />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
