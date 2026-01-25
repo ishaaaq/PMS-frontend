@@ -11,6 +11,13 @@ import ConsultantDetailPage from './pages/ConsultantDetailPage';
 import BudgetPage from './pages/BudgetPage';
 import ReportsPage from './pages/ReportsPage';
 import UsersPage from './pages/UsersPage';
+import UserDetailPage from './pages/UserDetailPage';
+import ContractorManagementPage from './pages/ContractorManagementPage';
+import ContractorDetailPage from './pages/ContractorDetailPage';
+import SettingsPage from './pages/SettingsPage';
+import NotificationsPage from './pages/NotificationsPage';
+import MilestonesPage from './pages/MilestonesPage';
+
 // Consultant Pages
 import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
 import ConsultantProjectList from './pages/consultant/ConsultantProjectList';
@@ -19,6 +26,14 @@ import SubmissionQueue from './components/consultant/SubmissionQueue';
 import ConsultantContractors from './pages/consultant/ConsultantContractors';
 import ConsultantNotifications from './pages/consultant/ConsultantNotifications';
 import ConsultantReports from './pages/consultant/ConsultantReports';
+
+// Contractor Pages
+import ContractorLayout from './layouts/ContractorLayout';
+import ContractorDashboard from './pages/contractor/ContractorDashboard';
+import ContractorAssignmentsPage from './pages/contractor/ContractorAssignmentsPage';
+import ContractorMessagesPage from './pages/contractor/ContractorMessagesPage';
+import ContractorProfilePage from './pages/contractor/ContractorProfilePage';
+import ContractorDocumentsPage from './pages/contractor/ContractorDocumentsPage';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -50,10 +65,14 @@ function RoleBasedRedirect() {
   const { user } = useAuth();
 
   if (user?.role === 'CONSULTANT') {
-    return <ConsultantDashboard />;
+    return <Navigate to="/dashboard/consultant" replace />;
   }
-  // Default to Admin/Standard view for now
-  return <DashboardHome />;
+  if (user?.role === 'CONTRACTOR') {
+    return <Navigate to="/contractor/dashboard" replace />;
+  }
+
+  // Default to Admin Dashboard
+  return <Navigate to="/dashboard/admin" replace />;
 }
 
 function App() {
@@ -146,7 +165,7 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="reports" element={
-              <ProtectedRoute allowedRoles={['ADMIN', 'CONSULTANT', 'CONTRACTOR']}>
+              <ProtectedRoute allowedRoles={['ADMIN']}>
                 <ReportsPage />
               </ProtectedRoute>
             } />
@@ -155,64 +174,43 @@ function App() {
                 <UsersPage />
               </ProtectedRoute>
             } />
+            <Route path="users/:id" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <UserDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="contractors" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ContractorManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path="contractors/:id" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ContractorDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="milestones" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <MilestonesPage />
+              </ProtectedRoute>
+            } />
+          </Route>
+
+          {/* Contractor Routes */}
+          <Route path="/contractor" element={<ContractorLayout />}>
+            <Route path="dashboard" element={<ContractorDashboard />} />
+            <Route path="projects" element={<ContractorAssignmentsPage />} />
+            <Route path="messages" element={<ContractorMessagesPage />} />
+            <Route path="profile" element={<ContractorProfilePage />} />
+            <Route path="documents" element={<ContractorDocumentsPage />} />
+            <Route index element={<Navigate to="/contractor/dashboard" replace />} />
           </Route>
         </Routes>
         <DevRoleSwitcher />
       </BrowserRouter>
     </AuthProvider>
-import UserDetailPage from './pages/UserDetailPage';
-import ContractorManagementPage from './pages/ContractorManagementPage';
-import ContractorDetailPage from './pages/ContractorDetailPage';
-import SettingsPage from './pages/SettingsPage';
-import NotificationsPage from './pages/NotificationsPage';
-import MilestonesPage from './pages/MilestonesPage';
-import ContractorLayout from './layouts/ContractorLayout';
-import ContractorDashboard from './pages/contractor/ContractorDashboard';
-import ContractorAssignmentsPage from './pages/contractor/ContractorAssignmentsPage';
-import ContractorMessagesPage from './pages/contractor/ContractorMessagesPage';
-import ContractorProfilePage from './pages/contractor/ContractorProfilePage';
-import ContractorDocumentsPage from './pages/contractor/ContractorDocumentsPage';
-
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        {/* Auth Routes */}
-        <Route path="/" element={<Navigate to="/auth/login" replace />} />
-        <Route path="/auth" element={<AuthLayout />}>
-          <Route path="login" element={<LoginPage />} />
-        </Route>
-
-        {/* Dashboard Routes */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<DashboardHome />} />
-          <Route path="projects" element={<ProjectListPage />} />
-          <Route path="projects/new" element={<CreateProjectPage />} />
-          <Route path="projects/:id" element={<ProjectDetailsPage />} />
-          <Route path="consultants" element={<ConsultantListPage />} />
-          <Route path="consultants/:id" element={<ConsultantDetailPage />} />
-          <Route path="budget" element={<BudgetPage />} />
-          <Route path="reports" element={<ReportsPage />} />
-          <Route path="users" element={<UsersPage />} />
-          <Route path="users/:id" element={<UserDetailPage />} />
-          <Route path="contractors" element={<ContractorManagementPage />} />
-          <Route path="contractors/:id" element={<ContractorDetailPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="milestones" element={<MilestonesPage />} />
-        </Route>
-
-        {/* Contractor Routes */}
-        <Route path="/contractor" element={<ContractorLayout />}>
-          <Route path="dashboard" element={<ContractorDashboard />} />
-          <Route path="projects" element={<ContractorAssignmentsPage />} />
-          <Route path="messages" element={<ContractorMessagesPage />} />
-          <Route path="profile" element={<ContractorProfilePage />} />
-          <Route path="documents" element={<ContractorDocumentsPage />} />
-          <Route index element={<Navigate to="/contractor/dashboard" replace />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
   );
 }
 
