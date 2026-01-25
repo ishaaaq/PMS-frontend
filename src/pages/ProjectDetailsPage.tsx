@@ -24,46 +24,46 @@ export default function ProjectDetailsPage() {
         }
     }, [id]);
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading project details...</div>;
+    if (loading) return <div className="p-8 text-center text-gray-500 dark:text-gray-400 animate-pulse">Loading project details...</div>;
     if (!project) return <div className="p-8 text-center text-red-500">Project not found</div>;
 
     const tabs = ['Details', 'Milestones', 'Personnel', 'Analytics'];
 
     return (
-        <div>
+        <div className="space-y-6">
             {/* Header */}
-            <div className="mb-6">
-                <div className="flex items-center text-sm text-gray-500 mb-4">
-                    <button onClick={() => navigate('/dashboard/projects')} className="hover:text-gray-900 flex items-center">
+            <div>
+                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    <button onClick={() => navigate('/dashboard/projects')} className="hover:text-gray-900 dark:hover:text-white flex items-center transition-colors">
                         <ArrowLeft className="h-4 w-4 mr-1" /> Back
                     </button>
                     <ChevronRight className="h-4 w-4 mx-2" />
-                    <span className="font-medium text-gray-900">{project.title}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{project.title}</span>
                 </div>
 
                 <div className="md:flex md:items-center md:justify-between">
                     <div>
                         <div className="flex items-center gap-3">
-                            <h2 className="text-2xl font-bold text-gray-900">{project.title}</h2>
-                            <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Admin View</span>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{project.title}</h2>
+                            <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Admin View</span>
                         </div>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 mt-4 md:mt-0">
                         <button
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-700 shadow-lg shadow-green-100 flex items-center transition-all active:scale-95"
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-700 shadow-lg shadow-green-100 dark:shadow-none flex items-center transition-all active:scale-95"
                             onClick={() => alert('Disbursement Authorized!')}
                         >
                             <ShieldCheck className="h-4 w-4 mr-2" />
                             Authorize Disbursement
                         </button>
-                        <button className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-50 transition-all active:scale-95">
+                        <button className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95">
                             Manage Project
                         </button>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="border-b border-gray-200 mt-6">
+                <div className="border-b border-gray-200 dark:border-gray-700 mt-6">
                     <nav className="-mb-px flex space-x-8">
                         {tabs.map((tab) => (
                             <button
@@ -71,9 +71,9 @@ export default function ProjectDetailsPage() {
                                 onClick={() => setActiveTab(tab)}
                                 className={cn(
                                     activeTab === tab
-                                        ? 'border-gray-900 text-gray-900'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                                        ? 'border-gray-900 text-gray-900 dark:border-white dark:text-white'
+                                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500',
+                                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors'
                                 )}
                             >
                                 {tab}
@@ -88,25 +88,25 @@ export default function ProjectDetailsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column: Info */}
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-white shadow rounded-lg p-6">
+                        <div className="glass-card rounded-lg p-6">
                             <div className="flex items-center mb-4">
                                 <FileTextIcon className="h-5 w-5 text-gray-400 mr-2" />
-                                <h3 className="text-lg font-medium text-gray-900">Description</h3>
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Description</h3>
                             </div>
-                            <p className="text-gray-600 text-sm leading-relaxed">
+                            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
                                 {project.description}
                             </p>
 
-                            <div className="mt-8 border-t border-gray-100 pt-6 grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
+                            <div className="mt-8 border-t border-gray-100 dark:border-gray-700/50 pt-6 grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
                                 <DetailRow label="Department" value={project.department || 'N/A'} icon={Users} />
                                 <DetailRow label="Location" value={`${project.lga}, ${project.state}`} icon={MapPin} />
 
                                 <div className="sm:col-span-2 space-y-2">
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500">Progress</span>
-                                        <span className="font-medium">{project.progress}%</span>
+                                        <span className="text-gray-500 dark:text-gray-400">Progress</span>
+                                        <span className="font-medium text-gray-900 dark:text-white">{project.progress}%</span>
                                     </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                                         <div className="bg-green-600 h-2 rounded-full" style={{ width: `${project.progress}%` }}></div>
                                     </div>
                                 </div>
@@ -115,7 +115,7 @@ export default function ProjectDetailsPage() {
                                     label="Status"
                                     value={
                                         <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
-                                            project.status === ProjectStatus.ONGOING ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"
+                                            project.status === ProjectStatus.ONGOING ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
                                         )}>
                                             {project.status}
                                         </span>
@@ -134,10 +134,10 @@ export default function ProjectDetailsPage() {
 
                     {/* Right Column: Gallery & Comments */}
                     <div className="space-y-6">
-                        <div className="bg-white shadow rounded-lg p-6">
+                        <div className="glass-card rounded-lg p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-medium text-gray-900">Project gallery</h3>
-                                <a href="#" className="text-sm text-indigo-600 hover:text-indigo-500">Full gallery</a>
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Project gallery</h3>
+                                <a href="#" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">Full gallery</a>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                                 {project.gallery && project.gallery.length > 0 ? (
@@ -145,28 +145,28 @@ export default function ProjectDetailsPage() {
                                         <img key={idx} src={img} alt="Project" className="h-24 w-full object-cover rounded-md" />
                                     ))
                                 ) : (
-                                    <div className="col-span-2 h-24 bg-gray-100 rounded-flex items-center justify-center text-gray-400 text-sm flex">No Images</div>
+                                    <div className="col-span-2 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 text-sm">No Images</div>
                                 )}
                             </div>
                         </div>
 
-                        <div className="bg-white shadow rounded-lg p-6">
+                        <div className="glass-card rounded-lg p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-medium text-gray-900">Comments</h3>
-                                <a href="#" className="text-sm text-indigo-600 hover:text-indigo-500">All comments</a>
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Comments</h3>
+                                <a href="#" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">All comments</a>
                             </div>
                             {/* Mock Comment */}
                             <div className="space-y-4">
                                 <div className="flex space-x-3">
                                     <div className="flex-shrink-0">
-                                        <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold">IA</div>
+                                        <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-700 dark:text-indigo-400 text-xs font-bold">IA</div>
                                     </div>
                                     <div>
                                         <div className="text-sm">
-                                            <span className="font-medium text-gray-900">Ishaq Abdullahi</span>
-                                            <span className="text-gray-500 ml-2">2 min ago</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">Ishaq Abdullahi</span>
+                                            <span className="text-gray-500 dark:text-gray-400 ml-2">2 min ago</span>
                                         </div>
-                                        <div className="mt-1 text-sm text-gray-700">
+                                        <div className="mt-1 text-sm text-gray-700 dark:text-gray-300">
                                             <p>Great progress on the foundation work! Ensure safety gear compliance.</p>
                                         </div>
                                     </div>
@@ -175,18 +175,18 @@ export default function ProjectDetailsPage() {
                         </div>
 
                         {/* Admin Action: Rate Consultant */}
-                        <div className="bg-indigo-50 shadow-sm border border-indigo-100 rounded-lg p-6">
-                            <h3 className="text-sm font-bold text-indigo-900 uppercase mb-4 flex items-center">
+                        <div className="bg-indigo-50 dark:bg-indigo-900/10 shadow-sm border border-indigo-100 dark:border-indigo-500/20 rounded-lg p-6">
+                            <h3 className="text-sm font-bold text-indigo-900 dark:text-indigo-300 uppercase mb-4 flex items-center">
                                 <Star className="h-4 w-4 mr-2 text-indigo-500" /> Rate Consultant Performance
                             </h3>
                             <div className="flex gap-2 mb-4">
                                 {[1, 2, 3, 4, 5].map(s => (
                                     <button key={s} className="hover:scale-110 transition-transform">
-                                        <Star className="h-6 w-6 text-indigo-200 hover:text-yellow-400 fill-current" />
+                                        <Star className="h-6 w-6 text-indigo-200 dark:text-indigo-800 hover:text-yellow-400 dark:hover:text-yellow-400 fill-current" />
                                     </button>
                                 ))}
                             </div>
-                            <p className="text-[10px] text-indigo-400 font-medium">Evaluation is required upon project completion to maintain consultant quality standards.</p>
+                            <p className="text-[10px] text-indigo-400 dark:text-indigo-300/80 font-medium">Evaluation is required upon project completion to maintain consultant quality standards.</p>
                         </div>
                     </div>
                 </div>
@@ -215,8 +215,8 @@ function DetailRow({ label, value, icon: Icon }: any) {
         <div className="flex items-start">
             {Icon && <Icon className="h-5 w-5 text-gray-400 mt-0.5 mr-3" />}
             <div>
-                <dt className="text-sm font-medium text-gray-500">{label}</dt>
-                <dd className="mt-1 text-sm text-gray-900 font-semibold">{value}</dd>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white font-semibold">{value}</dd>
             </div>
         </div>
     );

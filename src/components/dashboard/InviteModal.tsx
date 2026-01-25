@@ -22,23 +22,23 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm transition-opacity">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative border border-white/20 animate-in fade-in zoom-in duration-200">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative border border-white/20 dark:border-gray-700 animate-in fade-in zoom-in duration-200">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-900 transition-colors"
+                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                     <X className="h-5 w-5" />
                 </button>
 
                 <div className="p-8">
-                    <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center mb-6">
-                        <UserPlus className="h-7 w-7 text-indigo-600" />
+                    <div className="h-14 w-14 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center mb-6">
+                        <UserPlus className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
                     </div>
 
-                    <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
                         Invite Collaborator
                     </h3>
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                         Select role for the collaborators you want to invite. Bulk invitation can be sent for collaborators of the same role.
                     </p>
 
@@ -51,8 +51,8 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
                                         key={r}
                                         onClick={() => setRole(r)}
                                         className={`py-2 text-[10px] font-bold rounded-lg border transition-all ${role === r
-                                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100'
-                                            : 'bg-white border-gray-100 text-gray-500 hover:bg-gray-50'
+                                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-none'
+                                            : 'bg-white dark:bg-gray-700 border-gray-100 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                                             }`}
                                     >
                                         {r}
@@ -70,14 +70,14 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
                                     placeholder="Enter collaborator email..."
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 text-sm border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-gray-50/50 border outline-none"
+                                    className="w-full pl-10 pr-4 py-3 text-sm border-gray-100 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 bg-gray-50/50 dark:bg-gray-700/50 dark:text-white dark:placeholder-gray-500 border outline-none"
                                 />
                             </div>
                         </div>
 
                         <div className="pt-2">
                             <button
-                                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xl shadow-indigo-100 active:scale-95 transition-all text-sm uppercase tracking-widest"
+                                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 dark:hover:bg-indigo-500 text-white font-bold rounded-xl shadow-xl shadow-indigo-100 dark:shadow-none active:scale-95 transition-all text-sm uppercase tracking-widest"
                             >
                                 Send Invitation
                             </button>
@@ -85,20 +85,20 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
 
                         <div className="relative py-4">
                             <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-100"></div>
+                                <div className="w-full border-t border-gray-100 dark:border-gray-700"></div>
                             </div>
-                            <div className="relative flex justify-center text-xs uppercase font-bold text-gray-300">
-                                <span className="bg-white px-4">Or Share Link</span>
+                            <div className="relative flex justify-center text-xs uppercase font-bold text-gray-300 dark:text-gray-500">
+                                <span className="bg-white dark:bg-gray-800 px-4">Or Share Link</span>
                             </div>
                         </div>
 
                         <div className="flex gap-2">
-                            <div className="flex-1 bg-gray-50 rounded-xl px-4 py-3 text-xs font-medium text-gray-400 truncate flex items-center">
+                            <div className="flex-1 bg-gray-50 dark:bg-gray-700/50 rounded-xl px-4 py-3 text-xs font-medium text-gray-400 dark:text-gray-300 truncate flex items-center">
                                 pms.ptdf.gov.ng/invite/t-x7a9-z3v4
                             </div>
                             <button
                                 onClick={copyLink}
-                                className={`p-3 rounded-xl border transition-all ${copied ? 'bg-green-50 border-green-200 text-green-600' : 'bg-white border-gray-100 text-gray-400 hover:bg-gray-50'}`}
+                                className={`p-3 rounded-xl border transition-all ${copied ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400' : 'bg-white dark:bg-gray-700 border-gray-100 dark:border-gray-600 text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'}`}
                             >
                                 {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
                             </button>
