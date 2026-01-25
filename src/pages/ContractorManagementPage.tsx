@@ -8,7 +8,7 @@ import type { AdminContractor, GeographicZone, ContractorStatus, ContractorStats
 import {
     Search, Filter, Users, CheckCircle, Clock, Ban,
     Star, MoreVertical, Eye, FolderOpen, MessageSquare,
-    UserPlus, X, ChevronLeft, ChevronRight, Building2,
+    UserPlus, X, ChevronLeft, ChevronRight,
     ArrowUpDown, ArrowUp, ArrowDown, LayoutGrid, List,
     MapPin, Briefcase, Download, Trash2, Mail, Edit,
     ThumbsUp, ThumbsDown, Info
@@ -97,7 +97,7 @@ export default function ContractorManagementPage() {
     };
 
     const filteredAndSortedContractors = useMemo(() => {
-        let result = contractors.filter(c => {
+        const result = contractors.filter(c => {
             const matchesSearch = c.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 c.registrationNumber.toLowerCase().includes(searchQuery.toLowerCase());
             const matchesZone = zoneFilter === 'ALL' || c.zone === zoneFilter;
@@ -356,56 +356,56 @@ export default function ContractorManagementPage() {
 
             {/* Stats Bar */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-4">
-                    <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                        <Users className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+                <div className="glass-card rounded-2xl p-4 flex items-center gap-4">
+                    <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl shadow-sm text-indigo-600 dark:text-indigo-400">
+                        <Users className="h-6 w-6" />
                     </div>
                     <div>
                         <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">Total</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Total</p>
                     </div>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-4">
-                    <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                        <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <div className="glass-card rounded-2xl p-4 flex items-center gap-4">
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl shadow-sm text-ptdf-primary dark:text-emerald-400">
+                        <CheckCircle className="h-6 w-6" />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.active}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">Active</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.active}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Active</p>
                     </div>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-4">
-                    <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-                        <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                <div className="glass-card rounded-2xl p-4 flex items-center gap-4">
+                    <div className="p-3 bg-amber-50 dark:bg-amber-900/30 rounded-xl shadow-sm text-amber-600 dark:text-amber-400">
+                        <Clock className="h-6 w-6" />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.pending}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">Pending</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.pending}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Pending</p>
                     </div>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-4">
-                    <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                        <Ban className="h-6 w-6 text-red-600 dark:text-red-400" />
+                <div className="glass-card rounded-2xl p-4 flex items-center gap-4">
+                    <div className="p-3 bg-rose-50 dark:bg-rose-900/30 rounded-xl shadow-sm text-rose-600 dark:text-rose-400">
+                        <Ban className="h-6 w-6" />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.suspended}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">Suspended</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.suspended}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Suspended</p>
                     </div>
                 </div>
             </div>
 
             {/* Filters + View Toggle */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            <div className="glass-card rounded-2xl p-4">
                 <div className="flex flex-col lg:flex-row gap-4">
                     {/* Search */}
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <div className="flex-1 relative group">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-ptdf-primary transition-colors" />
                         <input
                             type="text"
                             placeholder="Search by company name or registration..."
                             value={searchQuery}
                             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-ptdf-primary focus:border-transparent text-sm"
+                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-ptdf-primary/20 focus:border-ptdf-primary text-sm transition-all"
                         />
                     </div>
 
@@ -415,7 +415,7 @@ export default function ContractorManagementPage() {
                         <select
                             value={zoneFilter}
                             onChange={(e) => { setZoneFilter(e.target.value as GeographicZone | 'ALL'); setCurrentPage(1); }}
-                            className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-ptdf-primary focus:border-transparent text-sm"
+                            className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-ptdf-primary/20 focus:border-ptdf-primary text-sm transition-all cursor-pointer hover:bg-white dark:hover:bg-gray-800"
                         >
                             <option value="ALL">All Zones</option>
                             {Object.entries(ZONE_LABELS).map(([key, label]) => (
@@ -428,7 +428,7 @@ export default function ContractorManagementPage() {
                     <select
                         value={statusFilter}
                         onChange={(e) => { setStatusFilter(e.target.value as ContractorStatus | 'ALL'); setCurrentPage(1); }}
-                        className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-ptdf-primary focus:border-transparent text-sm"
+                        className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-ptdf-primary/20 focus:border-ptdf-primary text-sm transition-all cursor-pointer hover:bg-white dark:hover:bg-gray-800"
                     >
                         <option value="ALL">All Status</option>
                         <option value="ACTIVE">Active</option>
@@ -440,7 +440,7 @@ export default function ContractorManagementPage() {
                     <select
                         value={ratingFilter}
                         onChange={(e) => { setRatingFilter(e.target.value as RatingFilter); setCurrentPage(1); }}
-                        className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-ptdf-primary focus:border-transparent text-sm"
+                        className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-ptdf-primary/20 focus:border-ptdf-primary text-sm transition-all cursor-pointer hover:bg-white dark:hover:bg-gray-800"
                     >
                         <option value="ALL">All Ratings</option>
                         <option value="5">5 Stars</option>
@@ -449,31 +449,35 @@ export default function ContractorManagementPage() {
                         <option value="BELOW3">Below 3 Stars</option>
                     </select>
 
-                    {/* Reset */}
-                    <button
-                        onClick={resetFilters}
-                        className="px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                        Reset
-                    </button>
+                    {/* Clear Filters Button */}
+                    {(searchQuery || zoneFilter !== 'ALL' || statusFilter !== 'ALL' || ratingFilter !== 'ALL') && (
+                        <button
+                            onClick={resetFilters}
+                            className="px-3 py-2.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-ptdf-primary dark:hover:text-ptdf-primary border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all flex items-center gap-1"
+                        >
+                            <X className="h-4 w-4" />
+                            Clear
+                        </button>
+                    )}
 
-                    {/* View Toggle */}
-                    <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
-                        <button
-                            onClick={() => { setViewMode('table'); setCurrentPage(1); }}
-                            className={`p-2.5 ${viewMode === 'table' ? 'bg-ptdf-primary text-white' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}`}
-                            title="Table View"
-                        >
-                            <List className="h-5 w-5" />
-                        </button>
-                        <button
-                            onClick={() => { setViewMode('cards'); setCurrentPage(1); }}
-                            className={`p-2.5 ${viewMode === 'cards' ? 'bg-ptdf-primary text-white' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}`}
-                            title="Card View"
-                        >
-                            <LayoutGrid className="h-5 w-5" />
-                        </button>
-                    </div>
+                </div>
+
+                {/* View Toggle */}
+                <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
+                    <button
+                        onClick={() => { setViewMode('table'); setCurrentPage(1); }}
+                        className={`p-2.5 ${viewMode === 'table' ? 'bg-ptdf-primary text-white' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}`}
+                        title="Table View"
+                    >
+                        <List className="h-5 w-5" />
+                    </button>
+                    <button
+                        onClick={() => { setViewMode('cards'); setCurrentPage(1); }}
+                        className={`p-2.5 ${viewMode === 'cards' ? 'bg-ptdf-primary text-white' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'}`}
+                        title="Card View"
+                    >
+                        <LayoutGrid className="h-5 w-5" />
+                    </button>
                 </div>
             </div>
 
@@ -511,200 +515,199 @@ export default function ContractorManagementPage() {
                 </div>
             )}
 
-            {/* Table View */}
-            {viewMode === 'table' && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {/* Content */}
+            {viewMode === 'table' ? (
+                <div className="glass-card rounded-2xl overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                        <table className="min-w-full divide-y divide-gray-200/50 dark:divide-gray-700/50">
+                            <thead className="bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
                                 <tr>
-                                    <th className="px-4 py-3 w-12">
-                                        <input
-                                            type="checkbox"
-                                            checked={paginatedContractors.length > 0 && selectedIds.size === paginatedContractors.length}
-                                            onChange={toggleSelectAll}
-                                            className="h-4 w-4 text-ptdf-primary rounded border-gray-300 dark:border-gray-600 focus:ring-ptdf-primary"
-                                        />
+                                    <th scope="col" className="px-6 py-4 text-left">
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.size === paginatedContractors.length && paginatedContractors.length > 0}
+                                                onChange={toggleSelectAll}
+                                                className="rounded border-gray-300 text-ptdf-primary focus:ring-ptdf-primary"
+                                            />
+                                        </div>
                                     </th>
                                     <th
-                                        className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-ptdf-primary transition-colors"
                                         onClick={() => handleSort('companyName')}
                                     >
-                                        <span className="flex items-center gap-1">Company {getSortIcon('companyName')}</span>
+                                        <div className="flex items-center gap-1">
+                                            Company & Reg
+                                            {getSortIcon('companyName')}
+                                        </div>
+                                    </th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Contact
                                     </th>
                                     <th
-                                        className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-ptdf-primary transition-colors"
                                         onClick={() => handleSort('zone')}
                                     >
-                                        <span className="flex items-center gap-1">Zone {getSortIcon('zone')}</span>
+                                        <div className="flex items-center gap-1">
+                                            Zone
+                                            {getSortIcon('zone')}
+                                        </div>
                                     </th>
                                     <th
-                                        className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                                        onClick={() => handleSort('projectCount')}
-                                    >
-                                        <span className="flex items-center gap-1">Projects {getSortIcon('projectCount')}</span>
-                                    </th>
-                                    <th
-                                        className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                                        onClick={() => handleSort('rating')}
-                                    >
-                                        <span className="flex items-center gap-1">Rating {getSortIcon('rating')}</span>
-                                    </th>
-                                    <th
-                                        className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-ptdf-primary transition-colors"
                                         onClick={() => handleSort('status')}
                                     >
-                                        <span className="flex items-center gap-1">Status {getSortIcon('status')}</span>
+                                        <div className="flex items-center gap-1">
+                                            Status
+                                            {getSortIcon('status')}
+                                        </div>
                                     </th>
                                     <th
-                                        className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                                        onClick={() => handleSort('lastActiveAt')}
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-ptdf-primary transition-colors"
+                                        onClick={() => handleSort('rating')}
                                     >
-                                        <span className="flex items-center gap-1">Last Active {getSortIcon('lastActiveAt')}</span>
+                                        <div className="flex items-center gap-1">
+                                            Rating
+                                            {getSortIcon('rating')}
+                                        </div>
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                                    <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {paginatedContractors.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={8} className="px-6 py-12 text-center">
-                                            <Users className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                                            <p className="text-gray-500 dark:text-gray-400 font-medium">No contractors found</p>
-                                            <p className="text-sm text-gray-400 dark:text-gray-500">Try adjusting your filters</p>
+                            <tbody className="bg-white/50 dark:bg-gray-800/50 divide-y divide-gray-200/50 dark:divide-gray-700/50">
+                                {paginatedContractors.map((contractor) => (
+                                    <tr
+                                        key={contractor.id}
+                                        onClick={() => handleViewProfile(contractor.id)}
+                                        className={`group hover:bg-white dark:hover:bg-gray-700/50 transition-colors duration-200 cursor-pointer ${selectedIds.has(contractor.id) ? 'bg-ptdf-primary/5 dark:bg-ptdf-primary/10' : ''}`}
+                                    >
+                                        <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.has(contractor.id)}
+                                                onChange={() => toggleSelect(contractor.id)}
+                                                className="rounded border-gray-300 text-ptdf-primary focus:ring-ptdf-primary"
+                                            />
                                         </td>
-                                    </tr>
-                                ) : (
-                                    paginatedContractors.map((contractor) => (
-                                        <tr key={contractor.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${selectedIds.has(contractor.id) ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}>
-                                            <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedIds.has(contractor.id)}
-                                                    onChange={() => toggleSelect(contractor.id)}
-                                                    className="h-4 w-4 text-ptdf-primary rounded border-gray-300 dark:border-gray-600 focus:ring-ptdf-primary"
-                                                />
-                                            </td>
-                                            <td className="px-6 py-4 cursor-pointer" onClick={() => handleViewProfile(contractor.id)}>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                                                        {contractor.logo ? (
-                                                            <img src={contractor.logo} alt="" className="h-full w-full rounded-lg object-cover" />
-                                                        ) : (
-                                                            <Building2 className="h-5 w-5 text-gray-400" />
-                                                        )}
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-ptdf-primary via-emerald-500 to-teal-400 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                                                    {contractor.companyName.substring(0, 2).toUpperCase()}
+                                                </div>
+                                                <div className="ml-4">
+                                                    <div className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-ptdf-primary transition-colors">
+                                                        {contractor.companyName}
                                                     </div>
-                                                    <div>
-                                                        <p className="font-medium text-gray-900 dark:text-white">{contractor.companyName}</p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">{contractor.registrationNumber}</p>
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                                                        {contractor.registrationNumber}
                                                     </div>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4">{getZoneBadge(contractor.zone)}</td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm">
-                                                    <p className="font-medium text-gray-900 dark:text-white">{contractor.projectCount}</p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">{contractor.activeProjects} active</p>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {contractor.totalReviews > 0 ? (
-                                                    <div
-                                                        className="relative group"
-                                                        onMouseEnter={() => setHoveredRatingId(contractor.id)}
-                                                        onMouseLeave={() => setHoveredRatingId(null)}
-                                                    >
-                                                        <div className="flex items-center gap-1 cursor-help">{renderStars(contractor.rating)}</div>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{contractor.rating.toFixed(1)} ({contractor.totalReviews})</p>
-                                                        {/* Rating Breakdown Tooltip */}
-                                                        {hoveredRatingId === contractor.id && (
-                                                            <div className="absolute left-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 z-30">
-                                                                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1"><Info className="h-3 w-3" /> Rating Breakdown</p>
-                                                                {(() => {
-                                                                    const breakdown = getRatingBreakdown(contractor.id);
-                                                                    return (
-                                                                        <div className="space-y-2">
-                                                                            <div className="flex items-center justify-between text-xs">
-                                                                                <span className="text-gray-500 dark:text-gray-400">Quality</span>
-                                                                                <span className="font-medium text-gray-900 dark:text-white">{breakdown.quality.toFixed(1)}</span>
-                                                                            </div>
-                                                                            <div className="flex items-center justify-between text-xs">
-                                                                                <span className="text-gray-500 dark:text-gray-400">Timeliness</span>
-                                                                                <span className="font-medium text-gray-900 dark:text-white">{breakdown.timeliness.toFixed(1)}</span>
-                                                                            </div>
-                                                                            <div className="flex items-center justify-between text-xs">
-                                                                                <span className="text-gray-500 dark:text-gray-400">Communication</span>
-                                                                                <span className="font-medium text-gray-900 dark:text-white">{breakdown.communication.toFixed(1)}</span>
-                                                                            </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-gray-900 dark:text-white">{contractor.email}</div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">{contractor.phone}</div>
+                                        </td>
+                                        <td className="px-6 py-4">{getZoneBadge(contractor.zone)}</td>
+                                        <td className="px-6 py-4">{getStatusBadge(contractor.status)}</td>
+                                        <td className="px-6 py-4">
+                                            {contractor.totalReviews > 0 ? (
+                                                <div
+                                                    className="relative"
+                                                    onMouseEnter={() => setHoveredRatingId(contractor.id)}
+                                                    onMouseLeave={() => setHoveredRatingId(null)}
+                                                >
+                                                    <div className="flex items-center gap-1 cursor-help">{renderStars(contractor.rating)}</div>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{contractor.rating.toFixed(1)} ({contractor.totalReviews})</p>
+                                                    {hoveredRatingId === contractor.id && (
+                                                        <div className="absolute left-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 z-30">
+                                                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1"><Info className="h-3 w-3" /> Rating Breakdown</p>
+                                                            {(() => {
+                                                                const breakdown = getRatingBreakdown(contractor.id);
+                                                                return (
+                                                                    <div className="space-y-2">
+                                                                        <div className="flex items-center justify-between text-xs">
+                                                                            <span className="text-gray-500 dark:text-gray-400">Quality</span>
+                                                                            <span className="font-medium text-gray-900 dark:text-white">{breakdown.quality.toFixed(1)}</span>
                                                                         </div>
-                                                                    );
-                                                                })()}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-xs text-gray-400 dark:text-gray-500">No reviews</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4">{getStatusBadge(contractor.status)}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{formatRelativeTime(contractor.lastActiveAt)}</td>
-                                            <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                                                <div className="relative">
-                                                    <button
-                                                        onClick={() => setActionMenuOpen(actionMenuOpen === contractor.id ? null : contractor.id)}
-                                                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                                    >
-                                                        <MoreVertical className="h-5 w-5 text-gray-400" />
-                                                    </button>
-                                                    {actionMenuOpen === contractor.id && (
-                                                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
-                                                            <button onClick={() => handleViewProfile(contractor.id)} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                                                <Eye className="h-4 w-4" /> View Profile
-                                                            </button>
-                                                            <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                                                <FolderOpen className="h-4 w-4" /> View Projects
-                                                            </button>
-                                                            <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                                                <MessageSquare className="h-4 w-4" /> Send Message
-                                                            </button>
-                                                            <button onClick={() => handleEdit(contractor)} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                                                <Edit className="h-4 w-4" /> Edit Details
-                                                            </button>
-                                                            {contractor.status === 'PENDING' && (
-                                                                <>
-                                                                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                                                                    <button onClick={() => { setActionMenuOpen(null); handleApprove(contractor, true); }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20">
-                                                                        <ThumbsUp className="h-4 w-4" /> Approve
-                                                                    </button>
-                                                                    <button onClick={() => { setActionMenuOpen(null); setApprovalContractor(contractor); }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
-                                                                        <ThumbsDown className="h-4 w-4" /> Reject with Note
-                                                                    </button>
-                                                                </>
-                                                            )}
-                                                            <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                                                            <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
-                                                                <Ban className="h-4 w-4" /> {contractor.status === 'SUSPENDED' ? 'Unsuspend' : 'Suspend'}
-                                                            </button>
+                                                                        <div className="flex items-center justify-between text-xs">
+                                                                            <span className="text-gray-500 dark:text-gray-400">Timeliness</span>
+                                                                            <span className="font-medium text-gray-900 dark:text-white">{breakdown.timeliness.toFixed(1)}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center justify-between text-xs">
+                                                                            <span className="text-gray-500 dark:text-gray-400">Communication</span>
+                                                                            <span className="font-medium text-gray-900 dark:text-white">{breakdown.communication.toFixed(1)}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </div>
                                                     )}
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
+                                            ) : (
+                                                <span className="text-xs text-gray-400 dark:text-gray-500">No reviews</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                            <div className="relative">
+                                                <button
+                                                    onClick={() => setActionMenuOpen(actionMenuOpen === contractor.id ? null : contractor.id)}
+                                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                >
+                                                    <MoreVertical className="h-5 w-5 text-gray-400" />
+                                                </button>
+                                                {actionMenuOpen === contractor.id && (
+                                                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
+                                                        <button onClick={() => handleViewProfile(contractor.id)} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                                            <Eye className="h-4 w-4" /> View Profile
+                                                        </button>
+                                                        <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                                            <FolderOpen className="h-4 w-4" /> View Projects
+                                                        </button>
+                                                        <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                                            <MessageSquare className="h-4 w-4" /> Send Message
+                                                        </button>
+                                                        <button onClick={() => handleEdit(contractor)} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                                            <Edit className="h-4 w-4" /> Edit Details
+                                                        </button>
+                                                        {contractor.status === 'PENDING' && (
+                                                            <>
+                                                                <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                                                                <button onClick={() => { setActionMenuOpen(null); handleApprove(contractor, true); }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20">
+                                                                    <ThumbsUp className="h-4 w-4" /> Approve
+                                                                </button>
+                                                                <button onClick={() => { setActionMenuOpen(null); setApprovalContractor(contractor); }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                                    <ThumbsDown className="h-4 w-4" /> Reject with Note
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                                                        <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                            <Ban className="h-4 w-4" /> {contractor.status === 'SUSPENDED' ? 'Unsuspend' : 'Suspend'}
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
-                    {/* Pagination */}
-                    {totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} totalItems={filteredAndSortedContractors.length} itemsPerPage={itemsPerPage} />}
                 </div>
-            )}
+            ) : null}
 
             {/* Card View */}
             {viewMode === 'cards' && (
                 <div>
                     {paginatedContractors.length === 0 ? (
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+                        <div className="glass-card rounded-2xl p-12 text-center">
                             <Users className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                             <p className="text-gray-500 dark:text-gray-400 font-medium">No contractors found</p>
                             <p className="text-sm text-gray-400 dark:text-gray-500">Try adjusting your filters</p>
@@ -715,64 +718,82 @@ export default function ContractorManagementPage() {
                                 <div
                                     key={contractor.id}
                                     onClick={() => handleViewProfile(contractor.id)}
-                                    className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md hover:border-ptdf-primary/50 transition-all cursor-pointer"
+                                    className="glass-card rounded-2xl p-5 hover:shadow-lg transition-all cursor-pointer group relative overflow-hidden"
                                 >
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-12 w-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                                                {contractor.logo ? (
-                                                    <img src={contractor.logo} alt="" className="h-full w-full rounded-xl object-cover" />
-                                                ) : (
-                                                    <Building2 className="h-6 w-6 text-gray-400" />
-                                                )}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold text-gray-900 dark:text-white">{contractor.companyName}</h3>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">{contractor.registrationNumber}</p>
-                                            </div>
-                                        </div>
-                                        {getStatusBadge(contractor.status)}
-                                    </div>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/0 dark:from-white/5 dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                                            <MapPin className="h-4 w-4 text-gray-400" />
-                                            {getZoneBadge(contractor.zone)}
+                                    <div className="relative z-10">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-ptdf-primary/20 to-teal-100/20 dark:from-ptdf-primary/30 dark:to-teal-900/30 flex items-center justify-center text-ptdf-primary font-bold shadow-sm">
+                                                    {contractor.logo ? (
+                                                        <img src={contractor.logo} alt="" className="h-full w-full rounded-xl object-cover" />
+                                                    ) : (
+                                                        contractor.companyName.substring(0, 2).toUpperCase()
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-ptdf-primary transition-colors">{contractor.companyName}</h3>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{contractor.registrationNumber}</p>
+                                                </div>
+                                            </div>
+                                            {getStatusBadge(contractor.status)}
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                                            <Briefcase className="h-4 w-4 text-gray-400" />
-                                            <span>{contractor.projectCount} projects ({contractor.activeProjects} active)</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex items-center gap-0.5">{renderStars(contractor.rating, 'md')}</div>
-                                            {contractor.totalReviews > 0 && (
-                                                <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {contractor.rating.toFixed(1)} ({contractor.totalReviews} reviews)
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
 
-                                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                                        <span className="text-xs text-gray-400 dark:text-gray-500">
-                                            Active {formatRelativeTime(contractor.lastActiveAt)}
-                                        </span>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleViewProfile(contractor.id); }}
-                                            className="text-xs font-medium text-ptdf-primary hover:underline flex items-center gap-1"
-                                        >
-                                            View Profile <Eye className="h-3 w-3" />
-                                        </button>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                                                <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700/50 text-gray-500">
+                                                    <MapPin className="h-3.5 w-3.5" />
+                                                </div>
+                                                {getZoneBadge(contractor.zone)}
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                                                <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700/50 text-gray-500">
+                                                    <Briefcase className="h-3.5 w-3.5" />
+                                                </div>
+                                                <span><span className="font-semibold">{contractor.projectCount}</span> projects (<span className="text-emerald-600">{contractor.activeProjects} active</span>)</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-1.5 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-500">
+                                                    <Star className="h-3.5 w-3.5 fill-current" />
+                                                </div>
+                                                <div className="flex items-center gap-1 font-medium text-gray-900 dark:text-white">
+                                                    {contractor.rating.toFixed(1)}
+                                                    <span className="text-xs text-gray-400 font-normal">({contractor.totalReviews} reviews)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+                                            <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                                                <Clock className="h-3 w-3" />
+                                                {formatRelativeTime(contractor.lastActiveAt)}
+                                            </span>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleViewProfile(contractor.id); }}
+                                                className="text-xs font-bold text-ptdf-primary hover:text-ptdf-secondary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0 duration-300"
+                                            >
+                                                View Profile <ChevronRight className="h-3 w-3" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     )}
-                    {totalPages > 1 && (
-                        <div className="mt-4">
-                            <Pagination currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} totalItems={filteredAndSortedContractors.length} itemsPerPage={itemsPerPage} />
-                        </div>
-                    )}
+                </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="mt-6">
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        setCurrentPage={setCurrentPage}
+                        totalItems={filteredAndSortedContractors.length}
+                        itemsPerPage={itemsPerPage}
+                    />
                 </div>
             )}
 
@@ -802,7 +823,7 @@ export default function ContractorManagementPage() {
                 />
             )}
 
-            {/* Close action menu on outside click */}
+            {/* Action Menu Backdrop */}
             {actionMenuOpen && (
                 <div className="fixed inset-0 z-10" onClick={() => setActionMenuOpen(null)} />
             )}

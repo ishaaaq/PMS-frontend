@@ -1,4 +1,6 @@
 
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Folder, AlertTriangle, CheckCircle, Clock, MapPin, TrendingUp, Filter, Download, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 const stats = [
@@ -17,6 +19,15 @@ const riskAlerts = [
 const zones = ['North Central', 'North East', 'North West', 'South East', 'South South', 'South West'];
 
 export default function DashboardHome() {
+    const [chartData, setChartData] = useState([40, 65, 55, 85, 75, 95, 80, 70, 90, 100, 85, 95]);
+    const navigate = useNavigate();
+
+    const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        // Simulate data update
+        const newData = Array.from({ length: 12 }, () => Math.floor(Math.random() * 60) + 40);
+        setChartData(newData);
+    };
+
     return (
         <div className="space-y-8">
             {/* Header */}
@@ -26,44 +37,47 @@ export default function DashboardHome() {
                     <p className="mt-1 text-sm text-gray-500">Overview of PTDF projects and performance across Nigeria.</p>
                 </div>
                 <div className="mt-4 flex gap-3 md:mt-0">
-                    <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    <button className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all active:scale-95">
                         <Download className="mr-2 h-4 w-4" /> Export Report
                     </button>
-                    <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    <button
+                        onClick={() => setChartData(Array.from({ length: 12 }, () => Math.floor(Math.random() * 60) + 40))}
+                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-lg shadow-indigo-600/20 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-all active:scale-95"
+                    >
                         Refresh Data
                     </button>
                 </div>
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-wrap items-center gap-4">
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-gray-400" />
                     <span className="text-sm font-medium text-gray-700">Filters:</span>
                 </div>
-                <select className="text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                <select onChange={handleFilterChange} className="text-sm border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 py-2 pl-3 pr-8 cursor-pointer">
                     <option>All Zones</option>
                     {zones.map(z => <option key={z}>{z}</option>)}
                 </select>
-                <select className="text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                <select onChange={handleFilterChange} className="text-sm border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 py-2 pl-3 pr-8 cursor-pointer">
                     <option>All Statuses</option>
                     <option>Ongoing</option>
                     <option>Completed</option>
                     <option>Suspended</option>
                 </select>
-                <input type="month" className="text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                <input type="month" className="text-sm border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3" />
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {stats.map((item) => (
-                    <div key={item.name} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-shadow">
+                    <div key={item.name} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-500">{item.name}</p>
                                 <p className="mt-2 text-3xl font-bold text-gray-900">{item.stat}</p>
                             </div>
-                            <div className={`p-3 rounded-lg ${item.bg}`}>
+                            <div className={`p-3 rounded-xl ${item.bg}`}>
                                 <item.icon className={`h-6 w-6 ${item.color}`} />
                             </div>
                         </div>
@@ -84,7 +98,7 @@ export default function DashboardHome() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main KPIs (Chart Placeholder) */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold text-gray-900 flex items-center">
                             <TrendingUp className="h-5 w-5 mr-2 text-indigo-500" />
@@ -92,32 +106,34 @@ export default function DashboardHome() {
                         </h3>
                         <div className="flex gap-2">
                             <span className="flex items-center text-xs text-gray-500">
-                                <span className="w-3 h-3 bg-indigo-500 rounded-full mr-1"></span> Planned
+                                <span className="w-3 h-3 bg-indigo-500/20 rounded-full mr-1"></span> Planned
                             </span>
                             <span className="flex items-center text-xs text-gray-500">
-                                <span className="w-3 h-3 bg-green-500 rounded-full mr-1"></span> Actual
+                                <span className="w-3 h-3 bg-indigo-600 rounded-full mr-1"></span> Actual
                             </span>
                         </div>
                     </div>
                     {/* Simulated Chart Area */}
                     <div className="h-64 relative flex items-end gap-2 px-2 border-b border-l border-gray-100">
-                        {[40, 65, 55, 85, 75, 95, 80, 70, 90, 100, 85, 95].map((height, i) => (
-                            <div key={i} className="flex-1 group relative">
-                                <div className="absolute bottom-full left-1/2 -ms-4 mb-2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                                    {height}%
+                        {chartData.map((height, i) => (
+                            <div key={i} className="flex-1 group relative h-full flex items-end transition-all duration-500">
+                                <div className="absolute bottom-full left-1/2 -ml-4 mb-2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none whitespace-nowrap">
+                                    {height}% Performance
                                 </div>
-                                <div
-                                    className="bg-indigo-500/20 rounded-t-sm w-full"
-                                    style={{ height: `${height * 0.8}%` }}
-                                ></div>
-                                <div
-                                    className="absolute bottom-0 bg-indigo-600 rounded-t-sm w-full transition-all duration-500 group-hover:bg-indigo-400"
-                                    style={{ height: `${height * 0.6}%` }}
-                                ></div>
+                                <div className="w-full flex items-end gap-0.5 relative h-full">
+                                    <div
+                                        className="bg-indigo-500/20 rounded-t-sm w-full transition-all duration-700 ease-out"
+                                        style={{ height: `${height * 0.8}%` }}
+                                    ></div>
+                                    <div
+                                        className="bg-indigo-600 rounded-t-sm w-full transition-all duration-700 ease-out group-hover:bg-indigo-500"
+                                        style={{ height: `${height * 0.6}%` }}
+                                    ></div>
+                                </div>
                             </div>
                         ))}
                     </div>
-                    <div className="flex justify-between mt-2 px-2 text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                    <div className="flex justify-between mt-4 px-2 text-[10px] text-gray-400 uppercase font-bold tracking-wider">
                         <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
                     </div>
                 </div>
@@ -140,8 +156,8 @@ export default function DashboardHome() {
                                 </p>
                                 <div className="mt-3 flex items-center justify-between">
                                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${alert.intensity === 'High' ? 'bg-red-100 text-red-700' :
-                                            alert.intensity === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                                                'bg-blue-100 text-blue-700'
+                                        alert.intensity === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                                            'bg-blue-100 text-blue-700'
                                         }`}>
                                         {alert.intensity} Risk
                                     </span>
