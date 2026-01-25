@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getProjects, type Project } from '../services/projects';
-import { Search, Filter, Plus, MapPin, Star, Link as LinkIcon, Calendar, ArrowRight } from 'lucide-react';
+import { Search, Filter, Plus, MapPin, Link as LinkIcon, Calendar, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function ProjectListPage() {
@@ -67,62 +67,68 @@ export default function ProjectListPage() {
             </div>
 
             {/* Projects Grid */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {loading ? (
-                    <div className="col-span-full py-12 text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ptdf-primary mx-auto mb-4"></div>
-                        <p className="text-gray-500">Loading projects...</p>
+            {loading ? (
+                <div className="space-y-6 animate-pulse">
+                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                            <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+                        ))}
                     </div>
-                ) : projects.map((project, idx) => (
-                    <div key={`${project.id}-${idx}`} className="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-ptdf-primary/30 transition-all duration-300 flex flex-col h-full">
-                        <div className="p-5 space-y-4 flex-1">
-                            <div className="flex justify-between items-start gap-2">
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white line-clamp-2 leading-snug group-hover:text-ptdf-primary transition-colors">
-                                    {project.title}
-                                </h3>
-                                <span className={`flex-shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusColor(project.status || 'active')}`}>
-                                    {project.status || 'Active'}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {projects.map((project, idx) => (
+                        <div key={`${project.id}-${idx}`} className="group bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-ptdf-primary/30 transition-all duration-300 flex flex-col h-full">
+                            <div className="p-5 space-y-4 flex-1">
+                                <div className="flex justify-between items-start gap-2">
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white line-clamp-2 leading-snug group-hover:text-ptdf-primary transition-colors">
+                                        {project.title}
+                                    </h3>
+                                    <span className={`flex-shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusColor(project.status || 'active')}`}>
+                                        {project.status || 'Active'}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-3 pt-2">
+                                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 gap-2">
+                                        <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                        <span className="truncate">{project.lga}, {project.state}</span>
+                                    </div>
+                                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 gap-2">
+                                        <LinkIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                        <span className="truncate font-medium">{project.contractor}</span>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <div className="flex justify-between text-xs font-semibold text-gray-500">
+                                            <span>Progress</span>
+                                            <span>{project.progress}%</span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-ptdf-primary to-emerald-400 rounded-full"
+                                                style={{ width: `${project.progress}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="px-5 py-4 border-t border-gray-50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50 rounded-b-2xl flex items-center justify-between">
+                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                    <Calendar className="h-3.5 w-3.5" /> Apr 12, 2024
                                 </span>
-                            </div>
-
-                            <div className="space-y-3 pt-2">
-                                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 gap-2">
-                                    <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                                    <span className="truncate">{project.lga}, {project.state}</span>
-                                </div>
-                                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 gap-2">
-                                    <LinkIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                                    <span className="truncate font-medium">{project.contractor}</span>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <div className="flex justify-between text-xs font-semibold text-gray-500">
-                                        <span>Progress</span>
-                                        <span>{project.progress}%</span>
-                                    </div>
-                                    <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-gradient-to-r from-ptdf-primary to-emerald-400 rounded-full"
-                                            style={{ width: `${project.progress}%` }}
-                                        />
-                                    </div>
-                                </div>
+                                <button
+                                    onClick={() => navigate(`/dashboard/projects/${project.id}`)}
+                                    className="text-xs font-bold text-ptdf-primary hover:text-ptdf-secondary flex items-center gap-1"
+                                >
+                                    View Details <ArrowRight className="h-3.5 w-3.5" />
+                                </button>
                             </div>
                         </div>
-
-                        <div className="px-5 py-4 border-t border-gray-50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50 rounded-b-2xl flex items-center justify-between">
-                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                                <Calendar className="h-3.5 w-3.5" /> Apr 12, 2024
-                            </span>
-                            <button
-                                onClick={() => navigate(`/dashboard/projects/${project.id}`)}
-                                className="text-xs font-bold text-ptdf-primary hover:text-ptdf-secondary flex items-center gap-1"
-                            >
-                                View Details <ArrowRight className="h-3.5 w-3.5" />
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

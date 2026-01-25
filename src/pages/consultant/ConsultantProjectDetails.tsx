@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     MapPin,
@@ -23,6 +23,15 @@ export default function ConsultantProjectDetails() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('sections');
     const [isCreateSectionOpen, setIsCreateSectionOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        // Simulate data loading
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 800);
+        return () => clearTimeout(timer);
+    }, []);
 
     // Mock Project Data
     const project = {
@@ -66,6 +75,19 @@ export default function ConsultantProjectDetails() {
             }
         ]
     };
+
+    if (isLoading) {
+        return (
+            <div className="max-w-6xl mx-auto space-y-6 animate-pulse">
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[1, 2, 3].map(i => <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>)}
+                </div>
+                <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">
