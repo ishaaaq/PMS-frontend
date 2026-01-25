@@ -1,12 +1,17 @@
-import { Home, Users, Bell, Settings, PieChart, FileText, MapPin, Flag, DollarSign, ChevronDown, Plus, Search, ShieldCheck, LogOut, Briefcase } from 'lucide-react';
+import { Home, Users, Bell, Settings, PieChart, Flag, DollarSign, Search, ShieldCheck, LogOut, Briefcase, Shield } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
+import type { UserRole } from '../../services/mockRole';
 
 export default function Sidebar() {
     const location = useLocation();
-    const { user, logout } = useAuth();
+    const { user, login, logout } = useAuth();
     const currentRole = user?.role || 'CONTRACTOR';
+
+    const handleRoleSwitch = (role: UserRole) => {
+        login(user?.email || 'test@ptdf.gov.ng', role);
+    };
 
     const essentials = [
         { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['ADMIN', 'CONTRACTOR'] },
@@ -21,19 +26,14 @@ export default function Sidebar() {
     ];
 
     const projectMenu = [
-        { name: 'Analytics', href: '/dashboard/analytics', icon: PieChart, roles: ['ADMIN', 'CONSULTANT'] },
-        { name: 'Reports', href: '/dashboard/reports', icon: FileText, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
-        { name: 'Milestones', href: '/dashboard/milestones', icon: Flag, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+        { name: 'Analytics & Reports', href: '/dashboard/reports', icon: PieChart, roles: ['ADMIN'] },
+        { name: 'Milestones', href: '/dashboard/milestones', icon: Flag, roles: ['ADMIN'] },
         { name: 'Users', href: '/dashboard/users', icon: Users, roles: ['ADMIN'] },
         { name: 'Budget', href: '/dashboard/budget', icon: DollarSign, roles: ['ADMIN'] },
-        { name: 'Analytics & Reports', href: '/dashboard/reports', icon: PieChart },
-        { name: 'Milestones', href: '/dashboard/milestones', icon: Flag },
-        { name: 'Users', href: '/dashboard/users', icon: Users },
-        { name: 'Budget', href: '/dashboard/budget', icon: DollarSign },
     ];
 
-    const filteredEssentials = essentials.filter(item => item.roles.includes(currentRole));
-    const filteredProjectMenu = projectMenu.filter(item => item.roles.includes(currentRole));
+    const filteredEssentials = essentials.filter(item => item.roles?.includes(currentRole));
+    const filteredProjectMenu = projectMenu.filter(item => item.roles?.includes(currentRole));
 
     const NavItem = ({ item }: { item: any }) => {
         const isActive = location.pathname === item.href;
@@ -87,7 +87,7 @@ export default function Sidebar() {
                             {(['ADMIN', 'CONSULTANT', 'CONTRACTOR'] as UserRole[]).map((role) => (
                                 <button
                                     key={role}
-                                    onClick={() => setRole(role)}
+                                    onClick={() => handleRoleSwitch(role)}
                                     className={cn(
                                         "text-xs px-2 py-1 rounded-md text-left flex items-center",
                                         currentRole === role ? "bg-blue-600 text-white" : "hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-800 dark:text-blue-300"
@@ -124,17 +124,20 @@ export default function Sidebar() {
                 </div>
 
                 <div className="flex-shrink-0 flex border-t border-gray-200/50 dark:border-gray-700/30 p-4">
-                    <Link to="/auth/login" className="flex-shrink-0 w-full group block p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <div className="flex items-center">
-                            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-ptdf-primary to-emerald-400 flex items-center justify-center text-sm font-bold text-white shadow-glow-sm">IA</div>
-                            <div className="ml-3">
-                                <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white">Ishaq Abdullahi</p>
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Super admin</p>
+                    <div className="flex w-full items-center justify-between">
+                        <Link to="/auth/login" className="flex-1 group block p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors mr-2">
+                            <div className="flex items-center">
+                                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-ptdf-primary to-emerald-400 flex items-center justify-center text-sm font-bold text-white shadow-glow-sm">IA</div>
+                                <div className="ml-3">
+                                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white">Ishaq Abdullahi</p>
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Super admin</p>
+                                </div>
                             </div>
-                        </div>
+                        </Link>
+                        {/* Logout Button */}
                         <button
                             onClick={logout}
-                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
                             title="Logout"
                         >
                             <LogOut className="h-5 w-5" />
