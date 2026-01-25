@@ -73,26 +73,29 @@ export default function ConsultantProjectDetails() {
             <div>
                 <button
                     onClick={() => navigate('/dashboard/consultant/projects')}
-                    className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
+                    className="flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mb-4"
                 >
                     <ChevronLeft className="h-4 w-4 mr-1" /> Back to Projects
                 </button>
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">{project.title}</h1>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{project.title}</h1>
+                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
                             <span className="flex items-center"><MapPin className="h-4 w-4 mr-1" /> {project.location}</span>
                             <span className="flex items-center"><Calendar className="h-4 w-4 mr-1" /> {project.startDate} - {project.endDate}</span>
-                            <span className="flex items-center text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded">
+                            <span className="flex items-center text-indigo-600 dark:text-indigo-400 font-medium bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded">
                                 {project.status}
                             </span>
                         </div>
                     </div>
                     <div className="flex gap-3">
-                        <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <button className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
                             <FileText className="h-4 w-4 mr-2" /> View Reports
                         </button>
-                        <button className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm">
+                        <button
+                            onClick={() => navigate(`/dashboard/consultant/projects/${id}/sections/new`)}
+                            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm"
+                        >
                             <Plus className="h-4 w-4 mr-2" /> Create Section
                         </button>
                     </div>
@@ -101,30 +104,30 @@ export default function ConsultantProjectDetails() {
 
             {/* Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                    <p className="text-sm text-gray-500">Total Budget</p>
-                    <p className="text-2xl font-bold text-gray-900">{project.budget}</p>
+                <div className="glass-card p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Total Budget</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{project.budget}</p>
                 </div>
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                    <p className="text-sm text-gray-500">Project Progress</p>
+                <div className="glass-card p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Project Progress</p>
                     <div className="flex items-center gap-2">
-                        <p className="text-2xl font-bold text-gray-900">{project.progress}%</p>
-                        <div className="flex-1 bg-gray-100 rounded-full h-2">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{project.progress}%</p>
+                        <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                             <div className="bg-green-500 h-2 rounded-full" style={{ width: `${project.progress}%` }}></div>
                         </div>
                     </div>
                 </div>
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                    <p className="text-sm text-gray-500">Contractors Active</p>
+                <div className="glass-card p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Contractors Active</p>
                     <div className="flex items-center gap-2 mt-1">
                         <div className="flex -space-x-2">
                             {project.contractors.map((c, i) => (
-                                <div key={i} className="h-8 w-8 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-xs font-bold text-indigo-700" title={c.name}>
+                                <div key={i} className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900 border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs font-bold text-indigo-700 dark:text-indigo-400" title={c.name}>
                                     {c.name.charAt(0)}
                                 </div>
                             ))}
                         </div>
-                        <button className="text-xs text-indigo-600 font-medium hover:underline flex items-center">
+                        <button className="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline flex items-center">
                             <UserPlus className="h-3 w-3 mr-1" /> Invite
                         </button>
                     </div>
@@ -132,16 +135,16 @@ export default function ConsultantProjectDetails() {
             </div>
 
             {/* Main Content Tabs */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="border-b border-gray-200">
+            <div className="glass-card rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="border-b border-gray-200 dark:border-gray-700">
                     <nav className="flex -mb-px">
                         {['Sections', 'Contractors', 'Submissions'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab.toLowerCase())}
                                 className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.toLowerCase()
-                                        ? 'border-indigo-500 text-indigo-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'
                                     }`}
                             >
                                 {tab}
@@ -154,34 +157,34 @@ export default function ConsultantProjectDetails() {
                     {activeTab === 'sections' && (
                         <div className="space-y-6">
                             <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-bold text-gray-900">Project Sections</h3>
-                                <p className="text-sm text-gray-500">Manage work breakdown and contractor assignments.</p>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Project Sections</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Manage work breakdown and contractor assignments.</p>
                             </div>
 
                             <div className="grid gap-4">
                                 {project.sections.map((section) => (
-                                    <div key={section.id} className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors bg-gray-50/50">
+                                    <div key={section.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-colors bg-gray-50/50 dark:bg-gray-800/50">
                                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
-                                                    <h4 className="font-bold text-gray-900">{section.title}</h4>
-                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${section.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                                                            section.status === 'Pending' ? 'bg-gray-200 text-gray-600' :
-                                                                'bg-blue-100 text-blue-700'
+                                                    <h4 className="font-bold text-gray-900 dark:text-white">{section.title}</h4>
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${section.status === 'Completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                                                        section.status === 'Pending' ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400' :
+                                                            'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                                                         }`}>
                                                         {section.status}
                                                     </span>
                                                 </div>
-                                                <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                                                <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
                                                     <span className="flex items-center"><DollarSign className="h-3 w-3 mr-1" /> {section.budget}</span>
                                                     <span className="flex items-center">
                                                         <Briefcase className="h-3 w-3 mr-1" />
                                                         {section.contractor === 'Unassigned' ? (
-                                                            <span className="text-orange-600 font-medium flex items-center">
+                                                            <span className="text-orange-600 dark:text-orange-400 font-medium flex items-center">
                                                                 <AlertTriangle className="h-3 w-3 mr-1" /> Unassigned
                                                             </span>
                                                         ) : (
-                                                            <span className="text-indigo-600 font-medium">{section.contractor}</span>
+                                                            <span className="text-indigo-600 dark:text-indigo-400 font-medium">{section.contractor}</span>
                                                         )}
                                                     </span>
                                                 </div>
@@ -190,23 +193,23 @@ export default function ConsultantProjectDetails() {
                                             <div className="flex items-center gap-3">
                                                 <div className="w-24 hidden md:block">
                                                     <div className="flex justify-between text-xs mb-1">
-                                                        <span>Progress</span>
-                                                        <span>{section.progress}%</span>
+                                                        <span className="text-gray-500 dark:text-gray-400">Progress</span>
+                                                        <span className="text-gray-700 dark:text-gray-300">{section.progress}%</span>
                                                     </div>
-                                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                                                         <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: `${section.progress}%` }}></div>
                                                     </div>
                                                 </div>
 
                                                 {section.contractor === 'Unassigned' ? (
                                                     <button
-                                                        onClick={() => setIsCreateSectionOpen(true)} // Reusing modal for now, ideally strictly assignment
+                                                        onClick={() => setIsCreateSectionOpen(true)}
                                                         className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded hover:bg-indigo-700"
                                                     >
                                                         Assign Contractor
                                                     </button>
                                                 ) : (
-                                                    <button className="px-3 py-1.5 border border-gray-300 text-gray-700 text-xs font-medium rounded hover:bg-gray-50">
+                                                    <button className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs font-medium rounded hover:bg-gray-50 dark:hover:bg-gray-700">
                                                         Manage
                                                     </button>
                                                 )}
@@ -221,20 +224,20 @@ export default function ConsultantProjectDetails() {
                     {activeTab === 'contractors' && (
                         <div>
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-lg font-bold text-gray-900">Project Contractors</h3>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Project Contractors</h3>
                                 <button className="flex items-center px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
                                     <UserPlus className="h-4 w-4 mr-2" /> Invite Contractor
                                 </button>
                             </div>
                             <div className="grid gap-4 md:grid-cols-2">
                                 {project.contractors.map((contractor) => (
-                                    <div key={contractor.id} className="border border-gray-200 rounded-lg p-4 flex justify-between items-start">
+                                    <div key={contractor.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex justify-between items-start bg-gray-50/50 dark:bg-gray-800/50">
                                         <div>
-                                            <h4 className="font-bold text-gray-900">{contractor.name}</h4>
-                                            <p className="text-sm text-gray-500">{contractor.role}</p>
+                                            <h4 className="font-bold text-gray-900 dark:text-white">{contractor.name}</h4>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">{contractor.role}</p>
                                             <p className="text-xs text-gray-400 mt-1">{contractor.email}</p>
                                         </div>
-                                        <button className="text-gray-400 hover:text-gray-600">
+                                        <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                                             <MoreVertical className="h-5 w-5" />
                                         </button>
                                     </div>
@@ -250,7 +253,7 @@ export default function ConsultantProjectDetails() {
                 isOpen={isCreateSectionOpen}
                 onClose={() => setIsCreateSectionOpen(false)}
                 projectId={id}
-                contractorName="" // Empty implies we might select one or create first
+                contractorName=""
             />
         </div>
     );

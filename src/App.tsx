@@ -26,6 +26,7 @@ import SubmissionQueue from './components/consultant/SubmissionQueue';
 import ConsultantContractors from './pages/consultant/ConsultantContractors';
 import ConsultantNotifications from './pages/consultant/ConsultantNotifications';
 import ConsultantReports from './pages/consultant/ConsultantReports';
+import CreateSectionPage from './pages/consultant/CreateSectionPage';
 
 // Contractor Pages
 import ContractorLayout from './layouts/ContractorLayout';
@@ -138,6 +139,11 @@ function App() {
             <Route path="consultant/reports" element={
               <ProtectedRoute allowedRoles={['CONSULTANT']}>
                 <ConsultantReports />
+              </ProtectedRoute>
+            } />
+            <Route path="consultant/projects/:id/sections/new" element={
+              <ProtectedRoute allowedRoles={['CONSULTANT']}>
+                <CreateSectionPage />
               </ProtectedRoute>
             } />
 

@@ -16,6 +16,7 @@ export default function Sidebar() {
     const essentials = [
         { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['ADMIN', 'CONTRACTOR'] },
         { name: 'Dashboard', href: '/dashboard/consultant', icon: Home, roles: ['CONSULTANT'] },
+        { name: 'Projects', href: '/dashboard/projects', icon: Briefcase, roles: ['ADMIN'] },
         { name: 'Consultants', href: '/dashboard/consultants', icon: ShieldCheck, roles: ['ADMIN'] },
         { name: 'Contractors', href: '/dashboard/contractors', icon: Users, roles: ['ADMIN'] },
         { name: 'My Projects', href: '/dashboard/consultant/projects', icon: Briefcase, roles: ['CONSULTANT'] },
@@ -80,7 +81,7 @@ export default function Sidebar() {
                 </div>
 
                 {/* MOCK ROLE SWITCHER */}
-                <div className="px-4 mt-2 mb-2">
+                {/* <div className="px-4 mt-2 mb-2">
                     <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-md border border-blue-100 dark:border-blue-800">
                         <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2 uppercase">Viewing As:</p>
                         <div className="flex flex-col space-y-1">
@@ -99,7 +100,7 @@ export default function Sidebar() {
                             ))}
                         </div>
                     </div>
-                </div>
+                </div> */}
 
                 <div className="flex-1 flex flex-col overflow-y-auto pt-2 pb-4">
                     <div className="px-4 mb-2">

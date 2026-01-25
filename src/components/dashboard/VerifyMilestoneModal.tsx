@@ -2,11 +2,9 @@ import { useState } from 'react';
 import {
     X,
     CheckCircle,
-    AlertTriangle,
     MessageSquare,
     FileText,
     Download,
-    Eye,
     ChevronLeft,
     ChevronRight,
     MapPin,
@@ -64,29 +62,29 @@ export default function VerifyMilestoneModal({ isOpen, onClose, submission }: Ve
         <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={onClose}></div>
+                <div className="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 backdrop-blur-sm transition-opacity" aria-hidden="true" onClick={onClose}></div>
 
                 <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
 
                     {/* Header */}
-                    <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-100">
+                    <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-100 dark:border-gray-700">
                         <div className="flex justify-between items-start">
                             <div className="flex items-center">
-                                <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
-                                    <FileText className="h-6 w-6 text-indigo-600" aria-hidden="true" />
+                                <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                                    <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
                                 </div>
                                 <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                                    <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
                                         Verify Submission
                                     </h3>
-                                    <p className="text-sm text-gray-500">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
                                         {data.milestone} • {data.contractor}
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+                            <button onClick={onClose} className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
@@ -137,37 +135,37 @@ export default function VerifyMilestoneModal({ isOpen, onClose, submission }: Ve
                         </div>
 
                         {/* Right Side: Details & Actions */}
-                        <div className="w-full md:w-1/3 flex flex-col bg-white border-l border-gray-200">
+                        <div className="w-full md:w-1/3 flex flex-col bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700">
                             <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
                                 {/* Meta Data */}
-                                <div className="space-y-3 pb-4 border-b border-gray-100">
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                                <div className="space-y-3 pb-4 border-b border-gray-100 dark:border-gray-700">
+                                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                                        <Calendar className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
                                         <span>Submitted: {data.date}</span>
                                     </div>
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+                                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                                        <MapPin className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
                                         <span>{data.location}</span>
                                     </div>
                                 </div>
 
                                 {/* Description */}
                                 <div>
-                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Progress Description</h4>
-                                    <p className="text-sm text-gray-700 leading-relaxed">
+                                    <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Progress Description</h4>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                                         {data.description}
                                     </p>
                                 </div>
 
                                 {/* Material Usage */}
                                 <div>
-                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Material Usage</h4>
-                                    <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                                    <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Material Usage</h4>
+                                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2">
                                         {data.materialUsage.map((item: any, idx: number) => (
                                             <div key={idx} className="flex justify-between text-xs">
-                                                <span className="text-gray-600">{item.item}</span>
-                                                <span className="font-medium text-gray-900">{item.quantity}</span>
+                                                <span className="text-gray-600 dark:text-gray-400">{item.item}</span>
+                                                <span className="font-medium text-gray-900 dark:text-gray-200">{item.quantity}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -175,15 +173,15 @@ export default function VerifyMilestoneModal({ isOpen, onClose, submission }: Ve
 
                                 {/* Documents */}
                                 <div>
-                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Attached Documents</h4>
+                                    <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Attached Documents</h4>
                                     <div className="space-y-2">
                                         {data.documents.map((doc: any, idx: number) => (
-                                            <div key={idx} className="flex items-center justify-between p-2 border border-gray-200 rounded hover:bg-gray-50">
+                                            <div key={idx} className="flex items-center justify-between p-2 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                                 <div className="flex items-center overflow-hidden">
-                                                    <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                                                    <span className="text-xs text-gray-700 truncate">{doc.name}</span>
+                                                    <FileText className="h-4 w-4 text-gray-400 dark:text-gray-500 mr-2 flex-shrink-0" />
+                                                    <span className="text-xs text-gray-700 dark:text-gray-300 truncate">{doc.name}</span>
                                                 </div>
-                                                <button className="text-indigo-600 hover:text-indigo-800">
+                                                <button className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
                                                     <Download className="h-4 w-4" />
                                                 </button>
                                             </div>
@@ -194,12 +192,12 @@ export default function VerifyMilestoneModal({ isOpen, onClose, submission }: Ve
                                 {/* Feedback Input (Only if querying) */}
                                 {status === 'queried' && (
                                     <div className="animate-fade-in">
-                                        <label className="block text-xs font-bold text-red-600 uppercase tracking-wider mb-2">
+                                        <label className="block text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-2">
                                             Query Reason / Instructions
                                         </label>
                                         <textarea
                                             rows={4}
-                                            className="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                            className="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
                                             placeholder="Explain what needs to be corrected..."
                                             value={feedback}
                                             onChange={(e) => setFeedback(e.target.value)}
@@ -209,9 +207,9 @@ export default function VerifyMilestoneModal({ isOpen, onClose, submission }: Ve
                             </div>
 
                             {/* Sticky Footer Actions */}
-                            <div className="p-4 border-t border-gray-200 bg-gray-50">
+                            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
                                 {status === 'approved' ? (
-                                    <div className="flex items-center justify-center text-green-600 font-bold p-2 bg-green-50 rounded-lg border border-green-200">
+                                    <div className="flex items-center justify-center text-green-600 dark:text-green-400 font-bold p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                                         <CheckCircle className="h-5 w-5 mr-2" />
                                         Verified & Approved
                                     </div>
@@ -221,14 +219,14 @@ export default function VerifyMilestoneModal({ isOpen, onClose, submission }: Ve
                                             <>
                                                 <button
                                                     onClick={() => setStatus('queried')}
-                                                    className="flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                                    className="flex justify-center items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
                                                 >
-                                                    <MessageSquare className="h-4 w-4 mr-2 text-gray-500" />
+                                                    <MessageSquare className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
                                                     Query
                                                 </button>
                                                 <button
                                                     onClick={handleApprove}
-                                                    className="flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                                    className="flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800"
                                                 >
                                                     <CheckCircle className="h-4 w-4 mr-2" />
                                                     Approve
@@ -238,14 +236,14 @@ export default function VerifyMilestoneModal({ isOpen, onClose, submission }: Ve
                                             <>
                                                 <button
                                                     onClick={() => setStatus('pending')}
-                                                    className="flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-gray-500 hover:text-gray-700"
+                                                    className="flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                                                 >
                                                     Cancel
                                                 </button>
                                                 <button
                                                     onClick={handleQuery}
                                                     disabled={!feedback}
-                                                    className="flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                                    className="flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
                                                 >
                                                     Send Query
                                                 </button>
