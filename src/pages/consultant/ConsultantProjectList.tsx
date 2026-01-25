@@ -1,10 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, MoreVertical, CheckCircle, Clock } from 'lucide-react';
 
 export default function ConsultantProjectList() {
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(true);
     // const [filter, setFilter] = useState('All'); // Will be implemented later
+
+    useEffect(() => {
+        // Simulate data loading
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 800);
+        return () => clearTimeout(timer);
+    }, []);
 
     // Mock data for consultant's assigned projects
     const projects = [
@@ -39,6 +48,15 @@ export default function ConsultantProjectList() {
             pendingActions: 0
         },
     ];
+
+    if (isLoading) {
+        return (
+            <div className="max-w-6xl mx-auto space-y-6 animate-pulse">
+                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">

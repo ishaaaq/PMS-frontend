@@ -1,5 +1,5 @@
 import { Folder, AlertTriangle, CheckCircle, Clock, MapPin, TrendingUp, Filter, Download, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const adminStats = [
     { name: 'Total Projects', stat: '124', icon: Folder, color: 'text-blue-600', bg: 'bg-blue-100', change: '+12%', changeType: 'increase' },
@@ -18,12 +18,41 @@ const zones = ['North Central', 'North East', 'North West', 'South East', 'South
 
 export default function DashboardHome() {
     const [chartData, setChartData] = useState([40, 65, 55, 85, 75, 95, 80, 70, 90, 100, 85, 95]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        // Simulate data loading
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 800);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleFilterChange = () => {
         // Simulate data update
         const newData = Array.from({ length: 12 }, () => Math.floor(Math.random() * 60) + 40);
         setChartData(newData);
     };
+
+    if (isLoading) {
+        return (
+            <div className="space-y-8 animate-pulse">
+                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>)}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 h-80 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+                    <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {[1, 2].map(i => <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>)}
+                </div>
+            </div>
+        );
+    }
+
 
     return (
         <div className="space-y-8">
