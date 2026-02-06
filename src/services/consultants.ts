@@ -114,7 +114,7 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
     });
 }
 
-export async function inviteConsultant(email: string, projectId?: string): Promise<{ success: boolean; message: string }> {
+export async function inviteConsultant(email: string): Promise<{ success: boolean; message: string }> {
     // Simulate API call
     return new Promise((resolve) => {
         setTimeout(() => {

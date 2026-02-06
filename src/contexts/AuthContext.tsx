@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useState, type ReactNode } from 'react';
 import type { UserRole } from '../services/mockRole';
 
 interface User {
@@ -18,18 +18,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+// Export the context so the hook file can use it
+export { AuthContext };
 
-    useEffect(() => {
-        // Check for stored user on mount
+export function AuthProvider({ children }: { children: ReactNode }) {
+    // Use lazy initialization to hydrate user from localStorage, avoiding setState in effect
+    const [user, setUser] = useState<User | null>(() => {
         const storedUser = localStorage.getItem('pms_user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-        setIsLoading(false);
-    }, []);
+        return storedUser ? JSON.parse(storedUser) : null;
+    });
+    const [isLoading] = useState(false);
 
     const login = async (email: string, role: UserRole) => {
         // Mock login - in a real app, this would call the API
@@ -54,12 +52,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             {children}
         </AuthContext.Provider>
     );
-}
-
-export function useAuth() {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
 }

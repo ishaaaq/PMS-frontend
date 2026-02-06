@@ -1,0 +1,17 @@
+﻿
+> frontend@0.0.0 lint
+> eslint .
+
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\components\dashboard\VerifyMilestoneModal.tsx
+  37:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\MilestonesPage.tsx
+  1:10  error  'useState' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\UsersPage.tsx
+  3:91  error  'CheckCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+Γ£û 3 problems (3 errors, 0 warnings)
+
+

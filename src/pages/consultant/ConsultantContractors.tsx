@@ -1,11 +1,24 @@
 import { useState } from 'react';
-import { Search, Mail, Phone, MapPin, Star, MoreVertical, UserPlus, Briefcase, Filter } from 'lucide-react';
+import { Search, MapPin, Star, MoreVertical, UserPlus, Briefcase, Filter } from 'lucide-react';
 import AssignSectionModal from '../../components/consultant/AssignSectionModal';
+
+interface Contractor {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    location: string;
+    specialization: string;
+    rating: number;
+    assignedProjects: string[];
+    sections: Array<{ project: string; section: string }>;
+    status: string;
+}
 
 export default function ConsultantContractors() {
     const [searchTerm, setSearchTerm] = useState('');
     const [assignModalOpen, setAssignModalOpen] = useState(false);
-    const [selectedContractor, setSelectedContractor] = useState<any>(null);
+    const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null);
     const [selectedProject, setSelectedProject] = useState('All Projects');
 
     // Mock data
@@ -63,7 +76,7 @@ export default function ConsultantContractors() {
         return matchesSearch && matchesProject;
     });
 
-    const openAssignModal = (contractor: any) => {
+    const openAssignModal = (contractor: Contractor) => {
         setSelectedContractor(contractor);
         setAssignModalOpen(true);
     };

@@ -4,7 +4,7 @@ import {
     Smartphone, Mail, Camera, Save, LogOut
 } from 'lucide-react';
 
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../hooks/useTheme';
 
 export default function SettingsPage() {
     const { resolvedTheme, toggleTheme } = useTheme();
@@ -38,7 +38,7 @@ export default function SettingsPage() {
                         ].map((item) => (
                             <button
                                 key={item.id}
-                                onClick={() => setActiveTab(item.id as any)}
+                                onClick={() => setActiveTab(item.id as 'profile' | 'notifications' | 'security')}
                                 className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${activeTab === item.id
                                     ? 'bg-ptdf-primary text-white shadow-lg shadow-ptdf-primary/30'
                                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'

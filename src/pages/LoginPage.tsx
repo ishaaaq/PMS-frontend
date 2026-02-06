@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import type { UserRole } from '../services/mockRole';
+
+interface LocationState {
+    from?: { pathname: string };
+}
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -12,7 +16,7 @@ export default function LoginPage() {
     const location = useLocation();
     const { login } = useAuth();
 
-    const from = (location.state as any)?.from?.pathname || '/dashboard';
+    const from = (location.state as LocationState | null)?.from?.pathname || '/dashboard';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -29,7 +33,7 @@ export default function LoginPage() {
             await login(email, role);
 
             navigate(from, { replace: true });
-        } catch (err) {
+        } catch {
             setError('Invalid credentials or server unavailable');
         } finally {
             setLoading(false);

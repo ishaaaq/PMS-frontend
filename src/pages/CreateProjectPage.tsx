@@ -53,7 +53,7 @@ export default function CreateProjectPage() {
         setMilestones(milestones.filter(m => m.id !== id));
     };
 
-    const updateMilestone = (id: string, field: keyof Milestone, value: any) => {
+    const updateMilestone = (id: string, field: keyof Milestone, value: string | number) => {
         setMilestones(milestones.map(m => m.id === id ? { ...m, [field]: value } : m));
     };
 

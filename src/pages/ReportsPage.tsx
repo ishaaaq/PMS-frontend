@@ -65,7 +65,7 @@ export default function ReportsPage() {
                     {['overview', 'financial', 'consultants'].map((tab) => (
                         <button
                             key={tab}
-                            onClick={() => setActiveTab(tab as any)}
+                            onClick={() => setActiveTab(tab as 'overview' | 'financial' | 'consultants')}
                             className={`pb-3 text-sm font-bold capitalize transition-all border-b-2 ${activeTab === tab
                                 ? 'text-indigo-600 border-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
                                 : 'text-gray-500 border-transparent hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'

@@ -1,17 +1,20 @@
-import { Home, Users, Bell, Settings, PieChart, Flag, DollarSign, Search, ShieldCheck, LogOut, Briefcase, Shield } from 'lucide-react';
+import { Home, Users, Bell, Settings, PieChart, Flag, DollarSign, Search, ShieldCheck, LogOut, Briefcase } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { useAuth } from '../../contexts/AuthContext';
-import type { UserRole } from '../../services/mockRole';
+import { useAuth } from '../../hooks/useAuth';
+import type { LucideIcon } from 'lucide-react';
+
+interface NavItemType {
+    name: string;
+    href: string;
+    icon: LucideIcon;
+    roles?: string[];
+}
 
 export default function Sidebar() {
     const location = useLocation();
-    const { user, login, logout } = useAuth();
+    const { user, logout } = useAuth();
     const currentRole = user?.role || 'CONTRACTOR';
-
-    const handleRoleSwitch = (role: UserRole) => {
-        login(user?.email || 'test@ptdf.gov.ng', role);
-    };
 
     const essentials = [
         { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['ADMIN', 'CONTRACTOR'] },
@@ -36,7 +39,7 @@ export default function Sidebar() {
     const filteredEssentials = essentials.filter(item => item.roles?.includes(currentRole));
     const filteredProjectMenu = projectMenu.filter(item => item.roles?.includes(currentRole));
 
-    const NavItem = ({ item }: { item: any }) => {
+    const NavItem = ({ item }: { item: NavItemType }) => {
         const isActive = location.pathname === item.href;
         return (
             <Link

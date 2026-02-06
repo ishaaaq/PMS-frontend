@@ -11,21 +11,45 @@ import {
     Calendar
 } from 'lucide-react';
 
-interface VerifyMilestoneModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    submission: any; // Using any for mock, replace with Submission interface
+interface MaterialUsage {
+    item: string;
+    quantity: string;
+    expected: string;
 }
 
-export default function VerifyMilestoneModal({ isOpen, onClose, submission }: VerifyMilestoneModalProps) {
+interface DocumentFile {
+    name: string;
+    size: string;
+}
+
+interface Milestone {
+    id: string;
+    title: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+    status?: string;
+    progress?: number;
+}
+
+interface VerifyMilestoneModalProps {
+    milestone?: Milestone;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    submission?: any;
+    isOpen?: boolean;
+    onClose: () => void;
+    onVerify?: (data: { status: 'approved' | 'queried'; feedback: string; milestoneId?: string; approved?: boolean }) => void;
+}
+
+export default function VerifyMilestoneModal({ milestone, submission, isOpen, onClose }: VerifyMilestoneModalProps) {
     const [status, setStatus] = useState<'pending' | 'approved' | 'queried'>('pending');
     const [feedback, setFeedback] = useState('');
     const [activeImage, setActiveImage] = useState(0);
 
-    if (!isOpen || !submission) return null;
+    if (!isOpen && !(milestone || submission)) return null;
 
     // Mock submission data if not provided (for development/preview)
-    const data = submission || {
+    const data = milestone || submission || {
         id: 'sub-123',
         milestone: 'Foundation Construction',
         contractor: 'BuildRight Construction Ltd',
@@ -162,7 +186,7 @@ export default function VerifyMilestoneModal({ isOpen, onClose, submission }: Ve
                                 <div>
                                     <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Material Usage</h4>
                                     <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2">
-                                        {data.materialUsage.map((item: any, idx: number) => (
+                                        {data.materialUsage.map((item: MaterialUsage, idx: number) => (
                                             <div key={idx} className="flex justify-between text-xs">
                                                 <span className="text-gray-600 dark:text-gray-400">{item.item}</span>
                                                 <span className="font-medium text-gray-900 dark:text-gray-200">{item.quantity}</span>
@@ -175,7 +199,7 @@ export default function VerifyMilestoneModal({ isOpen, onClose, submission }: Ve
                                 <div>
                                     <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Attached Documents</h4>
                                     <div className="space-y-2">
-                                        {data.documents.map((doc: any, idx: number) => (
+                                        {data.documents.map((doc: DocumentFile, idx: number) => (
                                             <div key={idx} className="flex items-center justify-between p-2 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                                 <div className="flex items-center overflow-hidden">
                                                     <FileText className="h-4 w-4 text-gray-400 dark:text-gray-500 mr-2 flex-shrink-0" />

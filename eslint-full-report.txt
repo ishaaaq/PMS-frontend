@@ -1,0 +1,146 @@
+﻿
+> frontend@0.0.0 lint
+> eslint .
+
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\components\consultant\AssignSectionModal.tsx
+  34:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\components\consultant\SubmissionQueue.tsx
+  11:66  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  62:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\components\dashboard\PersonnelTab.tsx
+  17:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  94:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\components\dashboard\SubmitMilestoneModal.tsx
+  3:21  error  'Check' is defined but never used         @typescript-eslint/no-unused-vars
+  9:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\components\dashboard\VerifyMilestoneModal.tsx
+   17:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  165:72  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  178:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\components\ui\Sidebar.tsx
+   1:107  error  'Shield' is defined but never used                     @typescript-eslint/no-unused-vars
+  12:11   error  'handleRoleSwitch' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  39:40   error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\contexts\AuthContext.tsx
+  29:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\contexts\AuthContext.tsx:29:13
+  27 |         const storedUser = localStorage.getItem('pms_user');
+  28 |         if (storedUser) {
+> 29 |             setUser(JSON.parse(storedUser));
+     |             ^^^^^^^ Avoid calling setState() directly within an effect
+  30 |         }
+  31 |         setIsLoading(false);
+  32 |     }, []);  react-hooks/set-state-in-effect
+  59:17  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react-refresh/only-export-components
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\contexts\ThemeContext.tsx
+  72:17  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\ConsultantDetailPage.tsx
+  155:38  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\ConsultantDetailPage.tsx:155:38
+  153 |                     </p>
+  154 |                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+> 155 |                         {Math.floor((Date.now() - new Date(consultant.joinedDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))} years ago
+      |                                      ^^^^^^^^^^ Cannot call impure function
+  156 |                     </p>
+  157 |                 </div>
+  158 |             </div>  react-hooks/purity
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\CreateProjectPage.tsx
+  56:73  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\DashboardHome.tsx
+  214:118  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\DashboardHome.tsx:214:118
+  212 |                                 <div className="flex justify-between items-center mb-1">
+  213 |                                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{zone}</span>
+> 214 |                                     <span className="text-xs text-gray-500 dark:text-gray-400 font-bold">{Math.floor(Math.random() * 20) + 5} Projects</span>
+      |                                                                                                                      ^^^^^^^^^^^^^ Cannot call impure function
+  215 |                                 </div>
+  216 |                                 <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+  217 |                                     <div  react-hooks/purity
+  219:60   error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\DashboardHome.tsx:219:60
+  217 |                                     <div
+  218 |                                         className="bg-indigo-500 h-full rounded-full transition-all duration-1000 group-hover:bg-indigo-400"
+> 219 |                                         style={{ width: `${Math.random() * 60 + 20}%` }}
+      |                                                            ^^^^^^^^^^^^^ Cannot call impure function
+  220 |                                     ></div>
+  221 |                                 </div>
+  222 |                             </div>                                                                                                                                                                                                                                                 react-hooks/purity
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\LoginPage.tsx
+  15:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:18  error  'err' is defined but never used           @typescript-eslint/no-unused-vars
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\MilestonesPage.tsx
+  1:10  error  'useState' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\ProjectDetailsPage.tsx
+  229:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  241:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\ReportsPage.tsx
+  68:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\SettingsPage.tsx
+  41:72  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\UserDetailPage.tsx
+  172:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\UsersPage.tsx
+  3:91  error  'CheckCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\consultant\ConsultantContractors.tsx
+   2:18  error  'Mail' is defined but never used          @typescript-eslint/no-unused-vars
+   2:24  error  'Phone' is defined but never used         @typescript-eslint/no-unused-vars
+   8:66  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  66:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\consultant\ConsultantProjectDetails.tsx
+  11:5   error  'CheckCircle' is defined but never used   @typescript-eslint/no-unused-vars
+  12:5   error  'Clock' is defined but never used         @typescript-eslint/no-unused-vars
+  19:10  error  'ArrowUpRight' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\consultant\CreateSectionPage.tsx
+   8:5   error  'Calendar' is defined but never used           @typescript-eslint/no-unused-vars
+  11:5   error  'Save' is defined but never used               @typescript-eslint/no-unused-vars
+  19:12  error  'title' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  19:19  error  'setTitle' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  40:32  error  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\pages\contractor\ContractorAssignmentsPage.tsx
+  152:27  error  'StatusIcon' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\ishaq\Documents\PMS-antigravity\frontend\src\services\consultants.ts
+  117:55  error  'projectId' is defined but never used  @typescript-eslint/no-unused-vars
+
+Γ£û 45 problems (45 errors, 0 warnings)
+
