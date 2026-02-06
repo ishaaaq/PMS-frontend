@@ -71,11 +71,11 @@ export default function AssignmentCard({ assignment, onUpdateProgress }: Assignm
                                 strokeWidth="4"
                                 fill="transparent"
                                 strokeDasharray={125.6}
-                                strokeDashoffset={125.6 - (125.6 * assignment.currentProgress) / 100}
+                                strokeDashoffset={125.6 - (125.6 * (assignment.currentProgress || 0)) / 100}
                                 className={isQueried ? 'text-red-500 dark:text-red-400' : 'text-ptdf-primary dark:text-blue-500'}
                             />
                         </svg>
-                        <span className="absolute text-[10px] font-bold text-gray-700 dark:text-gray-300">{assignment.currentProgress}%</span>
+                        <span className="absolute text-[10px] font-bold text-gray-700 dark:text-gray-300">{assignment.currentProgress || 0}%</span>
                     </div>
                 </div>
             </div>

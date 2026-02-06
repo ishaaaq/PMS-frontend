@@ -27,6 +27,11 @@ export interface Assignment {
     overallProgress: number;
     status: AssignmentStatus;
     lastUpdated: string;
+    // Properties for current/active milestone
+    dueDate?: string;
+    milestoneTitle?: string;
+    currentProgress?: number;
+    queryReason?: string;
 }
 
 export type NotificationType = 'QUERY' | 'PAYMENT' | 'SYSTEM' | 'APPROVAL';
