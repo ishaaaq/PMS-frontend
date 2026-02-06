@@ -9,14 +9,21 @@ interface PersonnelTabProps {
 
 type PersonnelType = 'Consultant' | 'Contractor' | 'In-house';
 
+interface Person {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+}
+
 export default function PersonnelTab({ project }: PersonnelTabProps) {
     const [activePersonnelTab, setActivePersonnelTab] = useState<PersonnelType>('Consultant');
     const [email, setEmail] = useState('');
 
     // Mock data - in real app, this would come from API
-    const consultants: any[] = [];
-    const contractors: any[] = [];
-    const inHouseTeam: any[] = [];
+    const consultants: Person[] = [];
+    const contractors: Person[] = [];
+    const inHouseTeam: Person[] = [];
 
     const handleInvite = (e: React.FormEvent) => {
         e.preventDefault();
@@ -91,7 +98,7 @@ export default function PersonnelTab({ project }: PersonnelTabProps) {
                             {activePersonnelTab} Team Members
                         </h3>
                         <div className="space-y-4">
-                            {personnelList.map((person: any) => (
+                            {personnelList.map((person: Person) => (
                                 <div key={person.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                                     <div className="flex items-center space-x-4">
                                         <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">

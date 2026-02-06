@@ -5,10 +5,8 @@ import {
     Briefcase,
     Plus,
     Trash2,
-    Calendar,
     DollarSign,
-    CheckCircle,
-    Save
+    CheckCircle
 } from 'lucide-react';
 
 export default function CreateSectionPage() {
@@ -16,7 +14,6 @@ export default function CreateSectionPage() {
     const { id } = useParams(); // Project ID
 
     // Form State
-    const [title, setTitle] = useState('New Project Section'); // Doc title, separate from section title? Or group title?
     const [contractorMode, setContractorMode] = useState<'existing' | 'invite'>('existing');
     const [selectedContractor, setSelectedContractor] = useState('');
     const [inviteEmail, setInviteEmail] = useState('');
@@ -37,6 +34,7 @@ export default function CreateSectionPage() {
 
     const handleChange = (index: number, field: string, value: string) => {
         const newSections = [...sections];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (newSections[index] as any)[field] = value;
         setSections(newSections);
     };
@@ -90,8 +88,8 @@ export default function CreateSectionPage() {
                                 <div
                                     onClick={() => setContractorMode('existing')}
                                     className={`cursor-pointer rounded-lg border p-4 flex items-start gap-3 transition-all ${contractorMode === 'existing'
-                                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 ring-1 ring-indigo-500'
-                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 ring-1 ring-indigo-500'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                         }`}
                                 >
                                     <div className={`mt-0.5 h-4 w-4 rounded-full border flex items-center justify-center ${contractorMode === 'existing' ? 'border-indigo-600' : 'border-gray-400'
@@ -107,8 +105,8 @@ export default function CreateSectionPage() {
                                 <div
                                     onClick={() => setContractorMode('invite')}
                                     className={`cursor-pointer rounded-lg border p-4 flex items-start gap-3 transition-all ${contractorMode === 'invite'
-                                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 ring-1 ring-indigo-500'
-                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 ring-1 ring-indigo-500'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                         }`}
                                 >
                                     <div className={`mt-0.5 h-4 w-4 rounded-full border flex items-center justify-center ${contractorMode === 'invite' ? 'border-indigo-600' : 'border-gray-400'

@@ -1,12 +1,19 @@
 
 import { useState } from 'react';
-import { Upload, X, Check } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import type { Milestone } from '../../services/milestones';
+
+interface MilestoneSubmission {
+    progress: number;
+    comments: string;
+    files: File[];
+    milestoneId: string;
+}
 
 interface SubmitMilestoneModalProps {
     milestone: Milestone;
     onClose: () => void;
-    onSubmit: (data: any) => void;
+    onSubmit: (data: MilestoneSubmission) => void;
 }
 
 export default function SubmitMilestoneModal({ milestone, onClose, onSubmit }: SubmitMilestoneModalProps) {

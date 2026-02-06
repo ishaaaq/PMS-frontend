@@ -8,6 +8,14 @@ interface AssignSectionModalProps {
     contractorName?: string; // Optional now
 }
 
+type Section = {
+    title: string;
+    budget: string;
+    startDate: string;
+    endDate: string;
+    description: string;
+};
+
 export default function AssignSectionModal({ isOpen, onClose, projectId, contractorName }: AssignSectionModalProps) {
     const [contractorMode, setContractorMode] = useState<'existing' | 'invite'>(contractorName ? 'existing' : 'invite');
     const [selectedContractor, setSelectedContractor] = useState(contractorName || '');
@@ -29,9 +37,9 @@ export default function AssignSectionModal({ isOpen, onClose, projectId, contrac
         setSections(newSections);
     };
 
-    const handleChange = (index: number, field: string, value: string) => {
+    const handleChange = (index: number, field: keyof Section, value: string) => {
         const newSections = [...sections];
-        (newSections[index] as any)[field] = value;
+        newSections[index][field] = value;
         setSections(newSections);
     };
 

@@ -8,7 +8,7 @@ import {
 import VerifyMilestoneModal from '../dashboard/VerifyMilestoneModal';
 
 export default function SubmissionQueue() {
-    const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
+    const [selectedSubmission, setSelectedSubmission] = useState<typeof submissions[0] | null>(null);
     const [activeTab, setActiveTab] = useState<'pending' | 'queried' | 'approved'>('pending');
 
     // Mock submissions
@@ -59,7 +59,7 @@ export default function SubmissionQueue() {
                     {['pending', 'queried', 'approved'].map((tab) => (
                         <button
                             key={tab}
-                            onClick={() => setActiveTab(tab as any)}
+                            onClick={() => setActiveTab(tab as 'pending' | 'queried' | 'approved')}
                             className={`px-4 py-1.5 text-sm font-medium rounded-md capitalize transition-colors ${activeTab === tab
                                 ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'

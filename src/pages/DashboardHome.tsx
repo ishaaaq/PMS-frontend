@@ -20,6 +20,15 @@ export default function DashboardHome() {
     const [chartData, setChartData] = useState([40, 65, 55, 85, 75, 95, 80, 70, 90, 100, 85, 95]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Use lazy initialization to avoid Math.random() being called on every render
+    const [zoneData] = useState(() =>
+        zones.map(zone => ({
+            name: zone,
+            projectCount: Math.floor(Math.random() * 20) + 5,
+            progress: Math.random() * 60 + 20
+        }))
+    );
+
     useEffect(() => {
         // Simulate data loading
         const timer = setTimeout(() => {
@@ -207,16 +216,16 @@ export default function DashboardHome() {
                 <div className="glass-card p-6 rounded-xl">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Nationwide Project Clusters</h3>
                     <div className="space-y-4">
-                        {zones.map(zone => (
-                            <div key={zone} className="group cursor-pointer">
+                        {zoneData.map(zone => (
+                            <div key={zone.name} className="group cursor-pointer">
                                 <div className="flex justify-between items-center mb-1">
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{zone}</span>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-bold">{Math.floor(Math.random() * 20) + 5} Projects</span>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{zone.name}</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-bold">{zone.projectCount} Projects</span>
                                 </div>
                                 <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
                                     <div
                                         className="bg-indigo-500 h-full rounded-full transition-all duration-1000 group-hover:bg-indigo-400"
-                                        style={{ width: `${Math.random() * 60 + 20}%` }}
+                                        style={{ width: `${zone.progress}%` }}
                                     ></div>
                                 </div>
                             </div>

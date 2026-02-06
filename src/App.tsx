@@ -36,7 +36,8 @@ import ContractorMessagesPage from './pages/contractor/ContractorMessagesPage';
 import ContractorProfilePage from './pages/contractor/ContractorProfilePage';
 import ContractorDocumentsPage from './pages/contractor/ContractorDocumentsPage';
 
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import type { UserRole } from './services/mockRole';
 

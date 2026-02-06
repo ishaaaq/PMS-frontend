@@ -8,15 +8,12 @@ import {
     UserPlus,
     MoreVertical,
     DollarSign,
-    CheckCircle,
-    Clock,
     AlertTriangle,
     FileText,
     ChevronLeft
 } from 'lucide-react';
 import AssignSectionModal from '../../components/consultant/AssignSectionModal';
-// Placeholder for InviteContractorModal - to be implemented or reused
-import { ArrowUpRight } from 'lucide-react';
+
 
 export default function ConsultantProjectDetails() {
     const { id } = useParams();

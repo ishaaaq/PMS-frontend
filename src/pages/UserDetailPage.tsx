@@ -6,6 +6,14 @@ import {
 } from 'lucide-react';
 import { DETAILED_USERS } from '../utils/mockData';
 
+interface ActivityLog {
+    id: number;
+    action: string;
+    text: string;
+    icon: string;
+    time: string;
+}
+
 export default function UserDetailPage() {
     const { id } = useParams();
     // Fallback to ID '1' if not found for demo purposes, or show "User not found"
@@ -169,7 +177,7 @@ export default function UserDetailPage() {
                         </div>
 
                         <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                            {user.recentActivity.map((log: any) => {
+                            {user.recentActivity.map((log: ActivityLog) => {
                                 const Icon = getIcon(log.icon);
                                 return (
                                     <div key={log.id} className="p-4 flex items-start gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">

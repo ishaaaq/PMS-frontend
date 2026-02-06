@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserPlus, Shield, MoreVertical, Search, Filter, ShieldCheck, ShieldAlert, CheckCircle, Mail, MapPin } from 'lucide-react';
+import { Users, UserPlus, Shield, MoreVertical, Search, Filter, ShieldCheck, ShieldAlert, Mail, MapPin } from 'lucide-react';
 import InviteModal from '../components/dashboard/InviteModal';
 
 export default function UsersPage() {

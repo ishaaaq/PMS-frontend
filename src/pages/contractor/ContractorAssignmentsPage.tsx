@@ -149,7 +149,6 @@ export default function ContractorAssignmentsPage() {
             <div className="space-y-4">
                 {sortedAssignments.map(assignment => {
                     const config = getStatusConfig(assignment.status);
-                    const StatusIcon = config.icon;
                     const isExpanded = expandedProject === assignment.id;
 
                     return (

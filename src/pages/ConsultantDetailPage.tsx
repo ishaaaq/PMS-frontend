@@ -10,11 +10,17 @@ export default function ConsultantDetailPage() {
     const [consultant, setConsultant] = useState<Consultant | undefined>(undefined);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('Overview');
+    const [yearsWithCompany, setYearsWithCompany] = useState(0);
 
     useEffect(() => {
         if (id) {
             getConsultant(id).then((data) => {
                 setConsultant(data);
+                // Calculate years once when data loads to avoid calling Date.now() during render
+                if (data?.joinedDate) {
+                    const years = Math.floor((Date.now() - new Date(data.joinedDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+                    setYearsWithCompany(years);
+                }
                 setLoading(false);
             });
         }
@@ -152,7 +158,7 @@ export default function ConsultantDetailPage() {
                         {new Date(consultant.joinedDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {Math.floor((Date.now() - new Date(consultant.joinedDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))} years ago
+                        {yearsWithCompany} years ago
                     </p>
                 </div>
             </div>
