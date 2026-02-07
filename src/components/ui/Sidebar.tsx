@@ -1,4 +1,4 @@
-import { Home, Users, Bell, Settings, PieChart, Flag, DollarSign, Search, ShieldCheck, LogOut, Briefcase, X } from 'lucide-react';
+import { Home, Users, Bell, Settings, PieChart, Flag, DollarSign, Search, ShieldCheck, LogOut, Briefcase, X, FileText, MessageSquare, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../hooks/useAuth';
@@ -24,16 +24,21 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps = {}) 
     const currentRole = user?.role || 'CONTRACTOR';
 
     const essentials = [
-        { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['ADMIN', 'CONTRACTOR'] },
+        { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['ADMIN'] },
         { name: 'Dashboard', href: '/dashboard/consultant', icon: Home, roles: ['CONSULTANT'] },
+        { name: 'Overview', href: '/dashboard/contractor', icon: Home, roles: ['CONTRACTOR'] },
         { name: 'Projects', href: '/dashboard/projects', icon: Briefcase, roles: ['ADMIN'] },
         { name: 'Consultants', href: '/dashboard/consultants', icon: ShieldCheck, roles: ['ADMIN'] },
         { name: 'Contractors', href: '/dashboard/contractors', icon: Users, roles: ['ADMIN'] },
         { name: 'My Projects', href: '/dashboard/consultant/projects', icon: Briefcase, roles: ['CONSULTANT'] },
         { name: 'My Contractors', href: '/dashboard/consultant/contractors', icon: Users, roles: ['CONSULTANT'] },
         { name: 'Verifications', href: '/dashboard/consultant/verification-queue', icon: ShieldCheck, roles: ['CONSULTANT'] },
-        { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
-        { name: 'Settings', href: '/dashboard/settings', icon: Settings, roles: ['ADMIN', 'CONSULTANT', 'CONTRACTOR'] },
+        { name: 'Assignments', href: '/dashboard/contractor/assignments', icon: Briefcase, roles: ['CONTRACTOR'] },
+        { name: 'Documents', href: '/dashboard/contractor/documents', icon: FileText, roles: ['CONTRACTOR'] },
+        { name: 'Messages', href: '/dashboard/contractor/messages', icon: MessageSquare, roles: ['CONTRACTOR'] },
+        { name: 'Profile', href: '/dashboard/contractor/profile', icon: User, roles: ['CONTRACTOR'] },
+        { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, roles: ['ADMIN', 'CONSULTANT'] },
+        { name: 'Settings', href: '/dashboard/settings', icon: Settings, roles: ['ADMIN', 'CONSULTANT'] },
     ];
 
     const projectMenu = [
@@ -177,14 +182,19 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps = {}) 
                             ))}
                         </nav>
 
-                        <div className="px-4 mb-2">
-                            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">This project</p>
-                        </div>
-                        <nav className="flex-1 space-y-1 mb-6">
-                            {filteredProjectMenu.map((item) => (
-                                <NavItem key={item.name} item={item} />
-                            ))}
-                        </nav>
+
+                        {filteredProjectMenu.length > 0 && (
+                            <>
+                                <div className="px-4 mb-2">
+                                    <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">This project</p>
+                                </div>
+                                <nav className="flex-1 space-y-1 mb-6">
+                                    {filteredProjectMenu.map((item) => (
+                                        <NavItem key={item.name} item={item} />
+                                    ))}
+                                </nav>
+                            </>
+                        )}
                     </div>
 
                     <div className="flex-shrink-0 flex border-t border-gray-200/50 dark:border-gray-700/30 p-4">
