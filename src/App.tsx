@@ -29,7 +29,6 @@ import ConsultantReports from './pages/consultant/ConsultantReports';
 import CreateSectionPage from './pages/consultant/CreateSectionPage';
 
 // Contractor Pages
-import ContractorLayout from './layouts/ContractorLayout';
 import ContractorDashboard from './pages/contractor/ContractorDashboard';
 import ContractorAssignmentsPage from './pages/contractor/ContractorAssignmentsPage';
 import ContractorMessagesPage from './pages/contractor/ContractorMessagesPage';
@@ -70,7 +69,7 @@ function RoleBasedRedirect() {
     return <Navigate to="/dashboard/consultant" replace />;
   }
   if (user?.role === 'CONTRACTOR') {
-    return <Navigate to="/contractor/dashboard" replace />;
+    return <Navigate to="/dashboard/contractor" replace />;
   }
 
   // Default to Admin Dashboard
@@ -203,21 +202,46 @@ function App() {
                 <MilestonesPage />
               </ProtectedRoute>
             } />
+
+            {/* Contractor Routes */}
+            <Route path="contractor" element={
+              <ProtectedRoute allowedRoles={['CONTRACTOR']}>
+                <ContractorDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="contractor/assignments" element={
+              <ProtectedRoute allowedRoles={['CONTRACTOR']}>
+                <ContractorAssignmentsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="contractor/messages" element={
+              <ProtectedRoute allowedRoles={['CONTRACTOR']}>
+                <ContractorMessagesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="contractor/profile" element={
+              <ProtectedRoute allowedRoles={['CONTRACTOR']}>
+                <ContractorProfilePage />
+              </ProtectedRoute>
+            } />
+            <Route path="contractor/documents" element={
+              <ProtectedRoute allowedRoles={['CONTRACTOR']}>
+                <ContractorDocumentsPage />
+              </ProtectedRoute>
+            } />
           </Route>
 
-          {/* Contractor Routes */}
-          <Route path="/contractor" element={<ContractorLayout />}>
-            <Route path="dashboard" element={<ContractorDashboard />} />
-            <Route path="projects" element={<ContractorAssignmentsPage />} />
-            <Route path="messages" element={<ContractorMessagesPage />} />
-            <Route path="profile" element={<ContractorProfilePage />} />
-            <Route path="documents" element={<ContractorDocumentsPage />} />
-            <Route index element={<Navigate to="/contractor/dashboard" replace />} />
-          </Route>
+          {/* Backward compatibility redirects from old /contractor/* paths */}
+          <Route path="/contractor" element={<Navigate to="/dashboard/contractor" replace />} />
+          <Route path="/contractor/dashboard" element={<Navigate to="/dashboard/contractor" replace />} />
+          <Route path="/contractor/projects" element={<Navigate to="/dashboard/contractor/assignments" replace />} />
+          <Route path="/contractor/messages" element={<Navigate to="/dashboard/contractor/messages" replace />} />
+          <Route path="/contractor/profile" element={<Navigate to="/dashboard/contractor/profile" replace />} />
+          <Route path="/contractor/documents" element={<Navigate to="/dashboard/contractor/documents" replace />} />
         </Routes>
         <DevRoleSwitcher />
       </BrowserRouter>
-    </AuthProvider>
+    </AuthProvider >
   );
 }
 
