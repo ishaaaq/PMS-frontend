@@ -34,12 +34,12 @@ export default function BudgetPage() {
                     >
                         <FileSpreadsheet className="mr-2 h-4 w-4" /> Audit Log
                     </button>
-                    <button
+                    {/* <button
                         onClick={() => setShowDisbursementModal(true)}
                         className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-lg shadow-green-600/20 text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition-all active:scale-95"
                     >
                         Initiate Disbursement
-                    </button>
+                    </button> */}
                 </div>
             </div>
 
