@@ -10,7 +10,10 @@ import {
     DollarSign,
     AlertTriangle,
     FileText,
-    ChevronLeft
+    ChevronLeft,
+    CheckCircle,
+    Clock,
+    AlertCircle
 } from 'lucide-react';
 import AssignSectionModal from '../../components/consultant/AssignSectionModal';
 
@@ -69,6 +72,72 @@ export default function ConsultantProjectDetails() {
                 budget: '₦15,000,000',
                 status: 'Pending',
                 progress: 0
+            }
+        ],
+        milestones: [
+            {
+                id: 'm1',
+                title: 'Site Clearing',
+                status: 'COMPLETED',
+                dueDate: '2025-01-20',
+                amount: '₦5,000,000',
+                sectionId: 's1'
+            },
+            {
+                id: 'm2',
+                title: 'Foundation Excavation',
+                status: 'COMPLETED',
+                dueDate: '2025-02-10',
+                amount: '₦10,000,000',
+                sectionId: 's1'
+            },
+            {
+                id: 'm3',
+                title: 'Foundation Pouring',
+                status: 'PENDING_APPROVAL',
+                dueDate: '2025-02-25',
+                amount: '₦10,000,000',
+                sectionId: 's1'
+            },
+            {
+                id: 'm4',
+                title: 'Column Installation',
+                status: 'IN_PROGRESS',
+                dueDate: '2025-03-15',
+                amount: '₦15,000,000',
+                sectionId: 's2'
+            },
+            {
+                id: 'm5',
+                title: 'Beam Construction',
+                status: 'IN_PROGRESS',
+                dueDate: '2025-04-01',
+                amount: '₦18,000,000',
+                sectionId: 's2'
+            },
+            {
+                id: 'm6',
+                title: 'Floor Slab Casting',
+                status: 'QUERIED',
+                dueDate: '2025-04-20',
+                amount: '₦12,000,000',
+                sectionId: 's2'
+            },
+            {
+                id: 'm7',
+                title: 'Electrical Panel Installation',
+                status: 'PENDING_APPROVAL',
+                dueDate: '2025-05-10',
+                amount: '₦8,000,000',
+                sectionId: null // Unassigned
+            },
+            {
+                id: 'm8',
+                title: 'Network Cabling',
+                status: 'IN_PROGRESS',
+                dueDate: '2025-05-25',
+                amount: '₦7,000,000',
+                sectionId: null // Unassigned
             }
         ]
     };
@@ -157,7 +226,7 @@ export default function ConsultantProjectDetails() {
             <div className="glass-card rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="border-b border-gray-200 dark:border-gray-700">
                     <nav className="flex -mb-px">
-                        {['Sections', 'Contractors', 'Submissions'].map((tab) => (
+                        {['Sections', 'Milestones', 'Contractors', 'Submissions'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab.toLowerCase())}
@@ -237,6 +306,115 @@ export default function ConsultantProjectDetails() {
                                     </div>
                                 ))}
                             </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'milestones' && (
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Project Milestones</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Grouped by section assignment</p>
+                            </div>
+
+                            {/* Group milestones by section */}
+                            {project.sections.map((section) => {
+                                const sectionMilestones = project.milestones.filter(m => m.sectionId === section.id);
+                                if (sectionMilestones.length === 0) return null;
+
+                                return (
+                                    <div key={section.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                        <div className="bg-gray-50 dark:bg-gray-800/50 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="font-bold text-gray-900 dark:text-white">{section.title}</h4>
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {sectionMilestones.length} milestone{sectionMilestones.length !== 1 ? 's' : ''}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                                            {sectionMilestones.map((milestone) => {
+                                                const statusConfig = {
+                                                    'COMPLETED': { color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400', icon: CheckCircle },
+                                                    'IN_PROGRESS': { color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400', icon: Clock },
+                                                    'PENDING_APPROVAL': { color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400', icon: AlertCircle },
+                                                    'QUERIED': { color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400', icon: AlertTriangle }
+                                                }[milestone.status] || { color: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400', icon: Clock };
+
+                                                const StatusIcon = statusConfig.icon;
+
+                                                return (
+                                                    <div key={milestone.id} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center gap-3">
+                                                                    <p className="font-medium text-gray-900 dark:text-white">{milestone.title}</p>
+                                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase flex items-center gap-1 ${statusConfig.color}`}>
+                                                                        <StatusIcon className="h-3 w-3" />
+                                                                        {milestone.status.replace('_', ' ')}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                                    <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" />Due: {milestone.dueDate}</span>
+                                                                    <span className="flex items-center"><DollarSign className="h-3 w-3 mr-1" />{milestone.amount}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {/* Unassigned Milestones */}
+                            {project.milestones.filter(m => !m.sectionId).length > 0 && (
+                                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                    <div className="bg-orange-50 dark:bg-orange-900/20 px-4 py-3 border-b border-orange-200 dark:border-orange-900/50">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="font-bold text-orange-900 dark:text-orange-300 flex items-center gap-2">
+                                                <AlertTriangle className="h-4 w-4" />
+                                                Unassigned Milestones
+                                            </h4>
+                                            <span className="text-xs text-orange-700 dark:text-orange-400">
+                                                {project.milestones.filter(m => !m.sectionId).length} milestone{project.milestones.filter(m => !m.sectionId).length !== 1 ? 's' : ''}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                                        {project.milestones.filter(m => !m.sectionId).map((milestone) => {
+                                            const statusConfig = {
+                                                'COMPLETED': { color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400', icon: CheckCircle },
+                                                'IN_PROGRESS': { color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400', icon: Clock },
+                                                'PENDING_APPROVAL': { color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400', icon: AlertCircle },
+                                                'QUERIED': { color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400', icon: AlertTriangle }
+                                            }[milestone.status] || { color: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400', icon: Clock };
+
+                                            const StatusIcon = statusConfig.icon;
+
+                                            return (
+                                                <div key={milestone.id} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-3">
+                                                                <p className="font-medium text-gray-900 dark:text-white">{milestone.title}</p>
+                                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase flex items-center gap-1 ${statusConfig.color}`}>
+                                                                    <StatusIcon className="h-3 w-3" />
+                                                                    {milestone.status.replace('_', ' ')}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                                <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" />Due: {milestone.dueDate}</span>
+                                                                <span className="flex items-center"><DollarSign className="h-3 w-3 mr-1" />{milestone.amount}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
