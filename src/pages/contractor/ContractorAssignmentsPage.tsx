@@ -232,28 +232,11 @@ export default function ContractorAssignmentsPage() {
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-3">
-                                                                {milestone.status !== 'COMPLETED' && (
-                                                                    <div className="text-right">
-                                                                        <p className="text-lg font-bold text-gray-900 dark:text-white">{milestone.progress}%</p>
-                                                                    </div>
-                                                                )}
                                                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${mConfig.color}`}>
                                                                     {milestone.status.replace('_', ' ')}
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        {/* Progress bar for non-completed */}
-                                                        {milestone.status !== 'COMPLETED' && (
-                                                            <div className="mt-3">
-                                                                <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
-                                                                    <div
-                                                                        className={`h-full rounded-full ${milestone.status === 'QUERIED' ? 'bg-red-500' : 'bg-indigo-500'
-                                                                            }`}
-                                                                        style={{ width: `${milestone.progress}%` }}
-                                                                    ></div>
-                                                                </div>
-                                                            </div>
-                                                        )}
                                                         {/* Action buttons */}
                                                         {(milestone.status === 'IN_PROGRESS' || milestone.status === 'QUERIED') && (
                                                             <div className="mt-4 flex flex-wrap gap-2">

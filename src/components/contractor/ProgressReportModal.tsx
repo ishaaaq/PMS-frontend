@@ -22,7 +22,6 @@ interface ProgressReportModalProps {
 
 export interface ProgressReportData {
     milestoneId: string;
-    progress: number;
     comments: string;
     files: File[];
     materials: MaterialEntry[];
@@ -35,7 +34,6 @@ export default function ProgressReportModal({
     onClose,
     onSubmit
 }: ProgressReportModalProps) {
-    const [progress, setProgress] = useState(milestone.progress || 0);
     const [comments, setComments] = useState('');
     const [files, setFiles] = useState<File[]>([]);
     const [materials, setMaterials] = useState<MaterialEntry[]>([]);
@@ -102,7 +100,6 @@ export default function ProgressReportModal({
 
         onSubmit({
             milestoneId: milestone.id,
-            progress,
             comments,
             files,
             materials
@@ -175,50 +172,6 @@ export default function ProgressReportModal({
                                     </div>
                                 </div>
                             )}
-
-                            {/* Progress Slider */}
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                                    Completion Progress
-                                </label>
-                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">0%</span>
-                                        <span className={`text-2xl font-bold ${progress === 100 ? 'text-green-600 dark:text-green-400' : `text-${accentColor}-600 dark:text-${accentColor}-400`}`}>
-                                            {progress}%
-                                        </span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">100%</span>
-                                    </div>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        step="5"
-                                        value={progress}
-                                        onChange={(e) => setProgress(Number(e.target.value))}
-                                        className={`w-full h-3 rounded-full appearance-none cursor-pointer
-                                            [&::-webkit-slider-thumb]:appearance-none
-                                            [&::-webkit-slider-thumb]:h-6
-                                            [&::-webkit-slider-thumb]:w-6
-                                            [&::-webkit-slider-thumb]:rounded-full
-                                            [&::-webkit-slider-thumb]:bg-white
-                                            [&::-webkit-slider-thumb]:border-4
-                                            [&::-webkit-slider-thumb]:border-${accentColor}-500
-                                            [&::-webkit-slider-thumb]:shadow-lg
-                                            [&::-webkit-slider-thumb]:cursor-pointer
-                                            bg-gradient-to-r from-gray-200 via-gray-200 to-gray-200 dark:from-gray-600 dark:via-gray-600 dark:to-gray-600`}
-                                        style={{
-                                            background: `linear-gradient(to right, ${isQueried ? '#ef4444' : '#6366f1'} 0%, ${isQueried ? '#ef4444' : '#6366f1'} ${progress}%, ${isQueried ? '#fca5a5' : '#a5b4fc'} ${progress}%, #e5e7eb 100%)`
-                                        }}
-                                    />
-                                    {progress === 100 && (
-                                        <div className="mt-3 flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
-                                            <CheckCircle className="h-4 w-4" />
-                                            <span className="font-medium">Milestone complete! Ready for approval.</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
 
                             {/* Evidence Upload */}
                             <div>
