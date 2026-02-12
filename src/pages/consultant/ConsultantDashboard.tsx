@@ -11,10 +11,12 @@ import {
     FileText,
     Bell
 } from 'lucide-react';
+import VerifyMilestoneModal from '../../components/dashboard/VerifyMilestoneModal';
 
 export default function ConsultantDashboard() {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedSubmission, setSelectedSubmission] = useState<typeof urgentTasks[0] | null>(null);
 
     useEffect(() => {
         // Simulate data loading
@@ -103,7 +105,10 @@ export default function ConsultantDashboard() {
                             <h3 className="font-bold text-gray-900 dark:text-white mb-1">{task.project}</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Submitted by <span className="font-medium text-gray-700 dark:text-gray-300">{task.contractor}</span></p>
 
-                            <button className="w-full py-2 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-lg text-sm font-medium transition-colors">
+                            <button
+                                onClick={() => setSelectedSubmission(task)}
+                                className="w-full py-2 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-lg text-sm font-medium transition-colors"
+                            >
                                 Review Submission
                             </button>
                         </div>
@@ -181,6 +186,13 @@ export default function ConsultantDashboard() {
                     ))}
                 </div>
             </section>
+
+            {/* Submission Verification Modal */}
+            <VerifyMilestoneModal
+                isOpen={!!selectedSubmission}
+                onClose={() => setSelectedSubmission(null)}
+                submission={selectedSubmission}
+            />
         </div>
     );
 }

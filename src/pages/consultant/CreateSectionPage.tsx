@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     ChevronLeft,
@@ -6,7 +6,8 @@ import {
     Plus,
     Trash2,
     DollarSign,
-    CheckCircle
+    CheckCircle,
+    ListChecks
 } from 'lucide-react';
 
 export default function CreateSectionPage() {
@@ -19,11 +20,37 @@ export default function CreateSectionPage() {
     const [inviteEmail, setInviteEmail] = useState('');
 
     const [sections, setSections] = useState([
-        { title: '', budget: '', startDate: '', endDate: '', description: '' }
+        { title: '', budget: '', startDate: '', endDate: '', description: '', milestoneIds: [] as string[] }
     ]);
 
+    // Mock project milestones (in real app, fetch from API)
+    const projectMilestones = [
+        { id: 'm1', title: 'Site Clearing', status: 'COMPLETED', amount: '₦5,000,000' },
+        { id: 'm2', title: 'Foundation Excavation', status: 'COMPLETED', amount: '₦10,000,000' },
+        { id: 'm3', title: 'Foundation Pouring', status: 'PENDING_APPROVAL', amount: '₦10,000,000' },
+        { id: 'm4', title: 'Column Installation', status: 'IN_PROGRESS', amount: '₦15,000,000' },
+        { id: 'm5', title: 'Beam Construction', status: 'IN_PROGRESS', amount: '₦18,000,000' },
+        { id: 'm6', title: 'Floor Slab Casting', status: 'QUERIED', amount: '₦12,000,000' },
+        { id: 'm7', title: 'Electrical Panel Installation', status: 'IN_PROGRESS', amount: '₦8,000,000' },
+        { id: 'm8', title: 'Network Cabling', status: 'IN_PROGRESS', amount: '₦7,000,000' },
+    ];
+
+    // Load section-milestone mapping from localStorage on mount
+    useEffect(() => {
+        const stored = localStorage.getItem(`project-${id}-sections`);
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                // We're creating new sections, so we don't load existing ones
+                // But we track existing mappings for duplicate prevention
+            } catch (e) {
+                console.error('Failed to parse stored sections:', e);
+            }
+        }
+    }, [id]);
+
     const handleAddSection = () => {
-        setSections([...sections, { title: '', budget: '', startDate: '', endDate: '', description: '' }]);
+        setSections([...sections, { title: '', budget: '', startDate: '', endDate: '', description: '', milestoneIds: [] }]);
     };
 
     const handleRemoveSection = (index: number) => {
@@ -32,17 +59,59 @@ export default function CreateSectionPage() {
         setSections(newSections);
     };
 
-    const handleChange = (index: number, field: string, value: string) => {
+    const handleChange = (index: number, field: string, value: string | string[]) => {
         const newSections = [...sections];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (newSections[index] as any)[field] = value;
         setSections(newSections);
     };
 
+    const handleMilestoneToggle = (sectionIndex: number, milestoneId: string) => {
+        const newSections = [...sections];
+        const section = newSections[sectionIndex];
+
+        if (section.milestoneIds.includes(milestoneId)) {
+            // Remove milestone
+            section.milestoneIds = section.milestoneIds.filter(id => id !== milestoneId);
+        } else {
+            // Add milestone
+            section.milestoneIds = [...section.milestoneIds, milestoneId];
+        }
+
+        setSections(newSections);
+    };
+
+    // Check if milestone is assigned to another section
+    const isMilestoneAssigned = (milestoneId: string, currentSectionIndex: number) => {
+        return sections.some((section, index) =>
+            index !== currentSectionIndex && section.milestoneIds.includes(milestoneId)
+        );
+    };
+
+    // Get which section a milestone is assigned to
+    const getAssignedSectionName = (milestoneId: string, currentSectionIndex: number) => {
+        const sectionIndex = sections.findIndex((section, index) =>
+            index !== currentSectionIndex && section.milestoneIds.includes(milestoneId)
+        );
+        if (sectionIndex >= 0) {
+            return sections[sectionIndex].title || `Section ${sectionIndex + 1}`;
+        }
+        return '';
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // API call simulation
-        console.log('Submitting sections:', sections);
+
+        // Save section-milestone mapping to localStorage
+        const sectionsData = sections.map((section, index) => ({
+            id: `s-${Date.now()}-${index}`,
+            ...section
+        }));
+
+        localStorage.setItem(`project-${id}-sections`, JSON.stringify(sectionsData));
+
+        console.log('Submitting sections:', sectionsData);
+
         // Navigate back to project details
         navigate(`/dashboard/consultant/projects/${id}`);
     };
@@ -192,7 +261,7 @@ export default function CreateSectionPage() {
                                         />
                                     </div>
 
-                                    <div className="md:col-span-2">
+                                    <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description & Requirements</label>
                                         <textarea
                                             rows={3}
@@ -201,6 +270,68 @@ export default function CreateSectionPage() {
                                             onChange={(e) => handleChange(index, 'description', e.target.value)}
                                             className="block w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white py-2.5"
                                         />
+                                    </div>
+
+                                    {/* Milestone Assignment */}
+                                    <div className="md:col-span-2 border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                            <ListChecks className="h-4 w-4" />
+                                            Assign Milestones to this Section
+                                        </label>
+                                        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-600">
+                                            {projectMilestones.length > 0 ? (
+                                                <div className="space-y-2">
+                                                    {projectMilestones.map((milestone) => {
+                                                        const isAssigned = isMilestoneAssigned(milestone.id, index);
+                                                        const assignedTo = isAssigned ? getAssignedSectionName(milestone.id, index) : '';
+                                                        const isChecked = section.milestoneIds.includes(milestone.id);
+
+                                                        return (
+                                                            <label
+                                                                key={milestone.id}
+                                                                className={`flex items-start gap-3 p-2 rounded-md cursor-pointer transition-colors ${isAssigned ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-800'
+                                                                    } ${isChecked ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={isChecked}
+                                                                    disabled={isAssigned}
+                                                                    onChange={() => handleMilestoneToggle(index, milestone.id)}
+                                                                    className="mt-1 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
+                                                                />
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{milestone.title}</p>
+                                                                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">{milestone.amount}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${milestone.status === 'COMPLETED' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                                                                                milestone.status === 'IN_PROGRESS' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
+                                                                                    milestone.status === 'QUERIED' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                                                                                        'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                                                                            }`}>
+                                                                            {milestone.status.replace('_', ' ')}
+                                                                        </span>
+                                                                        {isAssigned && (
+                                                                            <span className="text-[10px] text-orange-600 dark:text-orange-400 font-medium">
+                                                                                (Assigned to {assignedTo})
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </label>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No milestones available</p>
+                                            )}
+                                        </div>
+                                        {section.milestoneIds.length > 0 && (
+                                            <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-2">
+                                                {section.milestoneIds.length} milestone{section.milestoneIds.length !== 1 ? 's' : ''} assigned to this section
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div>
