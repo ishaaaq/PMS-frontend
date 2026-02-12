@@ -11,12 +11,10 @@ import {
     FileText,
     Bell
 } from 'lucide-react';
-import VerifyMilestoneModal from '../../components/dashboard/VerifyMilestoneModal';
 
 export default function ConsultantDashboard() {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedSubmission, setSelectedSubmission] = useState<typeof urgentTasks[0] | null>(null);
 
     useEffect(() => {
         // Simulate data loading
@@ -29,8 +27,8 @@ export default function ConsultantDashboard() {
 
     // Mock data - replace with API calls later
     const urgentTasks = [
-        { id: 1, type: 'Verification', project: 'ICT Center Construction', contractor: 'BuildRight Ltd', submitted: '2h ago', deadline: '24h' },
-        { id: 2, type: 'Query Response', project: 'Solar Mini-Grid', contractor: 'GreenEnergy', submitted: '5h ago', deadline: '48h' },
+        { id: '1', submissionId: 'sub-001', type: 'Verification', project: 'ICT Center Construction', contractor: 'BuildRight Ltd', submitted: '2h ago', deadline: '24h' },
+        { id: '2', submissionId: 'sub-002', type: 'Query Response', project: 'Solar Mini-Grid', contractor: 'GreenEnergy', submitted: '5h ago', deadline: '48h' },
     ];
 
     const activeProjects = [
@@ -106,7 +104,7 @@ export default function ConsultantDashboard() {
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Submitted by <span className="font-medium text-gray-700 dark:text-gray-300">{task.contractor}</span></p>
 
                             <button
-                                onClick={() => setSelectedSubmission(task)}
+                                onClick={() => navigate(`/dashboard/consultant/verification-queue?submissionId=${task.submissionId}`)}
                                 className="w-full py-2 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-lg text-sm font-medium transition-colors"
                             >
                                 Review Submission
@@ -186,13 +184,6 @@ export default function ConsultantDashboard() {
                     ))}
                 </div>
             </section>
-
-            {/* Submission Verification Modal */}
-            <VerifyMilestoneModal
-                isOpen={!!selectedSubmission}
-                onClose={() => setSelectedSubmission(null)}
-                submission={selectedSubmission}
-            />
         </div>
     );
 }

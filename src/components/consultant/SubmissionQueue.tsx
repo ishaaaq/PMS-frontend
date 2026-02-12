@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
     Clock,
     CheckCircle,
@@ -8,30 +9,66 @@ import {
 import VerifyMilestoneModal from '../dashboard/VerifyMilestoneModal';
 
 export default function SubmissionQueue() {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [selectedSubmission, setSelectedSubmission] = useState<typeof submissions[0] | null>(null);
     const [activeTab, setActiveTab] = useState<'pending' | 'queried' | 'approved'>('pending');
 
-    // Mock submissions
-    const submissions = [
+    // Mock submissions - in real app would have unique IDs
+    const submissions = useMemo(() => [
         {
-            id: '1',
+            id: 'sub-001',
             project: 'ICT Center Construction',
             contractor: 'BuildRight Construction',
             milestone: 'Foundation Pouring',
             submitted: '2 hours ago',
-            status: 'pending',
+            status: 'pending' as const,
             location: 'Lagos',
-            priority: 'high'
+            priority: 'high' as const,
+            // Data required by VerifyMilestoneModal
+            milestoneId: 'm3',
+            date: '2 hours ago',
+            description: 'Completed foundation pouring for the main building structure. All concrete has been properly cured and meets specification requirements.',
+            images: [
+                'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800',
+                'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800',
+                'https://images.unsplash.com/photo-1590496793929-5497d72b28fe?w=800'
+            ],
+            materialUsage: [
+                { item: 'Concrete (Grade 25)', quantity: '45m³', expected: '45m³' },
+                { item: 'Steel Reinforcement', quantity: '2.8 tons', expected: '3.0 tons' },
+                { item: 'Formwork Lumber', quantity: '850 ft', expected: '900 ft' }
+            ],
+            documents: [
+                { name: 'Foundation_Inspection_Report.pdf', size: '2.4 MB' },
+                { name: 'Material_Test_Results.pdf', size: '1.8 MB' }
+            ]
         },
         {
-            id: '2',
+            id: 'sub-002',
             project: 'Solar Mini-Grid',
             contractor: 'GreenEnergy Solutions',
             milestone: 'Panel Installation',
             submitted: '5 hours ago',
-            status: 'pending',
+            status: 'pending' as const,
             location: 'Kano',
-            priority: 'normal'
+            priority: 'normal' as const,
+            // Data required by VerifyMilestoneModal
+            milestoneId: 'm7',
+            date: '5 hours ago',
+            description: 'Installed solar panels on mounting structures. Completed electrical connections and tested output voltage.',
+            images: [
+                'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800',
+                'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800'
+            ],
+            materialUsage: [
+                { item: 'Solar Panels (350W)', quantity: '48 units', expected: '50 units' },
+                { item: 'Mounting Hardware', quantity: '1 set', expected: '1 set' },
+                { item: 'DC Cables', quantity: '450m', expected: '500m' }
+            ],
+            documents: [
+                { name: 'Panel_Installation_Photos.pdf', size: '5.2 MB' },
+                { name: 'Electrical_Test_Report.pdf', size: '1.1 MB' }
+            ]
         },
         {
             id: '3',
@@ -39,11 +76,40 @@ export default function SubmissionQueue() {
             contractor: 'BuildRight Construction',
             milestone: 'Site Clearing',
             submitted: '2 days ago',
-            status: 'approved',
+            status: 'approved' as const,
             location: 'Lagos',
-            priority: 'normal'
+            priority: 'normal' as const,
+            // Data required by VerifyMilestoneModal
+            milestoneId: 'm1',
+            date: '2 days ago',
+            description: 'Cleared project site of vegetation and debris. Graded land to level specifications.',
+            images: [
+                'https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=800'
+            ],
+            materialUsage: [
+                { item: 'Gravel Fill', quantity: '120m³', expected: '100m³' }
+            ],
+            documents: [
+                { name: 'Site_Survey_Report.pdf', size: '3.0 MB' }
+            ]
         }
-    ];
+    ], []);
+
+    // Auto-open submission if submissionId is in URL
+    useEffect(() => {
+        const submissionId = searchParams.get('submissionId');
+        if (submissionId && !selectedSubmission) {
+            const submission = submissions.find(s => s.id === submissionId);
+            if (submission) {
+                setSelectedSubmission(submission);
+                // Remove submissionId from URL after opening
+                const newParams = new URLSearchParams(searchParams);
+                newParams.delete('submissionId');
+                setSearchParams(newParams, { replace: true });
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams, selectedSubmission, submissions]);
 
     const filteredSubmissions = submissions.filter(s => s.status === activeTab);
 
