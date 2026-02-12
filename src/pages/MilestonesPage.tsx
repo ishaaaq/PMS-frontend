@@ -1,9 +1,34 @@
+import { useState } from 'react';
 import {
     Flag, Calendar, CheckCircle, Clock, AlertCircle,
     ArrowRight, Filter, ChevronRight
 } from 'lucide-react';
+import VerifyMilestoneModal from '../components/dashboard/VerifyMilestoneModal';
 
-const MILESTONES = [
+interface Submission {
+    id: string;
+    milestone: string;
+    contractor: string;
+    date: string;
+    location: string;
+    description: string;
+    images: string[];
+    materialUsage: { item: string; quantity: string; expected: string }[];
+    documents: { name: string; size: string }[];
+}
+
+interface Milestone {
+    id: number;
+    project: string;
+    title: string;
+    date: string;
+    status: string;
+    contractor: string;
+    progress: number;
+    approvedSubmission?: Submission;
+}
+
+const MILESTONES: Milestone[] = [
     {
         id: 1,
         project: 'Lagos-Ibadan Expressway Section B',
@@ -11,7 +36,29 @@ const MILESTONES = [
         date: '2024-03-15',
         status: 'completed',
         contractor: 'Julius Berger',
-        progress: 100
+        progress: 100,
+        approvedSubmission: {
+            id: 'sub-milestone-1',
+            milestone: 'Foundation Completion',
+            contractor: 'Julius Berger',
+            date: 'March 15, 2024',
+            location: 'Lagos-Ibadan Section B',
+            description: 'Successfully completed foundation work for the expressway section. All structural elements meet specifications and passed quality inspections.',
+            images: [
+                'https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=800',
+                'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800'
+            ],
+            materialUsage: [
+                { item: 'Concrete (M30 Grade)', quantity: '2500m³', expected: '2400-2600m³' },
+                { item: 'Steel Reinforcement', quantity: '180 tons', expected: '175-185 tons' },
+                { item: 'Formwork', quantity: '1200m²', expected: '1200m²' }
+            ],
+            documents: [
+                { name: 'Foundation_Completion_Report.pdf', size: '4.2 MB' },
+                { name: 'Quality_Test_Results.pdf', size: '2.1 MB' },
+                { name: 'Site_Photos_Archive.pdf', size: '8.5 MB' }
+            ]
+        }
     },
     {
         id: 2,
@@ -47,11 +94,33 @@ const MILESTONES = [
         date: '2025-01-20',
         status: 'completed',
         contractor: 'RCC',
-        progress: 100
+        progress: 100,
+        approvedSubmission: {
+            id: 'sub-milestone-5',
+            milestone: 'Asphalt Laying',
+            contractor: 'RCC',
+            date: 'January 20, 2025',
+            location: 'Enugu Road Project Site',
+            description: 'Completed asphalt laying for the designated road section. Surface quality tested and approved. Traffic marking completed.',
+            images: [
+                'https://images.unsplash.com/photo-1590496793929-5497d72b28fe?w=800',
+                'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800'
+            ],
+            materialUsage: [
+                { item: 'Asphalt Mix', quantity: '850 tons', expected: '800-900 tons' },
+                { item: 'Tack Coat', quantity: '120 liters', expected: '100-150 liters' },
+                { item: 'Road Marking Paint', quantity: '45 liters', expected: '40-50 liters' }
+            ],
+            documents: [
+                { name: 'Asphalt_Completion_Certificate.pdf', size: '1.8 MB' },
+                { name: 'Surface_Quality_Tests.pdf', size: '3.2 MB' }
+            ]
+        }
     }
 ];
 
 export default function MilestonesPage() {
+    const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 
     const getStatusStyle = (status: string) => {
         switch (status) {
@@ -68,6 +137,13 @@ export default function MilestonesPage() {
             case 'overdue': return <AlertCircle className="h-4 w-4" />;
             case 'in_progress': return <Clock className="h-4 w-4" />;
             default: return <Calendar className="h-4 w-4" />;
+        }
+    };
+
+    const handleMilestoneClick = (milestone: Milestone) => {
+        // Only allow viewing submission if milestone is completed and has approved submission
+        if (milestone.status === 'completed' && milestone.approvedSubmission) {
+            setSelectedSubmission(milestone.approvedSubmission);
         }
     };
 
@@ -117,55 +193,72 @@ export default function MilestonesPage() {
                     </button>
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {MILESTONES.map((milestone) => (
-                        <div key={milestone.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors group">
-                            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${getStatusStyle(milestone.status)}`}>
-                                            {getStatusIcon(milestone.status)}
-                                            {milestone.status.replace('_', ' ').toUpperCase()}
-                                        </span>
-                                        <span className="text-xs font-medium text-gray-400 flex items-center gap-1">
-                                            <Calendar className="h-3 w-3" /> {new Date(milestone.date).toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                    <h4 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-ptdf-primary transition-colors cursor-pointer">
-                                        {milestone.title}
-                                    </h4>
-                                    <div className="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                        <span>{milestone.project}</span>
-                                        <span>•</span>
-                                        <span className="font-medium text-gray-700 dark:text-gray-300">{milestone.contractor}</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-6 lg:min-w-[300px]">
+                    {MILESTONES.map((milestone) => {
+                        const isClickable = milestone.status === 'completed' && milestone.approvedSubmission;
+                        return (
+                            <div
+                                key={milestone.id}
+                                className={`p-6 transition-colors group ${isClickable ? 'hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer' : ''
+                                    }`}
+                                onClick={() => handleMilestoneClick(milestone)}
+                            >
+                                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                                     <div className="flex-1">
-                                        <div className="flex justify-between text-xs font-medium text-gray-500 mb-1.5">
-                                            <span>Progress</span>
-                                            <span>{milestone.progress}%</span>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${getStatusStyle(milestone.status)}`}>
+                                                {getStatusIcon(milestone.status)}
+                                                {milestone.status.replace('_', ' ').toUpperCase()}
+                                            </span>
+                                            <span className="text-xs font-medium text-gray-400 flex items-center gap-1">
+                                                <Calendar className="h-3 w-3" /> {new Date(milestone.date).toLocaleDateString()}
+                                            </span>
                                         </div>
-                                        <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full ${milestone.status === 'completed' ? 'bg-green-500' :
-                                                    milestone.status === 'overdue' ? 'bg-red-500' :
-                                                        milestone.status === 'in_progress' ? 'bg-blue-500' :
-                                                            'bg-gray-300'
-                                                    }`}
-                                                style={{ width: `${milestone.progress}%` }}
-                                            />
+                                        <h4 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-ptdf-primary transition-colors cursor-pointer">
+                                            {milestone.title}
+                                        </h4>
+                                        <div className="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                            <span>{milestone.project}</span>
+                                            <span>•</span>
+                                            <span className="font-medium text-gray-700 dark:text-gray-300">{milestone.contractor}</span>
                                         </div>
                                     </div>
-                                    <button className="p-2 text-gray-400 hover:text-ptdf-primary hover:bg-ptdf-primary/5 rounded-lg transition-colors">
-                                        <ArrowRight className="h-5 w-5" />
-                                    </button>
+
+                                    <div className="flex items-center gap-6 lg:min-w-[300px]">
+                                        <div className="flex-1">
+                                            <div className="flex justify-between text-xs font-medium text-gray-500 mb-1.5">
+                                                <span>Progress</span>
+                                                <span>{milestone.progress}%</span>
+                                            </div>
+                                            <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full ${milestone.status === 'completed' ? 'bg-green-500' :
+                                                        milestone.status === 'overdue' ? 'bg-red-500' :
+                                                            milestone.status === 'in_progress' ? 'bg-blue-500' :
+                                                                'bg-gray-300'
+                                                        }`}
+                                                    style={{ width: `${milestone.progress}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <button className="p-2 text-gray-400 hover:text-ptdf-primary hover:bg-ptdf-primary/5 rounded-lg transition-colors">
+                                            <ArrowRight className="h-5 w-5" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
-        </div>
+
+
+            {/* Submission Details Modal - Read-only for Admin */}
+            <VerifyMilestoneModal
+                isOpen={!!selectedSubmission}
+                onClose={() => setSelectedSubmission(null)}
+                submission={selectedSubmission}
+                readOnly
+            />
+        </div >
     );
 }
