@@ -90,7 +90,7 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
 
                 <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full sm:max-w-4xl mx-4 sm:mx-0">
 
                     {/* Header */}
                     <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-100 dark:border-gray-700">
@@ -114,10 +114,10 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                         </div>
                     </div>
 
-                    <div className="flex flex-col md:flex-row h-[70vh]">
+                    <div className="flex flex-col md:flex-row max-h-[80vh] md:h-[70vh]">
 
                         {/* Left Side: Evidence Viewer */}
-                        <div className="w-full md:w-2/3 bg-gray-900 flex flex-col relative">
+                        <div className="w-full md:w-2/3 bg-gray-900 flex flex-col relative h-64 md:h-auto">
                             {/* Main Image */}
                             <div className="flex-1 flex items-center justify-center overflow-hidden relative group">
                                 <img
@@ -159,8 +159,8 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                         </div>
 
                         {/* Right Side: Details & Actions */}
-                        <div className="w-full md:w-1/3 flex flex-col bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700">
-                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                        <div className="w-full md:w-1/3 flex flex-col bg-white dark:bg-gray-800 md:border-l border-t md:border-t-0 border-gray-200 dark:border-gray-700 max-h-96 md:max-h-none">
+                            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6">
 
                                 {/* Meta Data */}
                                 <div className="space-y-3 pb-4 border-b border-gray-100 dark:border-gray-700">
