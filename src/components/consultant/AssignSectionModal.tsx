@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { X, Plus, Trash2, Briefcase } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Plus, Trash2, Briefcase, AlertTriangle } from 'lucide-react';
+import { SectionsService } from '../../services/sections.service';
+import { supabase } from '@/lib/supabase';
 
 interface AssignSectionModalProps {
     isOpen: boolean;
@@ -20,10 +22,23 @@ export default function AssignSectionModal({ isOpen, onClose, projectId, contrac
     const [contractorMode, setContractorMode] = useState<'existing' | 'invite'>(contractorName ? 'existing' : 'invite');
     const [selectedContractor, setSelectedContractor] = useState(contractorName || '');
     const [inviteEmail, setInviteEmail] = useState('');
+    const [contractors, setContractors] = useState<{ id: string; full_name: string }[]>([]);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const [sections, setSections] = useState([
         { title: '', budget: '', startDate: '', endDate: '', description: '' }
     ]);
+
+    useEffect(() => {
+        supabase
+            .from('profiles')
+            .select('id, full_name')
+            .eq('role', 'contractor')
+            .then(({ data }) => {
+                if (data) setContractors(data as { id: string; full_name: string }[]);
+            });
+    }, []);
 
     if (!isOpen) return null;
 
@@ -43,11 +58,29 @@ export default function AssignSectionModal({ isOpen, onClose, projectId, contrac
         setSections(newSections);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // API call to assign sections
-        console.log('Assigning sections to', contractorName, sections);
-        onClose();
+        if (!projectId) return;
+        setError(null);
+        setSubmitting(true);
+        try {
+            for (const section of sections) {
+                const sectionId = await SectionsService.createSection(
+                    projectId,
+                    section.title,
+                    section.description,
+                    [] // No milestone IDs in this modal
+                );
+                if (contractorMode === 'existing' && selectedContractor && sectionId) {
+                    await SectionsService.assignContractor(String(sectionId), selectedContractor);
+                }
+            }
+            onClose();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to create sections. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -110,8 +143,9 @@ export default function AssignSectionModal({ isOpen, onClose, projectId, contrac
                                             onChange={(e) => setSelectedContractor(e.target.value)}
                                         >
                                             <option value="">Select a contractor...</option>
-                                            <option value="BuildRight Construction">BuildRight Construction</option>
-                                            <option value="GreenEnergy Solutions">GreenEnergy Solutions</option>
+                                            {contractors.map(c => (
+                                                <option key={c.id} value={c.id}>{c.full_name}</option>
+                                            ))}
                                         </select>
                                     ) : (
                                         <div>
@@ -217,11 +251,18 @@ export default function AssignSectionModal({ isOpen, onClose, projectId, contrac
                         </div>
 
                         <div className="bg-gray-50 dark:bg-gray-800/50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-100 dark:border-gray-700">
+                            {error && (
+                                <div className="w-full mb-2 flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+                                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                                    {error}
+                                </div>
+                            )}
                             <button
                                 type="submit"
-                                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                                disabled={submitting}
+                                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-70 disabled:cursor-not-allowed"
                             >
-                                Assign Sections
+                                {submitting ? 'Assigning...' : 'Assign Sections'}
                             </button>
                             <button
                                 type="button"

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { logRpcError } from '@/lib/debug'
 
 export const NotificationsService = {
     async sendNotification(sectionId: string, title: string, message: string) {
@@ -10,7 +11,10 @@ export const NotificationsService = {
                 p_message: message
             }
         )
-        if (error) throw error
+        if (error) {
+            logRpcError('rpc_send_section_notification', error)
+            throw error
+        }
         return data
     }
 }

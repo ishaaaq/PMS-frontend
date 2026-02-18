@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_PROJECTS, ProjectStatus } from '../services/projects';
+import { ProjectsService } from '../services/projects.service';
 import { ArrowLeft, Save, Plus, Trash2, DollarSign, Target, AlertTriangle } from 'lucide-react';
 
 interface Milestone {
@@ -15,6 +15,7 @@ interface Milestone {
 export default function CreateProjectPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // Minimal form state management
     const [formData, setFormData] = useState({
@@ -62,30 +63,70 @@ export default function CreateProjectPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
+
+        // --- Validation ---
+        const errors: string[] = [];
+
+        if (!formData.title.trim()) {
+            errors.push('Project title is required.');
+        }
+
+        const totalBudget = Number(formData.budgetTotal);
+        if (!formData.budgetTotal || isNaN(totalBudget) || totalBudget <= 0) {
+            errors.push('Total budget must be a positive number.');
+        }
+
+        if (milestones.length === 0) {
+            errors.push('At least one milestone is required.');
+        }
+
+        milestones.forEach((m, idx) => {
+            const label = `Milestone ${idx + 1}`;
+            if (!m.title.trim()) {
+                errors.push(`${label}: Title is required.`);
+            }
+            if (!m.dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(m.dueDate)) {
+                errors.push(`${label}: Due date is required (YYYY-MM-DD).`);
+            }
+            const mBudget = Number(m.budget);
+            if (isNaN(mBudget) || mBudget < 0) {
+                errors.push(`${label}: Budget must be a non-negative number.`);
+            }
+        });
 
         if (totalPercentage !== 100) {
-            alert('Total milestone percentage must equal 100%');
+            errors.push('Total milestone percentage must equal 100%.');
+        }
+
+        if (errors.length > 0) {
+            setError(errors.join('\n'));
             return;
         }
 
         setLoading(true);
+        try {
+            await ProjectsService.createProject({
+                title: formData.title.trim(),
+                description: formData.description.trim() || '',
+                location: `${formData.state}, ${formData.lga}`.trim(),
+                total_budget: totalBudget,
+                currency: "NGN",
+                milestones: milestones.map((m, idx) => ({
+                    title: m.title.trim(),
+                    description: '',
+                    sort_order: idx + 1,
+                    budget: Number(m.budget),
+                    due_date: m.dueDate,
+                })),
 
-        // Simulate API Call
-        setTimeout(() => {
-            MOCK_PROJECTS.unshift({
-                id: Math.random().toString(36).substr(2, 9),
-                ...formData,
-                budgetTotal: Number(formData.budgetTotal),
-                approvedBudget: Number(formData.budgetTotal),
-                amountSpent: 0,
-                status: ProjectStatus.INITIATED,
-                progress: 0,
-                gallery: [],
-                department: 'Projects',
             });
-            setLoading(false);
             navigate('/dashboard/projects');
-        }, 1000);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to create project. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -103,6 +144,13 @@ export default function CreateProjectPage() {
                     </div>
                 </div>
             </div>
+
+            {error && (
+                <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                    {error}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-8">
                 {/* 1. Basic Information */}

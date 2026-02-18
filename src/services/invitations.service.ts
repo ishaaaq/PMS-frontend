@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { logRpcError } from '@/lib/debug'
 
 export const InvitationsService = {
     async createInvitation(email: string, role: string, projectId: string, sectionId?: string) {
@@ -11,7 +12,10 @@ export const InvitationsService = {
                 p_section_id: sectionId ?? null
             }
         )
-        if (error) throw error
+        if (error) {
+            logRpcError('rpc_create_invitation', error)
+            throw error
+        }
         return data
     }
 }

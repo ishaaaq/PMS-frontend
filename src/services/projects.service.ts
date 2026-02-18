@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { logRpcError } from '@/lib/debug'
 
 export const ProjectsService = {
     async createProject(payload: Record<string, unknown>) {
@@ -6,7 +7,10 @@ export const ProjectsService = {
             'rpc_create_project',
             { payload }
         )
-        if (error) throw error
+        if (error) {
+            logRpcError('rpc_create_project', error)
+            throw error
+        }
         return data
     },
 
@@ -18,14 +22,20 @@ export const ProjectsService = {
                 p_consultant_user_id: consultantId
             }
         )
-        if (error) throw error
+        if (error) {
+            logRpcError('rpc_assign_consultant_to_project', error)
+            throw error
+        }
     },
 
     async getMyProjects() {
         const { data, error } = await supabase
             .from('projects')
             .select('*')
-        if (error) throw error
+        if (error) {
+            logRpcError('projects.select', error)
+            throw error
+        }
         return data
     }
 }

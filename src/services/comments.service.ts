@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { logRpcError } from '@/lib/debug'
 
 export const CommentsService = {
     async addProjectComment(projectId: string, body: string) {
@@ -9,7 +10,10 @@ export const CommentsService = {
                 p_body: body
             }
         )
-        if (error) throw error
+        if (error) {
+            logRpcError('rpc_add_project_comment', error)
+            throw error
+        }
         return data
     },
 
@@ -19,7 +23,10 @@ export const CommentsService = {
             .select('*')
             .eq('project_id', projectId)
 
-        if (error) throw error
+        if (error) {
+            logRpcError('project_comments.select', error)
+            throw error
+        }
         return data
     }
 }

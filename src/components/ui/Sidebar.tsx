@@ -199,12 +199,14 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps = {}) 
 
                     <div className="flex-shrink-0 flex border-t border-gray-200/50 dark:border-gray-700/30 p-4">
                         <div className="flex w-full items-center justify-between">
-                            <Link to="/auth/login" className="flex-1 group block p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors mr-2">
+                            <Link to="/dashboard/settings" className="flex-1 group block p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors mr-2">
                                 <div className="flex items-center">
-                                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-ptdf-primary to-emerald-400 flex items-center justify-center text-sm font-bold text-white shadow-glow-sm">IA</div>
+                                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-ptdf-primary to-emerald-400 flex items-center justify-center text-sm font-bold text-white shadow-glow-sm">
+                                        {user?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                                    </div>
                                     <div className="ml-3">
-                                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white">Ishaq Abdullahi</p>
-                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Super admin</p>
+                                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white">{user?.full_name || 'User'}</p>
+                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{user?.role || 'Unknown'}</p>
                                     </div>
                                 </div>
                             </Link>

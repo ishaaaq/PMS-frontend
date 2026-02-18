@@ -1,9 +1,8 @@
 
 export const ProjectStatus = {
-    INITIATED: 'INITIATED',
-    ONGOING: 'ONGOING',
+    DRAFT: 'DRAFT',
+    ACTIVE: 'ACTIVE',
     COMPLETED: 'COMPLETED',
-    SUSPENDED: 'SUSPENDED',
 } as const;
 
 export type ProjectStatus = typeof ProjectStatus[keyof typeof ProjectStatus];
@@ -37,7 +36,7 @@ export const MOCK_PROJECTS: Project[] = [
         budgetTotal: 150000000,
         approvedBudget: 150000000,
         amountSpent: 45000000,
-        status: ProjectStatus.ONGOING,
+        status: ProjectStatus.ACTIVE,
         progress: 45,
         contractor: 'BuildRight Construction Ltd',
         consultant: 'Prime Consultants',
@@ -58,7 +57,7 @@ export const MOCK_PROJECTS: Project[] = [
         budgetTotal: 85000000,
         approvedBudget: 85000000,
         amountSpent: 5000000,
-        status: ProjectStatus.INITIATED,
+        status: ProjectStatus.DRAFT,
         progress: 0,
         contractor: 'GreenEnergy Solutions',
         consultant: 'TechnoServe Partners',

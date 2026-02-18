@@ -4,6 +4,8 @@ import {
     Plus, Trash2, Package, ImageIcon
 } from 'lucide-react';
 import type { Milestone } from '../../services/contractor';
+import { SubmissionsService } from '../../services/submissions.service';
+import { StorageService } from '../../services/storage.service';
 
 interface MaterialEntry {
     id: string;
@@ -15,6 +17,7 @@ interface MaterialEntry {
 interface ProgressReportModalProps {
     milestone: Milestone;
     projectTitle: string;
+    projectId: string;
     isQueried?: boolean;
     onClose: () => void;
     onSubmit: (data: ProgressReportData) => void;
@@ -30,6 +33,7 @@ export interface ProgressReportData {
 export default function ProgressReportModal({
     milestone,
     projectTitle,
+    projectId,
     isQueried = false,
     onClose,
     onSubmit
@@ -39,6 +43,7 @@ export default function ProgressReportModal({
     const [materials, setMaterials] = useState<MaterialEntry[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const accentColor = isQueried ? 'red' : 'indigo';
@@ -94,18 +99,37 @@ export default function ProgressReportModal({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        onSubmit({
-            milestoneId: milestone.id,
-            comments,
-            files,
-            materials
-        });
-
-        setIsSubmitting(false);
+        setSubmitError(null);
+        try {
+            // 1. Create the submission record
+            const submissionId = await SubmissionsService.createSubmission(
+                milestone.id,
+                comments
+            );
+            // 2. Upload each evidence file to Supabase Storage
+            if (files.length > 0 && submissionId) {
+                await Promise.all(
+                    files.map(file =>
+                        StorageService.uploadEvidence(
+                            projectId,
+                            milestone.id,
+                            String(submissionId),
+                            file
+                        )
+                    )
+                );
+            }
+            onSubmit({
+                milestoneId: milestone.id,
+                comments,
+                files,
+                materials
+            });
+        } catch (err) {
+            setSubmitError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const getFileIcon = (file: File) => {
@@ -335,7 +359,12 @@ export default function ProgressReportModal({
                         {/* Footer */}
                         <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {files.length > 0 && (
+                                {submitError ? (
+                                    <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400">
+                                        <AlertTriangle className="h-4 w-4" />
+                                        {submitError}
+                                    </span>
+                                ) : files.length > 0 && (
                                     <span className="inline-flex items-center gap-1">
                                         <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400" />
                                         {files.length} file(s) attached

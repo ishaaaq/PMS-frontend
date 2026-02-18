@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { logRpcError } from '@/lib/debug'
 
 export const SectionsService = {
   async createSection(projectId: string, name: string, description: string, milestoneIds: string[]) {
@@ -11,7 +12,10 @@ export const SectionsService = {
         p_milestone_ids: milestoneIds
       }
     )
-    if (error) throw error
+    if (error) {
+      logRpcError('rpc_create_section', error)
+      throw error
+    }
     return data
   },
 
@@ -23,7 +27,10 @@ export const SectionsService = {
         p_contractor_user_id: contractorId
       }
     )
-    if (error) throw error
+    if (error) {
+      logRpcError('rpc_assign_contractor_to_section', error)
+      throw error
+    }
   },
 
   async getProjectSections(projectId: string) {
@@ -32,7 +39,10 @@ export const SectionsService = {
       .select('*')
       .eq('project_id', projectId)
 
-    if (error) throw error
+    if (error) {
+      logRpcError('sections.select', error)
+      throw error
+    }
     return data
   }
 }

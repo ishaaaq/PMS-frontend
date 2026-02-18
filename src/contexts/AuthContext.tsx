@@ -1,54 +1,95 @@
+import { createContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { supabase } from '../lib/supabase';
+import type { Session } from '@supabase/supabase-js';
 
-import { createContext, useState, type ReactNode } from 'react';
-import type { UserRole } from '../services/mockRole';
+export type UserRole = 'ADMIN' | 'CONSULTANT' | 'CONTRACTOR';
 
-interface User {
+export interface AppUser {
     id: string;
     email: string;
-    name: string;
+    full_name: string;
     role: UserRole;
 }
 
-interface AuthContextType {
-    user: User | null;
-    login: (email: string, role: UserRole) => Promise<void>;
-    logout: () => void;
+export interface AuthContextType {
+    user: AppUser | null;
+    login: (email: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
     isLoading: boolean;
+    profileError: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Export the context so the hook file can use it
 export { AuthContext };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    // Use lazy initialization to hydrate user from localStorage, avoiding setState in effect
-    const [user, setUser] = useState<User | null>(() => {
-        const storedUser = localStorage.getItem('pms_user');
-        return storedUser ? JSON.parse(storedUser) : null;
-    });
-    const [isLoading] = useState(false);
+    const [user, setUser] = useState<AppUser | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [profileError, setProfileError] = useState<string | null>(null);
 
-    const login = async (email: string, role: UserRole) => {
-        // Mock login - in a real app, this would call the API
-        const mockUser: User = {
-            id: 'u1',
-            email,
-            name: email.split('@')[0].split('.').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
-            role: role
-        };
+    const fetchProfile = useCallback(async (session: Session) => {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('user_id, role, full_name')
+            .eq('user_id', session.user.id)
+            .single();
 
-        setUser(mockUser);
-        localStorage.setItem('pms_user', JSON.stringify(mockUser));
+        if (error || !data) {
+            setUser(null);
+            setProfileError('Account not provisioned. Contact Admin.');
+            return;
+        }
+
+        setProfileError(null);
+        setUser({
+            id: data.user_id,
+            email: session.user.email ?? '',
+            full_name: data.full_name,
+            role: data.role as UserRole,
+        });
+    }, []);
+
+    useEffect(() => {
+        // 1. Check existing session on mount
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                fetchProfile(session).finally(() => setIsLoading(false));
+            } else {
+                setIsLoading(false);
+            }
+        });
+
+        // 2. Listen for auth state changes (login, logout, token refresh)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            (_event, session) => {
+                if (session) {
+                    fetchProfile(session).finally(() => setIsLoading(false));
+                } else {
+                    setUser(null);
+                    setProfileError(null);
+                    setIsLoading(false);
+                }
+            }
+        );
+
+        return () => subscription.unsubscribe();
+    }, [fetchProfile]);
+
+    const login = async (email: string, password: string) => {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        // onAuthStateChange will handle profile fetch
     };
 
-    const logout = () => {
+    const logout = async () => {
+        await supabase.auth.signOut();
         setUser(null);
-        localStorage.removeItem('pms_user');
+        setProfileError(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, login, logout, isLoading, profileError }}>
             {children}
         </AuthContext.Provider>
     );
