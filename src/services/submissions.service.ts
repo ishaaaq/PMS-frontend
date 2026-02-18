@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { logRpcError } from '@/lib/debug'
 
 export const SubmissionsService = {
     async createSubmission(milestoneId: string, description: string) {
@@ -9,7 +10,10 @@ export const SubmissionsService = {
                 p_work_description: description
             }
         )
-        if (error) throw error
+        if (error) {
+            logRpcError('rpc_create_submission', error)
+            throw error
+        }
         return data
     },
 
@@ -21,7 +25,10 @@ export const SubmissionsService = {
                 p_query_note: note
             }
         )
-        if (error) throw error
+        if (error) {
+            logRpcError('rpc_query_submission', error)
+            throw error
+        }
     },
 
     async approveSubmission(submissionId: string) {
@@ -31,7 +38,10 @@ export const SubmissionsService = {
                 p_submission_id: submissionId
             }
         )
-        if (error) throw error
+        if (error) {
+            logRpcError('rpc_approve_submission', error)
+            throw error
+        }
     },
 
     async getMilestoneSubmissions(milestoneId: string) {
@@ -40,7 +50,10 @@ export const SubmissionsService = {
             .select('*')
             .eq('milestone_id', milestoneId)
 
-        if (error) throw error
+        if (error) {
+            logRpcError('submissions.select', error)
+            throw error
+        }
         return data
     }
 }

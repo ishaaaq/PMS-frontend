@@ -8,8 +8,10 @@ import {
     ChevronLeft,
     ChevronRight,
     MapPin,
-    Calendar
+    Calendar,
+    AlertTriangle
 } from 'lucide-react';
+import { SubmissionsService } from '../../services/submissions.service';
 
 interface MaterialUsage {
     item: string;
@@ -42,10 +44,12 @@ interface VerifyMilestoneModalProps {
     readOnly?: boolean; // Hide action buttons for admin view
 }
 
-export default function VerifyMilestoneModal({ milestone, submission, isOpen, onClose, readOnly = false }: VerifyMilestoneModalProps) {
+export default function VerifyMilestoneModal({ milestone, submission, isOpen, onClose, onVerify, readOnly = false }: VerifyMilestoneModalProps) {
     const [status, setStatus] = useState<'pending' | 'approved' | 'queried'>('pending');
     const [feedback, setFeedback] = useState('');
     const [activeImage, setActiveImage] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [actionError, setActionError] = useState<string | null>(null);
 
     if (!isOpen && !(milestone || submission)) return null;
 
@@ -72,15 +76,38 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
         ]
     };
 
-    const handleApprove = () => {
-        setStatus('approved');
-        // API call would go here
-        setTimeout(() => onClose(), 1500);
+    const handleApprove = async () => {
+        const submissionId = submission?.id || data?.id;
+        if (!submissionId) return;
+        setIsLoading(true);
+        setActionError(null);
+        try {
+            await SubmissionsService.approveSubmission(submissionId);
+            setStatus('approved');
+            onVerify?.({ status: 'approved', feedback: '', milestoneId: milestone?.id, approved: true });
+            setTimeout(() => onClose(), 1500);
+        } catch (err) {
+            setActionError(err instanceof Error ? err.message : 'Failed to approve. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleQuery = () => {
-        setStatus('queried');
-        // API call would go here
+    const handleQuery = async () => {
+        const submissionId = submission?.id || data?.id;
+        if (!submissionId || !feedback.trim()) return;
+        setIsLoading(true);
+        setActionError(null);
+        try {
+            await SubmissionsService.querySubmission(submissionId, feedback);
+            setStatus('queried');
+            onVerify?.({ status: 'queried', feedback, milestoneId: milestone?.id });
+            onClose();
+        } catch (err) {
+            setActionError(err instanceof Error ? err.message : 'Failed to send query. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -234,6 +261,12 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                             {/* Sticky Footer Actions - Hidden in read-only mode */}
                             {!readOnly && (
                                 <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                                    {actionError && (
+                                        <div className="mb-3 flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+                                            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                                            {actionError}
+                                        </div>
+                                    )}
                                     {status === 'approved' ? (
                                         <div className="flex items-center justify-center text-green-600 dark:text-green-400 font-bold p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                                             <CheckCircle className="h-5 w-5 mr-2" />
@@ -245,33 +278,36 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                                                 <>
                                                     <button
                                                         onClick={() => setStatus('queried')}
-                                                        className="flex justify-center items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+                                                        disabled={isLoading}
+                                                        className="flex justify-center items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 disabled:opacity-50"
                                                     >
                                                         <MessageSquare className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
                                                         Query
                                                     </button>
                                                     <button
                                                         onClick={handleApprove}
-                                                        className="flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800"
+                                                        disabled={isLoading}
+                                                        className="flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 disabled:opacity-50"
                                                     >
                                                         <CheckCircle className="h-4 w-4 mr-2" />
-                                                        Approve
+                                                        {isLoading ? 'Approving...' : 'Approve'}
                                                     </button>
                                                 </>
                                             ) : (
                                                 <>
                                                     <button
                                                         onClick={() => setStatus('pending')}
-                                                        className="flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                                                        disabled={isLoading}
+                                                        className="flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50"
                                                     >
                                                         Cancel
                                                     </button>
                                                     <button
                                                         onClick={handleQuery}
-                                                        disabled={!feedback}
+                                                        disabled={!feedback || isLoading}
                                                         className="flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
                                                     >
-                                                        Send Query
+                                                        {isLoading ? 'Sending...' : 'Send Query'}
                                                     </button>
                                                 </>
                                             )}

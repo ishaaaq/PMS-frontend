@@ -38,28 +38,6 @@ import ContractorDocumentsPage from './pages/contractor/ContractorDocumentsPage'
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import type { UserRole } from './services/mockRole';
-
-function DevRoleSwitcher() {
-  const { login, user } = useAuth();
-
-  if (import.meta.env.MODE === 'production') return null;
-
-  return (
-    <div className="fixed bottom-4 right-4 z-50 flex gap-2 p-2 bg-white rounded-lg shadow-lg border border-gray-200">
-      {(['ADMIN', 'CONSULTANT', 'CONTRACTOR'] as UserRole[]).map((role) => (
-        <button
-          key={role}
-          onClick={() => login(user?.email || 'test@ptdf.gov.ng', role)}
-          className={`text-[10px] px-2 py-1 rounded ${user?.role === role ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-        >
-          {role}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 
 function RoleBasedRedirect() {
@@ -147,14 +125,22 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* Shared/Admin Routes (Legacy - will strictly separate later) */}
-            <Route path="projects" element={<ProjectListPage />} />
+            {/* Admin Routes */}
+            <Route path="projects" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ProjectListPage />
+              </ProtectedRoute>
+            } />
             <Route path="projects/new" element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <CreateProjectPage />
               </ProtectedRoute>
             } />
-            <Route path="projects/:id" element={<ProjectDetailsPage />} />
+            <Route path="projects/:id" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ProjectDetailsPage />
+              </ProtectedRoute>
+            } />
             <Route path="consultants" element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <ConsultantListPage />
@@ -239,7 +225,6 @@ function App() {
           <Route path="/contractor/profile" element={<Navigate to="/dashboard/contractor/profile" replace />} />
           <Route path="/contractor/documents" element={<Navigate to="/dashboard/contractor/documents" replace />} />
         </Routes>
-        <DevRoleSwitcher />
       </BrowserRouter>
     </AuthProvider >
   );

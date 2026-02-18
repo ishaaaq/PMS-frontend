@@ -138,7 +138,7 @@ export default function ProjectDetailsPage() {
                                     label="Status"
                                     value={
                                         <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
-                                            project.status === ProjectStatus.ONGOING ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                                            project.status === ProjectStatus.ACTIVE ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
                                         )}>
                                             {project.status}
                                         </span>

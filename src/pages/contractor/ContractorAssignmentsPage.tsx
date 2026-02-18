@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getContractorAssignments } from '../../services/contractor';
 import type { Assignment, Milestone } from '../../services/contractor';
 import ProgressReportModal from '../../components/contractor/ProgressReportModal';
-import type { ProgressReportData } from '../../components/contractor/ProgressReportModal';
+
 import {
     Search, Filter, MapPin, Calendar, ChevronDown, ChevronUp,
     AlertTriangle, CheckCircle, Clock, Upload, DollarSign
@@ -14,7 +14,7 @@ export default function ContractorAssignmentsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('All');
     const [expandedProject, setExpandedProject] = useState<string | null>(null);
-    const [selectedMilestone, setSelectedMilestone] = useState<{ milestone: Milestone; projectTitle: string; isQueried: boolean } | null>(null);
+    const [selectedMilestone, setSelectedMilestone] = useState<{ milestone: Milestone; projectTitle: string; projectId: string; isQueried: boolean } | null>(null);
     const [showSuccess, setShowSuccess] = useState(false);
 
     useEffect(() => {
@@ -61,17 +61,16 @@ export default function ContractorAssignmentsPage() {
         return (priority[a.status] ?? 4) - (priority[b.status] ?? 4);
     });
 
-    const handleUpdateProgress = (milestone: Milestone, projectTitle: string) => {
+    const handleUpdateProgress = (milestone: Milestone, projectTitle: string, projectId: string) => {
         setSelectedMilestone({
             milestone,
             projectTitle,
+            projectId,
             isQueried: milestone.status === 'QUERIED'
         });
     };
 
-    const handleSubmitReport = (data: ProgressReportData) => {
-        console.log('Submitting progress report:', data);
-        // In a real app, this would call an API
+    const handleSubmitReport = () => {
         setSelectedMilestone(null);
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
@@ -241,7 +240,7 @@ export default function ContractorAssignmentsPage() {
                                                         {(milestone.status === 'IN_PROGRESS' || milestone.status === 'QUERIED') && (
                                                             <div className="mt-4 flex flex-wrap gap-2">
                                                                 <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleUpdateProgress(milestone, assignment.projectTitle); }}
+                                                                    onClick={(e) => { e.stopPropagation(); handleUpdateProgress(milestone, assignment.projectTitle, assignment.projectId); }}
                                                                     className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md shadow-sm transition-colors ${milestone.status === 'QUERIED'
                                                                         ? 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600'
                                                                         : 'bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600'
@@ -285,6 +284,7 @@ export default function ContractorAssignmentsPage() {
                 <ProgressReportModal
                     milestone={selectedMilestone.milestone}
                     projectTitle={selectedMilestone.projectTitle}
+                    projectId={selectedMilestone.projectId}
                     isQueried={selectedMilestone.isQueried}
                     onClose={() => setSelectedMilestone(null)}
                     onSubmit={handleSubmitReport}

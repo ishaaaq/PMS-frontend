@@ -1,10 +1,8 @@
 
 export const MilestoneStatus = {
-    PENDING: 'PENDING',
+    NOT_STARTED: 'NOT_STARTED',
     IN_PROGRESS: 'IN_PROGRESS',
     COMPLETED: 'COMPLETED',
-    VERIFIED: 'VERIFIED',
-    PAID: 'PAID',
 } as const;
 
 export type MilestoneStatus = typeof MilestoneStatus[keyof typeof MilestoneStatus];
@@ -28,7 +26,7 @@ export const MOCK_MILESTONES: Milestone[] = [
         title: 'Mobilization & Site Clearing',
         description: 'Initial mobilization of equipment to site and clearing of vegetation.',
         amount: 30000000,
-        status: MilestoneStatus.PAID,
+        status: MilestoneStatus.COMPLETED,
         dueDate: '2025-01-20',
         completedDate: '2025-01-18',
         progress: 100
@@ -49,7 +47,7 @@ export const MOCK_MILESTONES: Milestone[] = [
         title: 'Superstructure (Ground to First Floor)',
         description: 'Block work and columns for ground floor.',
         amount: 40000000,
-        status: MilestoneStatus.PENDING,
+        status: MilestoneStatus.NOT_STARTED,
         dueDate: '2025-05-30',
         progress: 0
     },
@@ -59,7 +57,7 @@ export const MOCK_MILESTONES: Milestone[] = [
         title: 'Roofing & Finishes',
         description: 'Roofing structure, sheets, and initial internal finishes.',
         amount: 35000000,
-        status: MilestoneStatus.PENDING,
+        status: MilestoneStatus.NOT_STARTED,
         dueDate: '2025-08-15',
         progress: 0
     }

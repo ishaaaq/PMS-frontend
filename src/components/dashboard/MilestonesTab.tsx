@@ -4,14 +4,15 @@ import { getProjectMilestones, type Milestone, MilestoneStatus } from '../../ser
 import { Calendar, CheckCircle, Circle, Clock, Upload, CheckSquare } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Badge } from '../ui/Badge';
-import { useRoleStore } from '../../services/mockRole';
+import { useAuth } from '../../hooks/useAuth';
 import SubmitMilestoneModal from './SubmitMilestoneModal';
 import VerifyMilestoneModal from './VerifyMilestoneModal';
 
 export default function MilestonesTab({ projectId }: { projectId: string }) {
     const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [loading, setLoading] = useState(true);
-    const { currentRole } = useRoleStore();
+    const { user } = useAuth();
+    const currentRole = user?.role;
     const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
     const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
     const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
@@ -28,8 +29,6 @@ export default function MilestonesTab({ projectId }: { projectId: string }) {
     const getStatusIcon = (status: MilestoneStatus) => {
         switch (status) {
             case MilestoneStatus.COMPLETED:
-            case MilestoneStatus.VERIFIED:
-            case MilestoneStatus.PAID:
                 return <CheckCircle className="h-6 w-6 text-green-500 dark:text-green-400" />;
             case MilestoneStatus.IN_PROGRESS:
                 return <Clock className="h-6 w-6 text-blue-500 dark:text-blue-400" />;
@@ -41,8 +40,6 @@ export default function MilestonesTab({ projectId }: { projectId: string }) {
     const getStatusColor = (status: MilestoneStatus) => {
         switch (status) {
             case MilestoneStatus.COMPLETED:
-            case MilestoneStatus.VERIFIED:
-            case MilestoneStatus.PAID:
                 return 'success';
             case MilestoneStatus.IN_PROGRESS:
                 return 'info';
@@ -90,7 +87,7 @@ export default function MilestonesTab({ projectId }: { projectId: string }) {
 
                                             {/* ROLE BASED ACTIONS */}
                                             <div className="mt-3">
-                                                {currentRole === 'CONTRACTOR' && (milestone.status === MilestoneStatus.PENDING || milestone.status === MilestoneStatus.IN_PROGRESS) && (
+                                                {currentRole === 'CONTRACTOR' && (milestone.status === MilestoneStatus.NOT_STARTED || milestone.status === MilestoneStatus.IN_PROGRESS) && (
                                                     <button
                                                         onClick={() => handleContractorSubmit(milestone)}
                                                         className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:hover:bg-indigo-500"
@@ -173,7 +170,7 @@ export default function MilestonesTab({ projectId }: { projectId: string }) {
                         // Update the milestone status based on approval
                         setMilestones(milestones.map(m =>
                             m.id === data.milestoneId
-                                ? { ...m, status: data.approved ? MilestoneStatus.VERIFIED : MilestoneStatus.IN_PROGRESS }
+                                ? { ...m, status: data.approved ? MilestoneStatus.COMPLETED : MilestoneStatus.IN_PROGRESS }
                                 : m
                         ));
                         setIsVerifyModalOpen(false);

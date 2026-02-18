@@ -7,8 +7,11 @@ import {
     Trash2,
     DollarSign,
     CheckCircle,
-    ListChecks
+    ListChecks,
+    AlertTriangle
 } from 'lucide-react';
+import { SectionsService } from '../../services/sections.service';
+import { supabase } from '@/lib/supabase';
 
 export default function CreateSectionPage() {
     const navigate = useNavigate();
@@ -18,6 +21,9 @@ export default function CreateSectionPage() {
     const [contractorMode, setContractorMode] = useState<'existing' | 'invite'>('existing');
     const [selectedContractor, setSelectedContractor] = useState('');
     const [inviteEmail, setInviteEmail] = useState('');
+    const [contractors, setContractors] = useState<{ id: string; full_name: string }[]>([]);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const [sections, setSections] = useState([
         { title: '', budget: '', startDate: '', endDate: '', description: '', milestoneIds: [] as string[] }
@@ -35,19 +41,16 @@ export default function CreateSectionPage() {
         { id: 'm8', title: 'Network Cabling', status: 'IN_PROGRESS', amount: '₦7,000,000' },
     ];
 
-    // Load section-milestone mapping from localStorage on mount
+    // Fetch contractors from Supabase
     useEffect(() => {
-        const stored = localStorage.getItem(`project-${id}-sections`);
-        if (stored) {
-            try {
-                JSON.parse(stored);
-                // We're creating new sections, so we don't load existing ones
-                // But we track existing mappings for duplicate prevention
-            } catch (e) {
-                console.error('Failed to parse stored sections:', e);
-            }
-        }
-    }, [id]);
+        supabase
+            .from('profiles')
+            .select('id, full_name')
+            .eq('role', 'contractor')
+            .then(({ data }) => {
+                if (data) setContractors(data as { id: string; full_name: string }[]);
+            });
+    }, []);
 
     const handleAddSection = () => {
         setSections([...sections, { title: '', budget: '', startDate: '', endDate: '', description: '', milestoneIds: [] }]);
@@ -99,21 +102,30 @@ export default function CreateSectionPage() {
         return '';
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Save section-milestone mapping to localStorage
-        const sectionsData = sections.map((section, index) => ({
-            id: `s-${Date.now()}-${index}`,
-            ...section
-        }));
-
-        localStorage.setItem(`project-${id}-sections`, JSON.stringify(sectionsData));
-
-        console.log('Submitting sections:', sectionsData);
-
-        // Navigate back to project details
-        navigate(`/dashboard/consultant/projects/${id}`);
+        if (!id) return;
+        setError(null);
+        setSubmitting(true);
+        try {
+            for (const section of sections) {
+                const sectionId = await SectionsService.createSection(
+                    id,
+                    section.title,
+                    section.description,
+                    section.milestoneIds
+                );
+                // Assign contractor if one is selected (UUID from dropdown)
+                if (contractorMode === 'existing' && selectedContractor && sectionId) {
+                    await SectionsService.assignContractor(String(sectionId), selectedContractor);
+                }
+            }
+            navigate(`/dashboard/consultant/projects/${id}`);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to create sections. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -135,6 +147,13 @@ export default function CreateSectionPage() {
                     </div>
                 </div>
             </div>
+
+            {error && (
+                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                    {error}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-8">
 
@@ -198,8 +217,9 @@ export default function CreateSectionPage() {
                                         onChange={(e) => setSelectedContractor(e.target.value)}
                                     >
                                         <option value="">Select a contractor...</option>
-                                        <option value="BuildRight Construction">BuildRight Construction</option>
-                                        <option value="GreenEnergy Solutions">GreenEnergy Solutions</option>
+                                        {contractors.map(c => (
+                                            <option key={c.id} value={c.id}>{c.full_name}</option>
+                                        ))}
                                     </select>
                                 </div>
                             ) : (
@@ -405,10 +425,11 @@ export default function CreateSectionPage() {
                     </button>
                     <button
                         type="submit"
-                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold shadow-lg shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-2"
+                        disabled={submitting}
+                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold shadow-lg shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-2"
                     >
                         <CheckCircle className="h-4 w-4" />
-                        Create & Assign Sections
+                        {submitting ? 'Creating...' : 'Create & Assign Sections'}
                     </button>
                 </div>
 

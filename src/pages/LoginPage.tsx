@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import type { UserRole } from '../services/mockRole';
 
 interface LocationState {
     from?: { pathname: string };
@@ -24,17 +23,11 @@ export default function LoginPage() {
         setError('');
 
         try {
-            // Determine role based on email for testing
-            let role: UserRole = 'CONTRACTOR';
-            if (email.includes('admin')) role = 'ADMIN';
-            else if (email.includes('consultant')) role = 'CONSULTANT';
-
-            // Use the new auth context login
-            await login(email, role);
-
+            await login(email, password);
             navigate(from, { replace: true });
-        } catch {
-            setError('Invalid credentials or server unavailable');
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Invalid credentials or server unavailable';
+            setError(msg);
         } finally {
             setLoading(false);
         }
