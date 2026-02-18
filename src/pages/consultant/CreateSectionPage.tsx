@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { SectionsService } from '../../services/sections.service';
 import { supabase } from '@/lib/supabase';
+import { logRpcError } from '@/lib/debug';
 
 export default function CreateSectionPage() {
     const navigate = useNavigate();
@@ -29,28 +30,33 @@ export default function CreateSectionPage() {
         { title: '', budget: '', startDate: '', endDate: '', description: '', milestoneIds: [] as string[] }
     ]);
 
-    // Mock project milestones (in real app, fetch from API)
-    const projectMilestones = [
-        { id: 'm1', title: 'Site Clearing', status: 'COMPLETED', amount: '₦5,000,000' },
-        { id: 'm2', title: 'Foundation Excavation', status: 'COMPLETED', amount: '₦10,000,000' },
-        { id: 'm3', title: 'Foundation Pouring', status: 'PENDING_APPROVAL', amount: '₦10,000,000' },
-        { id: 'm4', title: 'Column Installation', status: 'IN_PROGRESS', amount: '₦15,000,000' },
-        { id: 'm5', title: 'Beam Construction', status: 'IN_PROGRESS', amount: '₦18,000,000' },
-        { id: 'm6', title: 'Floor Slab Casting', status: 'QUERIED', amount: '₦12,000,000' },
-        { id: 'm7', title: 'Electrical Panel Installation', status: 'IN_PROGRESS', amount: '₦8,000,000' },
-        { id: 'm8', title: 'Network Cabling', status: 'IN_PROGRESS', amount: '₦7,000,000' },
-    ];
+    // Real milestones from Supabase
+    const [projectMilestones, setProjectMilestones] = useState<
+        { id: string; title: string; status: string; budget: number }[]
+    >([]);
 
-    // Fetch contractors from Supabase
+    // Fetch milestones + contractors on mount
     useEffect(() => {
+        if (!id) return;
+        SectionsService.getProjectMilestones(id)
+            .then(data => {
+                if (data) setProjectMilestones(data.map(m => ({
+                    id: m.id,
+                    title: m.title,
+                    status: m.status,
+                    budget: Number(m.budget)
+                })));
+            })
+            .catch(err => logRpcError('getProjectMilestones', err));
+
         supabase
             .from('profiles')
-            .select('id, full_name')
-            .eq('role', 'contractor')
+            .select('user_id, full_name')
+            .eq('role', 'CONTRACTOR')
             .then(({ data }) => {
-                if (data) setContractors(data as { id: string; full_name: string }[]);
+                if (data) setContractors(data.map(c => ({ id: c.user_id, full_name: c.full_name })));
             });
-    }, []);
+    }, [id]);
 
     const handleAddSection = () => {
         setSections([...sections, { title: '', budget: '', startDate: '', endDate: '', description: '', milestoneIds: [] }]);
@@ -322,7 +328,7 @@ export default function CreateSectionPage() {
                                                                 <div className="flex-1">
                                                                     <div className="flex items-center justify-between">
                                                                         <p className="text-sm font-medium text-gray-900 dark:text-white">{milestone.title}</p>
-                                                                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">{milestone.amount}</span>
+                                                                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">₦{milestone.budget.toLocaleString()}</span>
                                                                     </div>
                                                                     <div className="flex items-center gap-2 mt-0.5">
                                                                         <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${milestone.status === 'COMPLETED' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :

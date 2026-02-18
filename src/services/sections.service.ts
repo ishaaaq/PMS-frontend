@@ -44,5 +44,54 @@ export const SectionsService = {
       throw error
     }
     return data
+  },
+
+  /** Sections with assigned contractor info (name, user_id) */
+  async getProjectSectionsDetailed(projectId: string) {
+    const { data, error } = await supabase
+      .from('sections')
+      .select(`
+        id, name, description, created_at,
+        section_assignments (
+          contractor_user_id,
+          profiles:contractor_user_id ( full_name )
+        )
+      `)
+      .eq('project_id', projectId)
+
+    if (error) {
+      logRpcError('sections.detailed', error)
+      throw error
+    }
+    return data
+  },
+
+  /** Map of section_id → milestone_id[] for a project */
+  async getSectionMilestoneMap(projectId: string) {
+    const { data, error } = await supabase
+      .from('section_milestones')
+      .select('section_id, milestone_id, sections!inner(project_id)')
+      .eq('sections.project_id', projectId)
+
+    if (error) {
+      logRpcError('section_milestones.select', error)
+      throw error
+    }
+    return data as { section_id: string; milestone_id: string }[]
+  },
+
+  /** All milestones for a project (ordered by sort_order) */
+  async getProjectMilestones(projectId: string) {
+    const { data, error } = await supabase
+      .from('milestones')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('sort_order')
+
+    if (error) {
+      logRpcError('milestones.select', error)
+      throw error
+    }
+    return data
   }
 }

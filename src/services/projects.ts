@@ -1,8 +1,11 @@
+import { supabase } from '@/lib/supabase';
+import { logRpcError } from '@/lib/debug';
 
 export const ProjectStatus = {
     DRAFT: 'DRAFT',
     ACTIVE: 'ACTIVE',
     COMPLETED: 'COMPLETED',
+    SUSPENDED: 'SUSPENDED',
 } as const;
 
 export type ProjectStatus = typeof ProjectStatus[keyof typeof ProjectStatus];
@@ -26,76 +29,111 @@ export interface Project {
     department: string;
 }
 
-export const MOCK_PROJECTS: Project[] = [
-    {
-        id: '1',
-        title: 'Construction of ICT Center',
-        description: 'Building a state-of-the-art ICT center for the University of Lagos. This initiative aims to create a modern learning environment for students in the area. We are looking for a contractor who can bring this vision to life, ensuring high-quality construction and adherence to safety standards. The project will include classrooms, a library, and recreational spaces, all designed to foster a positive educational experience.',
-        lga: 'Lagos Mainland',
-        state: 'Lagos',
-        budgetTotal: 150000000,
-        approvedBudget: 150000000,
-        amountSpent: 45000000,
-        status: ProjectStatus.ACTIVE,
-        progress: 45,
-        contractor: 'BuildRight Construction Ltd',
-        consultant: 'Prime Consultants',
-        startDate: '2025-01-10',
-        endDate: '2025-12-20',
-        department: 'Project',
-        gallery: [
-            'https://images.unsplash.com/photo-1590644365607-1c5a2e9a3a70?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGNvbnN0cnVjdGlvbiUyMHNpdGV8ZW58MHx8MHx8fDA%3D',
-            'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGNvbnN0cnVjdGlvbnxlbnwwfHwwfHx8MA%3D%3D'
-        ]
-    },
-    {
-        id: '2',
-        title: 'Solar Power Installation',
-        description: 'Installation of 500KW Solar mini-grid.',
-        lga: 'Kano Municipal',
-        state: 'Kano',
-        budgetTotal: 85000000,
-        approvedBudget: 85000000,
-        amountSpent: 5000000,
-        status: ProjectStatus.DRAFT,
-        progress: 0,
-        contractor: 'GreenEnergy Solutions',
-        consultant: 'TechnoServe Partners',
-        startDate: '2025-02-01',
-        endDate: '2025-08-01',
-        department: 'Renewable Energy',
-        gallery: []
-    },
-    {
-        id: '3',
-        title: 'Laboratory Equipment Supply',
-        description: 'Supply and installation of chemistry lab equipment.',
-        lga: 'Port Harcourt',
-        state: 'Rivers',
-        budgetTotal: 45000000,
-        approvedBudget: 45000000,
-        amountSpent: 45000000,
-        status: ProjectStatus.COMPLETED,
-        progress: 100,
-        contractor: 'LabTech Nigeria',
-        consultant: 'Prime Consultants',
-        startDate: '2024-06-01',
-        endDate: '2024-12-01',
-        department: 'Education',
-        gallery: [
-            'https://images.unsplash.com/photo-1579165466741-7f35a4755657?w=500&auto=format&fit=crop&q=60'
-        ]
-    },
-];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mapProject = (p: any): Project => {
+    // Parse location if it's stored as "State, LGA" string
+    let state = p.state || '';
+    let lga = p.lga || '';
+
+    // If location is stored as a single string field, try to parse
+    if (!state && !lga && p.location) {
+        const parts = p.location.split(',').map((s: string) => s.trim());
+        if (parts.length >= 2) {
+            state = parts[0];
+            lga = parts[1];
+        } else {
+            state = p.location;
+        }
+    }
+
+    // Determine status from DB or default
+    const status = (p.status?.toUpperCase() as ProjectStatus) || ProjectStatus.DRAFT;
+
+    return {
+        id: p.id,
+        title: p.title,
+        description: p.description || '',
+        lga,
+        state,
+        budgetTotal: Number(p.total_budget || 0),
+        approvedBudget: Number(p.approved_budget || p.total_budget || 0), // Fallback if approved not separate
+        amountSpent: Number(p.amount_spent || 0),
+        status,
+        progress: Number(p.progress || 0),
+        contractor: p.contractor_profile?.full_name || 'Unassigned',
+        consultant: p.consultant_profile?.full_name || 'Unassigned',
+        startDate: p.start_date || new Date().toISOString().split('T')[0],
+        endDate: p.end_date || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        gallery: p.gallery || [],
+        department: p.department || 'Project',
+    };
+};
 
 export const getProjects = async (): Promise<Project[]> => {
-    return new Promise((resolve) => {
-        setTimeout(() => resolve(MOCK_PROJECTS), 800); // Simulate network delay
-    });
+    // Basic fetch with profile joins for names.
+    // If foreign keys are not set up as `contractor_id` -> `profiles.id`, 
+    // the join syntax `contractor_profile:contractor_id ( full_name )` might fail.
+    // We will attempt it, and handle errors if necessary.
+
+    const { data, error } = await supabase
+        .from('projects')
+        .select(`
+            *,
+            contractor_profile:contractor_user_id ( full_name ),
+            consultant_profile:consultant_user_id ( full_name )
+        `)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        // Fallback: If joined columns fail (e.g. invalid relationship name), try raw fetch
+        // Checking for PostgREST error codes for undefined column/relation
+        if (error.code === '42703' || error.code === 'PGRST200') {
+            console.warn('Join failed, fetching raw projects', error.message);
+            const { data: simpleData, error: simpleError } = await supabase
+                .from('projects')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (simpleError) {
+                logRpcError('getProjects', simpleError);
+                return [];
+            }
+            return (simpleData || []).map(mapProject);
+        }
+        logRpcError('getProjects', error);
+        return [];
+    }
+
+    return (data || []).map(mapProject);
 };
 
 export const getProject = async (id: string): Promise<Project | undefined> => {
-    return new Promise((resolve) => {
-        setTimeout(() => resolve(MOCK_PROJECTS.find(p => p.id === id)), 500);
-    });
+    const { data, error } = await supabase
+        .from('projects')
+        .select(`
+            *,
+            contractor_profile:contractor_user_id ( full_name ),
+            consultant_profile:consultant_user_id ( full_name )
+        `)
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        if (error.code === '42703' || error.code === 'PGRST200') {
+            const { data: simpleData, error: simpleError } = await supabase
+                .from('projects')
+                .select('*')
+                .eq('id', id)
+                .single();
+            if (simpleError) {
+                logRpcError('getProject', simpleError);
+                return undefined;
+            }
+            return simpleData ? mapProject(simpleData) : undefined;
+        }
+        logRpcError('getProject', error);
+        return undefined;
+    }
+
+    return mapProject(data);
 };

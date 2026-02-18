@@ -1,4 +1,5 @@
-
+import { supabase } from '@/lib/supabase';
+import { logRpcError } from '@/lib/debug';
 export interface BudgetSummary {
     currency: string;
     totalAllocated: number;
@@ -161,7 +162,109 @@ export const getContractorBudget = async (): Promise<BudgetSummary> => {
 };
 
 export const getContractorAssignments = async (): Promise<Assignment[]> => {
-    return new Promise((resolve) => setTimeout(() => resolve(MOCK_ASSIGNMENTS), 400));
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    // Get all section assignments for this contractor
+    const { data, error } = await supabase
+        .from('section_assignments')
+        .select(`
+            section_id,
+            sections (
+                id, name, project_id,
+                projects ( id, title, location, status )
+            )
+        `)
+        .eq('contractor_user_id', user.id);
+
+    if (error) {
+        logRpcError('getContractorAssignments', error);
+        return [];
+    }
+
+    // For each section, get its milestones
+    const projectMap = new Map<string, Assignment>();
+
+    for (const row of data || []) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sec = row.sections as any;
+        if (!sec) continue;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const proj = sec.projects as any;
+        if (!proj) continue;
+
+        const projectId = proj.id as string;
+
+        if (!projectMap.has(projectId)) {
+            projectMap.set(projectId, {
+                id: projectId,
+                projectId,
+                projectTitle: proj.title,
+                location: proj.location || '',
+                milestones: [],
+                overallProgress: 0,
+                status: proj.status === 'COMPLETED' ? 'COMPLETED' : proj.status === 'ACTIVE' ? 'IN_PROGRESS' : 'IN_PROGRESS',
+                lastUpdated: new Date().toISOString(),
+            });
+        }
+    }
+
+    // Fetch milestones for each section
+    const sectionIds = (data || []).map(r => r.section_id);
+    if (sectionIds.length > 0) {
+        const { data: smData, error: smError } = await supabase
+            .from('section_milestones')
+            .select('section_id, milestone_id, milestones ( id, title, status, due_date, budget )')
+            .in('section_id', sectionIds);
+
+        if (smError) {
+            logRpcError('section_milestones.contractor', smError);
+        }
+
+        // Map section_id → project_id using the data we already have
+        const sectionToProject = new Map<string, string>();
+        for (const row of data || []) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const sec = row.sections as any;
+            if (sec?.projects) sectionToProject.set(row.section_id, sec.projects.id);
+        }
+
+        for (const sm of smData || []) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const ms = sm.milestones as any;
+            if (!ms) continue;
+            const projId = sectionToProject.get(sm.section_id);
+            if (!projId) continue;
+            const assignment = projectMap.get(projId);
+            if (!assignment) continue;
+
+            assignment.milestones.push({
+                id: ms.id,
+                title: ms.title,
+                progress: ms.status === 'COMPLETED' ? 100 : ms.status === 'IN_PROGRESS' ? 50 : 0,
+                status: ms.status as AssignmentStatus,
+                dueDate: ms.due_date,
+                amount: Number(ms.budget),
+            });
+        }
+    }
+
+    // Calculate overall progress for each project
+    for (const assignment of projectMap.values()) {
+        if (assignment.milestones.length > 0) {
+            const completed = assignment.milestones.filter(m => m.status === 'COMPLETED').length;
+            assignment.overallProgress = Math.round((completed / assignment.milestones.length) * 100);
+        }
+        // Check for queried milestones
+        const queried = assignment.milestones.find(m => m.status === 'QUERIED');
+        if (queried) {
+            assignment.status = 'QUERIED';
+            assignment.milestoneTitle = queried.title;
+            assignment.queryReason = 'Consultant has flagged this milestone for review.';
+        }
+    }
+
+    return Array.from(projectMap.values());
 };
 
 export const getContractorNotifications = async (): Promise<Notification[]> => {

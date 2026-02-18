@@ -21,8 +21,21 @@ export default function PersonnelTab({ project }: PersonnelTabProps) {
     const [email, setEmail] = useState('');
 
     // Mock data - in real app, this would come from API
-    const consultants: Person[] = [];
-    const contractors: Person[] = [];
+    // Populate from project data
+    const consultants: Person[] = project.consultant && project.consultant !== 'Unassigned' ? [{
+        id: 'consultant-1',
+        name: project.consultant,
+        email: 'consultant@ptdf.gov.ng', // proper email fetch requires schema change
+        role: 'Lead Consultant'
+    }] : [];
+
+    const contractors: Person[] = project.contractor && project.contractor !== 'Unassigned' ? [{
+        id: 'contractor-1',
+        name: project.contractor,
+        email: 'contractor@ptdf.gov.ng',
+        role: 'Lead Contractor'
+    }] : [];
+
     const inHouseTeam: Person[] = [];
 
     const handleInvite = (e: React.FormEvent) => {

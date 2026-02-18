@@ -7,7 +7,8 @@ interface AssignSectionModalProps {
     isOpen: boolean;
     onClose: () => void;
     projectId?: string;
-    contractorName?: string; // Optional now
+    sectionId?: string; // If provided, skip section creation and only assign contractor
+    contractorName?: string;
 }
 
 type Section = {
@@ -18,7 +19,7 @@ type Section = {
     description: string;
 };
 
-export default function AssignSectionModal({ isOpen, onClose, projectId, contractorName }: AssignSectionModalProps) {
+export default function AssignSectionModal({ isOpen, onClose, projectId, sectionId, contractorName }: AssignSectionModalProps) {
     const [contractorMode, setContractorMode] = useState<'existing' | 'invite'>(contractorName ? 'existing' : 'invite');
     const [selectedContractor, setSelectedContractor] = useState(contractorName || '');
     const [inviteEmail, setInviteEmail] = useState('');
@@ -33,10 +34,10 @@ export default function AssignSectionModal({ isOpen, onClose, projectId, contrac
     useEffect(() => {
         supabase
             .from('profiles')
-            .select('id, full_name')
-            .eq('role', 'contractor')
+            .select('user_id, full_name')
+            .eq('role', 'CONTRACTOR')
             .then(({ data }) => {
-                if (data) setContractors(data as { id: string; full_name: string }[]);
+                if (data) setContractors(data.map(c => ({ id: c.user_id, full_name: c.full_name })));
             });
     }, []);
 
@@ -60,24 +61,32 @@ export default function AssignSectionModal({ isOpen, onClose, projectId, contrac
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!projectId) return;
         setError(null);
         setSubmitting(true);
         try {
-            for (const section of sections) {
-                const sectionId = await SectionsService.createSection(
-                    projectId,
-                    section.title,
-                    section.description,
-                    [] // No milestone IDs in this modal
-                );
-                if (contractorMode === 'existing' && selectedContractor && sectionId) {
-                    await SectionsService.assignContractor(String(sectionId), selectedContractor);
+            if (sectionId) {
+                // Assign-only mode: just assign the contractor to the existing section
+                if (contractorMode === 'existing' && selectedContractor) {
+                    await SectionsService.assignContractor(sectionId, selectedContractor);
+                }
+            } else {
+                // Create-and-assign mode
+                if (!projectId) return;
+                for (const section of sections) {
+                    const newSectionId = await SectionsService.createSection(
+                        projectId,
+                        section.title,
+                        section.description,
+                        []
+                    );
+                    if (contractorMode === 'existing' && selectedContractor && newSectionId) {
+                        await SectionsService.assignContractor(String(newSectionId), selectedContractor);
+                    }
                 }
             }
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create sections. Please try again.');
+            setError(err instanceof Error ? err.message : 'Failed to assign. Please try again.');
         } finally {
             setSubmitting(false);
         }

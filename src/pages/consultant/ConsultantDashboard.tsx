@@ -11,31 +11,116 @@ import {
     FileText,
     Bell
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+interface UrgentTask {
+    id: string;
+    submissionId: string;
+    type: string;
+    project: string;
+    contractor: string;
+    submitted: string;
+    deadline: string;
+}
+
+interface ActiveProject {
+    id: string;
+    title: string;
+    location: string;
+    status: string;
+    progress: number;
+    nextMilestone: string;
+}
 
 export default function ConsultantDashboard() {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
 
+    const [urgentTasks, setUrgentTasks] = useState<UrgentTask[]>([]);
+    const [activeProjects, setActiveProjects] = useState<ActiveProject[]>([]);
+
     useEffect(() => {
-        // Simulate data loading
-        const timer = setTimeout(() => {
-            setIsLoading(false);
-        }, 800);
-        return () => clearTimeout(timer);
+        const fetchData = async () => {
+            setIsLoading(true);
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+
+                // Fetch urgent tasks (Pending Submissions)
+                const { data: tasks, error: taskError } = await supabase
+                    .from('submissions')
+                    .select(`
+                        id, 
+                        status, 
+                        submitted_at, 
+                        milestones (
+                            title,
+                            sections (
+                                projects (
+                                    title
+                                )
+                            )
+                        ),
+                        profiles!submissions_contractor_user_id_fkey (
+                            full_name
+                        )
+                    `)
+                    .eq('status', 'PENDING_APPROVAL')
+                    .order('submitted_at', { ascending: false })
+                    .limit(5);
+
+                if (taskError) console.error('Error fetching tasks', taskError);
+
+                if (tasks) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    setUrgentTasks(tasks.map((t: any) => ({
+                        id: t.id,
+                        submissionId: t.id,
+                        type: 'Verification',
+                        project: t.milestones?.sections?.projects?.title || 'Unknown Project',
+                        contractor: t.profiles?.full_name || 'Unknown Contractor',
+                        submitted: new Date(t.submitted_at).toLocaleDateString(),
+                        deadline: '24h' // Placeholder
+                    })));
+                }
+
+                // Fetch active projects
+                const { data: projData, error: projError } = await supabase
+                    .from('project_consultants')
+                    .select(`
+                        project_id,
+                        projects (
+                            id,
+                            title,
+                            location,
+                            status
+                        )
+                    `)
+                    .eq('consultant_user_id', user.id);
+
+                if (projError) console.error('Error fetching projects', projError);
+
+                if (projData) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    setActiveProjects(projData.map((p: any) => ({
+                        id: p.projects.id,
+                        title: p.projects.title,
+                        location: p.projects.location,
+                        status: p.projects.status,
+                        progress: 0, // TODO: Calculate progress
+                        nextMilestone: 'TBD'
+                    })));
+                }
+
+            } catch (error) {
+                console.error('Failed to load dashboard data', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
     }, []);
-
-
-    // Mock data - replace with API calls later
-    const urgentTasks = [
-        { id: '1', submissionId: 'sub-001', type: 'Verification', project: 'ICT Center Construction', contractor: 'BuildRight Ltd', submitted: '2h ago', deadline: '24h' },
-        { id: '2', submissionId: 'sub-002', type: 'Query Response', project: 'Solar Mini-Grid', contractor: 'GreenEnergy', submitted: '5h ago', deadline: '48h' },
-    ];
-
-    const activeProjects = [
-        { id: '1', title: 'ICT Center Construction', location: 'Lagos', status: 'Active', progress: 45, nextMilestone: 'Roofing' },
-        { id: '2', title: 'Solar Mini-Grid', location: 'Kano', status: 'Active', progress: 12, nextMilestone: 'Foundation' },
-        { id: '3', title: 'Laboratory Equipment', location: 'Rivers', status: 'Pending', progress: 0, nextMilestone: 'Mobilization' },
-    ];
 
     if (isLoading) {
         return (
