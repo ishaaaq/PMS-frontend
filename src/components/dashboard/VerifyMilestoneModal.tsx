@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     X,
     CheckCircle,
@@ -12,6 +12,8 @@ import {
     AlertTriangle
 } from 'lucide-react';
 import { SubmissionsService } from '../../services/submissions.service';
+import { StorageService } from '../../services/storage.service';
+
 
 interface MaterialUsage {
     item: string;
@@ -22,6 +24,7 @@ interface MaterialUsage {
 interface DocumentFile {
     name: string;
     size: string;
+    url?: string;
 }
 
 interface Milestone {
@@ -51,33 +54,93 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
     const [isLoading, setIsLoading] = useState(false);
     const [actionError, setActionError] = useState<string | null>(null);
 
-    if (!isOpen && !(milestone || submission)) return null;
 
-    // Mock submission data if not provided (for development/preview)
-    const data = milestone || submission || {
-        id: 'sub-123',
-        milestone: 'Foundation Construction',
-        contractor: 'BuildRight Construction Ltd',
-        date: 'Oct 24, 2025',
-        location: 'Lagos Main Site',
-        description: 'Completed excavation and pouring of foundation concrete according to specifications.',
-        images: [
-            'https://images.unsplash.com/photo-1590644365607-1c5a2e9a3a70?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1590644365607-1c5a2e9a3a70?auto=format&fit=crop&w=800&q=80'
-        ],
-        documents: [
-            { name: 'Material_Test_Result.pdf', size: '2.4 MB' },
-            { name: 'Site_Inspection_Log.pdf', size: '1.2 MB' }
-        ],
-        materialUsage: [
-            { item: 'Cement', quantity: '500 Bags', expected: '450-550 Bags' },
-            { item: 'Steel Reinforcement', quantity: '2 Tons', expected: '2 Tons' }
-        ]
+
+    // State for data
+    const [images, setImages] = useState<string[]>([]);
+    const [documents, setDocuments] = useState<DocumentFile[]>([]);
+    const [materialUsage, setMaterialUsage] = useState<MaterialUsage[]>([]);
+
+    const submissionId = submission?.id || milestone?.id; // Fallback logic
+
+    // Fetch Evidence & Materials
+    useEffect(() => {
+        if (!isOpen || !submissionId) return;
+
+        const loadData = async () => {
+            setIsLoading(true);
+            try {
+                // Fetch materials
+                const materials = await SubmissionsService.getSubmissionMaterials(submissionId);
+                if (materials) {
+                    setMaterialUsage(materials.map(m => ({
+                        item: m.material_name,
+                        quantity: `${m.quantity} ${m.unit}`,
+                        expected: 'N/A' // Not currently in DB
+                    })));
+                }
+
+                // Fetch evidence
+                const evidence = await SubmissionsService.getSubmissionEvidence(submissionId);
+                const imgs: string[] = [];
+                const docs: DocumentFile[] = [];
+
+                if (evidence) {
+                    for (const file of evidence) {
+                        try {
+                            const url = await StorageService.getSignedUrl(file.file_path);
+                            if (file.file_type && file.file_type.startsWith('image/')) {
+                                imgs.push(url);
+                            } else {
+                                docs.push({
+                                    name: file.file_path.split('/').pop() || 'Document',
+                                    size: formatSize(file.file_size || 0),
+                                    url: url
+                                });
+                            }
+                        } catch (e) {
+                            console.error('Failed to sign URL for', file.file_path, e);
+                        }
+                    }
+                }
+                setImages(imgs);
+                setDocuments(docs);
+            } catch (err) {
+                console.error('Failed to load submission data', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        // If mock data is provided directly in submission, use it (for preview)
+        if (submission?.images || submission?.documents) {
+            setImages(submission.images || []);
+            setDocuments(submission.documents || []);
+            setMaterialUsage(submission.materialUsage || []);
+            setIsLoading(false);
+        } else {
+            loadData();
+        }
+    }, [isOpen, submissionId, submission]);
+
+    const formatSize = (bytes: number) => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    // Derived data for display
+    const displayData = {
+        milestone: submission?.milestone || milestone?.title || 'Unknown Milestone',
+        description: submission?.description || submission?.work_description || 'No description provided.',
+        contractor: submission?.contractor || 'Unknown Contractor',
+        date: submission?.date || new Date(submission?.submitted_at || Date.now()).toLocaleDateString(),
+        location: submission?.location || 'Unknown Location'
     };
 
     const handleApprove = async () => {
-        const submissionId = submission?.id || data?.id;
         if (!submissionId) return;
         setIsLoading(true);
         setActionError(null);
@@ -94,7 +157,6 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
     };
 
     const handleQuery = async () => {
-        const submissionId = submission?.id || data?.id;
         if (!submissionId || !feedback.trim()) return;
         setIsLoading(true);
         setActionError(null);
@@ -109,6 +171,9 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
             setIsLoading(false);
         }
     };
+
+    // Render nothing if not open
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -132,7 +197,7 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                                         Verify Submission
                                     </h3>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        {data.milestone} • {data.contractor}
+                                        {displayData.milestone} • {displayData.contractor}
                                     </p>
                                 </div>
                             </div>
@@ -149,7 +214,7 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                             {/* Main Image */}
                             <div className="flex-1 flex items-center justify-center overflow-hidden relative group">
                                 <img
-                                    src={data.images[activeImage]}
+                                    src={images[activeImage]}
                                     alt="Evidence"
                                     className="max-h-full max-w-full object-contain"
                                 />
@@ -163,8 +228,8 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                                     <ChevronLeft className="h-6 w-6" />
                                 </button>
                                 <button
-                                    onClick={() => setActiveImage(prev => Math.min(data.images.length - 1, prev + 1))}
-                                    disabled={activeImage === data.images.length - 1}
+                                    onClick={() => setActiveImage(prev => Math.min(images.length - 1, prev + 1))}
+                                    disabled={activeImage === images.length - 1}
                                     className="absolute right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 disabled:opacity-30 transition-opacity"
                                 >
                                     <ChevronRight className="h-6 w-6" />
@@ -173,7 +238,7 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
 
                             {/* Thumbnails */}
                             <div className="h-20 bg-black/80 flex items-center gap-2 px-4 overflow-x-auto">
-                                {data.images.map((img: string, idx: number) => (
+                                {images.map((img: string, idx: number) => (
                                     <button
                                         key={idx}
                                         onClick={() => setActiveImage(idx)}
@@ -194,11 +259,11 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                                 <div className="space-y-3 pb-4 border-b border-gray-100 dark:border-gray-700">
                                     <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                                         <Calendar className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
-                                        <span>Submitted: {data.date}</span>
+                                        <span>Submitted: {displayData.date}</span>
                                     </div>
                                     <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                                         <MapPin className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
-                                        <span>{data.location}</span>
+                                        <span>{displayData.location}</span>
                                     </div>
                                 </div>
 
@@ -206,7 +271,7 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                                 <div>
                                     <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Progress Description</h4>
                                     <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                                        {data.description}
+                                        {displayData.description}
                                     </p>
                                 </div>
 
@@ -214,7 +279,7 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                                 <div>
                                     <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Material Usage</h4>
                                     <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2">
-                                        {data.materialUsage.map((item: MaterialUsage, idx: number) => (
+                                        {materialUsage.map((item: MaterialUsage, idx: number) => (
                                             <div key={idx} className="flex justify-between text-xs">
                                                 <span className="text-gray-600 dark:text-gray-400">{item.item}</span>
                                                 <span className="font-medium text-gray-900 dark:text-gray-200">{item.quantity}</span>
@@ -227,15 +292,20 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                                 <div>
                                     <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Attached Documents</h4>
                                     <div className="space-y-2">
-                                        {data.documents.map((doc: DocumentFile, idx: number) => (
+                                        {documents.map((doc: DocumentFile, idx: number) => (
                                             <div key={idx} className="flex items-center justify-between p-2 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                                 <div className="flex items-center overflow-hidden">
                                                     <FileText className="h-4 w-4 text-gray-400 dark:text-gray-500 mr-2 flex-shrink-0" />
                                                     <span className="text-xs text-gray-700 dark:text-gray-300 truncate">{doc.name}</span>
                                                 </div>
-                                                <button className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
+                                                <a
+                                                    href={doc.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
+                                                >
                                                     <Download className="h-4 w-4" />
-                                                </button>
+                                                </a>
                                             </div>
                                         ))}
                                     </div>

@@ -55,5 +55,31 @@ export const SubmissionsService = {
             throw error
         }
         return data
+    },
+
+    async getSubmissionEvidence(submissionId: string) {
+        const { data, error } = await supabase
+            .from('submission_evidence')
+            .select('*')
+            .eq('submission_id', submissionId)
+
+        if (error) {
+            logRpcError('submission_evidence.select', error)
+            throw error
+        }
+        return data
+    },
+
+    async getSubmissionMaterials(submissionId: string) {
+        const { data, error } = await supabase
+            .from('submission_materials')
+            .select('*')
+            .eq('submission_id', submissionId)
+
+        if (error) {
+            logRpcError('submission_materials.select', error)
+            throw error
+        }
+        return data
     }
 }
