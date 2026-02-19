@@ -66,7 +66,7 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
     const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', id)
+        .eq('user_id', id)
         .eq('role', 'CONSULTANT')
         .single();
 

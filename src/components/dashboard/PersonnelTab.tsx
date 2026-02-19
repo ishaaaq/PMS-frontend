@@ -84,9 +84,14 @@ export default function PersonnelTab({ project }: PersonnelTabProps) {
                 // We'll show an alert and reload for simplicity.
                 alert('Consultant assigned successfully! Refreshing...');
                 window.location.reload();
+                alert('Consultant assigned successfully! Refreshing...');
+                window.location.reload();
             } else {
-                // Contractor flow - Fallback to Invite/Section hint as backend has no Assign RPC
-                alert(`Contractors are typically assigned to specific sections. You can invite a new contractor below, or go to the Sections tab.`);
+                // Contractor flow - Add to Project Pool
+                if (!user.id) throw new Error('Selected user has no ID');
+                await ProjectsService.addContractorToProject(project.id, user.id);
+                alert('Contractor added to project successfully! Refreshing...');
+                window.location.reload();
             }
         } catch (error) {
             console.error('Assignment failed', error);
@@ -104,12 +109,14 @@ export default function PersonnelTab({ project }: PersonnelTabProps) {
         }))
         : [];
 
-    const contractors: Person[] = project.contractor && project.contractor !== 'Unassigned' ? [{
-        id: project.contractorId || 'contractor-1',
-        name: project.contractor,
-        email: 'contractor@ptdf.gov.ng',
-        role: 'Lead Contractor'
-    }] : [];
+    const contractors: Person[] = project.projectContractors && project.projectContractors.length > 0
+        ? project.projectContractors.map(c => ({
+            id: c.id,
+            name: c.name,
+            email: 'contractor@ptdf.gov.ng',
+            role: 'Contractor'
+        }))
+        : [];
 
     const inHouseTeam: Person[] = [];
 
@@ -225,9 +232,9 @@ export default function PersonnelTab({ project }: PersonnelTabProps) {
                             <span>Add {activePersonnelTab}</span>
                         </button>
                         {activePersonnelTab === 'Contractor' && (
-                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 flex items-center">
+                            <p className="mt-2 text-xs text-blue-600 dark:text-blue-400 flex items-center">
                                 <AlertCircle className="h-3 w-3 mr-1" />
-                                Contractors are usually assigned to specific Sections.
+                                Adding a contractor here gives them access to the project. Assign them to specific sections in the Sections tab.
                             </p>
                         )}
                     </div>
@@ -265,7 +272,7 @@ export default function PersonnelTab({ project }: PersonnelTabProps) {
                         singleSelect={true}
                         alreadyAssignedIds={
                             activePersonnelTab === 'Consultant' ? project.assignedConsultants?.map(c => c.id) || [] :
-                                activePersonnelTab === 'Contractor' && assignedContractorId ? [assignedContractorId] : []
+                                activePersonnelTab === 'Contractor' ? project.projectContractors?.map(c => c.id) || [] : []
                         }
                     />
 

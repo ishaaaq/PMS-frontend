@@ -32,6 +32,24 @@ export const ProjectsService = {
         }
     },
 
+    async addContractorToProject(projectId: string, contractorId: string) {
+        if (!projectId || !contractorId) {
+            console.error('addContractorToProject called with missing args:', { projectId, contractorId });
+            throw new Error('Project ID and Contractor ID are required');
+        }
+        const { error } = await supabase.rpc(
+            'rpc_add_contractor_to_project',
+            {
+                p_project_id: projectId,
+                p_contractor_user_id: contractorId
+            }
+        )
+        if (error) {
+            logRpcError('rpc_add_contractor_to_project', error)
+            throw error
+        }
+    },
+
     async getMyProjects() {
         const { data, error } = await supabase
             .from('projects')
