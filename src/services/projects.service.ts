@@ -15,6 +15,10 @@ export const ProjectsService = {
     },
 
     async assignConsultant(projectId: string, consultantId: string) {
+        if (!projectId || !consultantId) {
+            console.error('assignConsultant called with missing args:', { projectId, consultantId });
+            throw new Error('Project ID and Consultant ID are required');
+        }
         const { error } = await supabase.rpc(
             'rpc_assign_consultant_to_project',
             {

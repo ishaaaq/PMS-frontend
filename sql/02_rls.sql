@@ -161,6 +161,23 @@ using (false)
 with check (false);
 
 -- ============================================================
+-- PROJECT ↔ CONSULTANT MAPPING
+-- ============================================================
+
+create policy "admin_project_consultants"
+on project_consultants for select
+using (is_admin());
+
+create policy "consultant_view_own"
+on project_consultants for select
+using (consultant_user_id = auth.uid());
+
+create policy "project_consultants_block_writes"
+on project_consultants for all
+using (false)
+with check (false);
+
+-- ============================================================
 -- MILESTONES
 -- ============================================================
 

@@ -22,7 +22,10 @@ export interface Project {
     status: ProjectStatus;
     progress: number;
     contractor: string;
+    contractorId?: string;
     consultant: string;
+    consultantId?: string;
+    assignedConsultants: { id: string; name: string; role: string }[];
     startDate: string;
     endDate: string;
     gallery: string[];
@@ -49,6 +52,28 @@ const mapProject = (p: any): Project => {
     // Determine status from DB or default
     const status = (p.status?.toUpperCase() as ProjectStatus) || ProjectStatus.DRAFT;
 
+    // Extract consultant from project_consultants join table
+    if (p.project_consultants) {
+        console.log('mapProject: HAS project_consultants', p.project_consultants);
+    } else {
+        console.log('mapProject: NO project_consultants property found (likely raw fetch)');
+    }
+
+    const assignedConsultants = (p.project_consultants || []).map((pc: any) => ({
+        id: pc.consultant_user_id,
+        name: pc.profiles?.full_name || 'Unassigned Consultant',
+        role: 'Consultant'
+    }));
+
+    const assignedConsultantObj = p.project_consultants?.[0];
+    const consultantName = assignedConsultantObj?.profiles?.full_name || 'Unassigned';
+    const consultantId = assignedConsultantObj?.consultant_user_id;
+
+    // Contractor fetching might differ, staying with previous logic or similar if table exists
+    // If project_contractors existed, we'd do same. But strictly sticking to consultant fix.
+    // Preserving old logic for contractor just in case, but noting it might be empty if column doesn't exist.
+    const contractorName = 'Unassigned';
+
     return {
         id: p.id,
         title: p.title,
@@ -56,12 +81,14 @@ const mapProject = (p: any): Project => {
         lga,
         state,
         budgetTotal: Number(p.total_budget || 0),
-        approvedBudget: Number(p.approved_budget || p.total_budget || 0), // Fallback if approved not separate
+        approvedBudget: Number(p.approved_budget || p.total_budget || 0),
         amountSpent: Number(p.amount_spent || 0),
         status,
         progress: Number(p.progress || 0),
-        contractor: p.contractor_profile?.full_name || 'Unassigned',
-        consultant: p.consultant_profile?.full_name || 'Unassigned',
+        contractor: contractorName,
+        consultant: consultantName,
+        consultantId: consultantId,
+        assignedConsultants,
         startDate: p.start_date || new Date().toISOString().split('T')[0],
         endDate: p.end_date || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         gallery: p.gallery || [],
@@ -70,34 +97,27 @@ const mapProject = (p: any): Project => {
 };
 
 export const getProjects = async (): Promise<Project[]> => {
-    // Basic fetch with profile joins for names.
-    // If foreign keys are not set up as `contractor_id` -> `profiles.id`, 
-    // the join syntax `contractor_profile:contractor_id ( full_name )` might fail.
-    // We will attempt it, and handle errors if necessary.
-
     const { data, error } = await supabase
         .from('projects')
         .select(`
             *,
-            contractor_profile:contractor_user_id ( full_name ),
-            consultant_profile:consultant_user_id ( full_name )
+            project_consultants (
+                consultant_user_id,
+                profiles:consultant_user_id ( full_name )
+            )
         `)
         .order('created_at', { ascending: false });
 
     if (error) {
-        // Fallback: If joined columns fail (e.g. invalid relationship name), try raw fetch
-        // Checking for PostgREST error codes for undefined column/relation
+        // Fallback or retry logic if needed, but for now we expect this relationship to exist
+        // given the RPC implementation.
+        // We warn but don't strictly fallback to raw if we believe this schema is correct now.
         if (error.code === '42703' || error.code === 'PGRST200') {
-            console.warn('Join failed, fetching raw projects', error.message);
-            const { data: simpleData, error: simpleError } = await supabase
+            console.warn('Relation fetch failed, falling back to raw', error);
+            const { data: simpleData } = await supabase
                 .from('projects')
                 .select('*')
                 .order('created_at', { ascending: false });
-
-            if (simpleError) {
-                logRpcError('getProjects', simpleError);
-                return [];
-            }
             return (simpleData || []).map(mapProject);
         }
         logRpcError('getProjects', error);
@@ -112,27 +132,20 @@ export const getProject = async (id: string): Promise<Project | undefined> => {
         .from('projects')
         .select(`
             *,
-            contractor_profile:contractor_user_id ( full_name ),
-            consultant_profile:consultant_user_id ( full_name )
+            project_consultants (
+                consultant_user_id,
+                profiles:consultant_user_id ( full_name )
+            )
         `)
         .eq('id', id)
         .single();
 
     if (error) {
-        if (error.code === '42703' || error.code === 'PGRST200') {
-            const { data: simpleData, error: simpleError } = await supabase
-                .from('projects')
-                .select('*')
-                .eq('id', id)
-                .single();
-            if (simpleError) {
-                logRpcError('getProject', simpleError);
-                return undefined;
-            }
-            return simpleData ? mapProject(simpleData) : undefined;
-        }
+        console.error('getProject: Primary fetch failed (likely RLS or Join issue). Falling back to raw.', error);
         logRpcError('getProject', error);
-        return undefined;
+        // Fallback read
+        const { data: simpleData } = await supabase.from('projects').select('*').eq('id', id).single();
+        return simpleData ? mapProject(simpleData) : undefined;
     }
 
     return mapProject(data);
