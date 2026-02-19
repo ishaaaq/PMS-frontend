@@ -30,6 +30,7 @@ export interface Project {
     endDate: string;
     gallery: string[];
     department: string;
+    projectContractors?: { id: string; name: string; role: string }[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -69,10 +70,18 @@ const mapProject = (p: any): Project => {
     const consultantName = assignedConsultantObj?.profiles?.full_name || 'Unassigned';
     const consultantId = assignedConsultantObj?.consultant_user_id;
 
+    // Map project owners/contractors from pool
+    const projectContractors = (p.project_contractors || []).map((pc: any) => ({
+        id: pc.contractor_user_id,
+        name: pc.profiles?.full_name || 'Unassigned Contractor',
+        role: 'Contractor'
+    }));
+
     // Contractor fetching might differ, staying with previous logic or similar if table exists
     // If project_contractors existed, we'd do same. But strictly sticking to consultant fix.
     // Preserving old logic for contractor just in case, but noting it might be empty if column doesn't exist.
-    const contractorName = 'Unassigned';
+    const contractorName = projectContractors.length > 0 ? projectContractors[0].name : 'Unassigned';
+    const contractorId = projectContractors.length > 0 ? projectContractors[0].id : undefined;
 
     return {
         id: p.id,
@@ -89,6 +98,7 @@ const mapProject = (p: any): Project => {
         consultant: consultantName,
         consultantId: consultantId,
         assignedConsultants,
+        projectContractors,
         startDate: p.start_date || new Date().toISOString().split('T')[0],
         endDate: p.end_date || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         gallery: p.gallery || [],
@@ -135,6 +145,10 @@ export const getProject = async (id: string): Promise<Project | undefined> => {
             project_consultants (
                 consultant_user_id,
                 profiles:consultant_user_id ( full_name )
+            ),
+            project_contractors (
+                contractor_user_id,
+                profiles:contractor_user_id ( full_name )
             )
         `)
         .eq('id', id)
