@@ -46,15 +46,14 @@ export const SectionsService = {
     return data
   },
 
-  /** Sections with assigned contractor info (name, user_id) */
+  /** Sections with assigned contractor info (user_id only, name from pool) */
   async getProjectSectionsDetailed(projectId: string) {
     const { data, error } = await supabase
       .from('sections')
       .select(`
         id, name, description, created_at,
         section_assignments (
-          contractor_user_id,
-          profiles:contractor_user_id ( full_name )
+          contractor_user_id
         )
       `)
       .eq('project_id', projectId)

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabase } from '@/lib/supabase';
 import { logRpcError } from '@/lib/debug';
 
@@ -71,7 +72,7 @@ const mapProject = (p: any): Project => {
     const consultantId = assignedConsultantObj?.consultant_user_id;
 
     // Map project owners/contractors from pool
-    const projectContractors = (p.project_contractors || []).map((pc: any) => ({
+    const projectContractors = (p.project_contractors || []).map((pc: { contractor_user_id: string; profiles?: { full_name: string } }) => ({
         id: pc.contractor_user_id,
         name: pc.profiles?.full_name || 'Unassigned Contractor',
         role: 'Contractor'
@@ -81,7 +82,7 @@ const mapProject = (p: any): Project => {
     // If project_contractors existed, we'd do same. But strictly sticking to consultant fix.
     // Preserving old logic for contractor just in case, but noting it might be empty if column doesn't exist.
     const contractorName = projectContractors.length > 0 ? projectContractors[0].name : 'Unassigned';
-    const contractorId = projectContractors.length > 0 ? projectContractors[0].id : undefined;
+    // const contractorId = projectContractors.length > 0 ? projectContractors[0].id : undefined;
 
     return {
         id: p.id,

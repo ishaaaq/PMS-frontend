@@ -18,7 +18,7 @@ import {
 import AssignSectionModal from '../../components/consultant/AssignSectionModal';
 import { SectionsService } from '../../services/sections.service';
 import { supabase } from '@/lib/supabase';
-import { logRpcError } from '@/lib/debug';
+import { ProjectsService } from '../../services/projects.service';
 
 // ---------- types for fetched data ----------
 interface ProjectRow {
@@ -75,38 +75,55 @@ export default function ConsultantProjectDetails() {
 
     const fetchData = useCallback(async () => {
         if (!id) return;
+
+        // --- 1. Project (required — bail if this fails) ---
         try {
-            // Fetch project
             const { data: projData, error: projError } = await supabase
                 .from('projects')
                 .select('*')
                 .eq('id', id)
                 .single();
-            if (projError) { logRpcError('projects.select', projError); throw projError; }
+
+            if (projError) throw projError;
             setProject(projData as ProjectRow);
+        } catch (err) {
+            console.error('[ProjectDetails] project fetch failed:', err);
+            setIsLoading(false);
+            return; // can't render anything without the project
+        }
 
-            // Fetch sections (with assignments + contractor name)
+        // --- 2. Sections ---
+        try {
             const secData = await SectionsService.getProjectSectionsDetailed(id);
-            setSections(secData as SectionRow[]);
+            setSections((secData || []) as SectionRow[]);
+        } catch (err) {
+            console.error('[ProjectDetails] sections fetch failed:', err);
+        }
 
-            // Build contractor list from section assignments
-            const ctrs: ContractorInfo[] = [];
-            for (const sec of (secData || [])) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                for (const a of (sec as any).section_assignments || []) {
-                    const name = a.profiles?.full_name || 'Unknown';
-                    if (!ctrs.find(c => c.id === a.contractor_user_id)) {
-                        ctrs.push({ id: a.contractor_user_id, name, sectionName: sec.name });
-                    }
-                }
-            }
+        // --- 3. Contractors (project pool via RPC) ---
+        try {
+            const poolData = await ProjectsService.getProjectContractors(id);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const ctrs: ContractorInfo[] = poolData.map((c: any) => ({
+                id: c.id,
+                name: c.name || 'Unknown',
+                sectionName: 'Project Pool'
+            }));
             setContractors(ctrs);
+        } catch (err) {
+            console.error('[ProjectDetails] contractors fetch failed:', err);
+        }
 
-            // Fetch milestones
+        // --- 4. Milestones ---
+        try {
             const msData = await SectionsService.getProjectMilestones(id);
             setMilestones((msData || []) as MilestoneRow[]);
+        } catch (err) {
+            console.error('[ProjectDetails] milestones fetch failed:', err);
+        }
 
-            // Fetch section↔milestone mapping
+        // --- 5. Section ↔ milestone mapping ---
+        try {
             const mapData = await SectionsService.getSectionMilestoneMap(id);
             const map: Record<string, string[]> = {};
             for (const row of mapData) {
@@ -115,10 +132,10 @@ export default function ConsultantProjectDetails() {
             }
             setSectionMilestoneMap(map);
         } catch (err) {
-            logRpcError('ConsultantProjectDetails.fetchData', err);
-        } finally {
-            setIsLoading(false);
+            console.error('[ProjectDetails] section-milestone map fetch failed:', err);
         }
+
+        setIsLoading(false);
     }, [id]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
@@ -135,7 +152,8 @@ export default function ConsultantProjectDetails() {
     const getContractorForSection = (section: SectionRow) => {
         const assignment = section.section_assignments?.[0];
         if (!assignment) return null;
-        return assignment.profiles?.full_name || 'Unknown';
+        const match = contractors.find(c => c.id === assignment.contractor_user_id);
+        return match?.name || 'Unknown';
     };
 
     const completedCount = milestones.filter(m => m.status === 'COMPLETED').length;

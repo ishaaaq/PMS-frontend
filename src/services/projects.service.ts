@@ -59,5 +59,29 @@ export const ProjectsService = {
             throw error
         }
         return data
+    },
+
+    async getProjectContractors(projectId: string) {
+        const { data, error } = await supabase.rpc(
+            'rpc_get_project_contractors',
+            { p_project_id: projectId }
+        );
+
+        if (error) {
+            logRpcError('getProjectContractors', error);
+            throw error;
+        }
+
+        return (data || []).map((item: { contractor_user_id: string; full_name: string; phone: string; added_at: string }) => ({
+            id: item.contractor_user_id,
+            name: item.full_name || 'Unknown',
+            email: '',
+            phone: item.phone || '',
+            location: '',
+            specialization: '',
+            rating: 0,
+            status: 'Active',
+            addedAt: item.added_at
+        }));
     }
 }
