@@ -23,6 +23,7 @@ export interface Assignment {
     id: string;
     projectId: string;
     projectTitle: string;
+    sectionTitle?: string; // New field for Section Name
     location: string;
     milestones: Milestone[];
     overallProgress: number;
@@ -165,8 +166,8 @@ export const getContractorAssignments = async (): Promise<Assignment[]> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
-    // Get all section assignments for this contractor
-    const { data, error } = await supabase
+    // 1. Get all section assignments for this contractor (RLS handled)
+    const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('section_assignments')
         .select(`
             section_id,
@@ -177,15 +178,29 @@ export const getContractorAssignments = async (): Promise<Assignment[]> => {
         `)
         .eq('contractor_user_id', user.id);
 
-    if (error) {
-        logRpcError('getContractorAssignments', error);
+    if (assignmentsError) {
+        logRpcError('section_assignments.select', assignmentsError);
         return [];
     }
 
-    // For each section, get its milestones
-    const projectMap = new Map<string, Assignment>();
+    if (!assignmentsData || assignmentsData.length === 0) return [];
 
-    for (const row of data || []) {
+    // Verification / Debug Logging
+    console.log(`[Assignments] Raw count: ${assignmentsData.length}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const uniqueSections = new Set(assignmentsData.map((a: any) => a.section_id));
+    console.log(`[Assignments] Unique sections: ${uniqueSections.size}`);
+
+    if (assignmentsData.length !== uniqueSections.size) {
+        console.warn('[Assignments] Duplicates detected in raw fetch! Deduplicating...');
+    }
+
+    // Map section_id -> Assignment
+    const sectionMap = new Map<string, Assignment>();
+    const sectionIds: string[] = [];
+
+    // 2. Build map and collect section IDs - ENSURING UNIQUENESS
+    for (const row of assignmentsData) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const sec = row.sections as any;
         if (!sec) continue;
@@ -193,78 +208,141 @@ export const getContractorAssignments = async (): Promise<Assignment[]> => {
         const proj = sec.projects as any;
         if (!proj) continue;
 
-        const projectId = proj.id as string;
+        const sectionId = sec.id;
 
-        if (!projectMap.has(projectId)) {
-            projectMap.set(projectId, {
-                id: projectId,
-                projectId,
-                projectTitle: proj.title,
-                location: proj.location || '',
-                milestones: [],
-                overallProgress: 0,
-                status: proj.status === 'COMPLETED' ? 'COMPLETED' : proj.status === 'ACTIVE' ? 'IN_PROGRESS' : 'IN_PROGRESS',
-                lastUpdated: new Date().toISOString(),
-            });
+        // Skip if already processed (Deduplication)
+        if (sectionMap.has(sectionId)) continue;
+
+        sectionIds.push(sectionId);
+        sectionMap.set(sectionId, {
+            id: sectionId, // ID is now Section ID
+            projectId: proj.id,
+            projectTitle: proj.title,
+            sectionTitle: sec.name, // Added Section Title
+            location: proj.location || 'Unknown Location',
+            milestones: [],
+            overallProgress: 0,
+            status: 'IN_PROGRESS',
+            lastUpdated: new Date().toISOString(),
+        });
+    }
+
+    if (sectionIds.length === 0) return Array.from(sectionMap.values());
+
+    // 3. Fetch milestones for these sections
+    const { data: smData, error: smError } = await supabase
+        .from('section_milestones')
+        .select(`
+            section_id,
+            milestones (
+                id, title, status, due_date, budget, description
+            )
+        `)
+        .in('section_id', sectionIds); // sectionIds are unique here
+
+    if (smError) {
+        logRpcError('section_milestones.select', smError);
+        return Array.from(sectionMap.values());
+    }
+
+    // 4. Fetch Submissions
+    const milestoneIds: string[] = [];
+    smData?.forEach(row => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((row.milestones as any)?.id) milestoneIds.push((row.milestones as any).id);
+    });
+
+    const submissionMap = new Map<string, string>(); // milestone_id -> status
+    if (milestoneIds.length > 0) {
+        const { data: subData } = await supabase
+            .from('submissions')
+            .select('milestone_id, status, submitted_at')
+            .in('milestone_id', milestoneIds)
+            .eq('contractor_user_id', user.id)
+            .order('submitted_at', { ascending: false });
+
+        if (subData) {
+            for (const sub of subData) {
+                if (!submissionMap.has(sub.milestone_id)) {
+                    submissionMap.set(sub.milestone_id, sub.status);
+                }
+            }
         }
     }
 
-    // Fetch milestones for each section
-    const sectionIds = (data || []).map(r => r.section_id);
-    if (sectionIds.length > 0) {
-        const { data: smData, error: smError } = await supabase
-            .from('section_milestones')
-            .select('section_id, milestone_id, milestones ( id, title, status, due_date, budget )')
-            .in('section_id', sectionIds);
+    // 5. Map milestones to SECTIONS
+    for (const row of smData || []) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const ms = row.milestones as any;
+        if (!ms) continue;
 
-        if (smError) {
-            logRpcError('section_milestones.contractor', smError);
+        const assignment = sectionMap.get(row.section_id);
+        if (!assignment) continue;
+
+        // DETERMINE STATUS
+        let displayStatus: AssignmentStatus = 'IN_PROGRESS';
+        let progress = 0;
+
+        if (ms.status === 'COMPLETED') {
+            displayStatus = 'COMPLETED';
+            progress = 100;
+        } else {
+            const subStatus = submissionMap.get(ms.id);
+            if (subStatus === 'PENDING_APPROVAL') {
+                displayStatus = 'PENDING_APPROVAL';
+                progress = 75;
+            } else if (subStatus === 'QUERIED') {
+                displayStatus = 'QUERIED';
+                progress = 50;
+            } else {
+                displayStatus = 'IN_PROGRESS';
+                progress = ms.status === 'IN_PROGRESS' ? 50 : 0;
+            }
         }
 
-        // Map section_id → project_id using the data we already have
-        const sectionToProject = new Map<string, string>();
-        for (const row of data || []) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const sec = row.sections as any;
-            if (sec?.projects) sectionToProject.set(row.section_id, sec.projects.id);
-        }
-
-        for (const sm of smData || []) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const ms = sm.milestones as any;
-            if (!ms) continue;
-            const projId = sectionToProject.get(sm.section_id);
-            if (!projId) continue;
-            const assignment = projectMap.get(projId);
-            if (!assignment) continue;
-
-            assignment.milestones.push({
-                id: ms.id,
-                title: ms.title,
-                progress: ms.status === 'COMPLETED' ? 100 : ms.status === 'IN_PROGRESS' ? 50 : 0,
-                status: ms.status as AssignmentStatus,
-                dueDate: ms.due_date,
-                amount: Number(ms.budget),
-            });
-        }
+        assignment.milestones.push({
+            id: ms.id,
+            title: ms.title,
+            progress,
+            status: displayStatus,
+            dueDate: ms.due_date,
+            amount: Number(ms.budget || 0),
+        });
     }
 
-    // Calculate overall progress for each project
-    for (const assignment of projectMap.values()) {
-        if (assignment.milestones.length > 0) {
+    // 6. Calculate aggregations
+    for (const assignment of sectionMap.values()) {
+        const total = assignment.milestones.length;
+        if (total > 0) {
             const completed = assignment.milestones.filter(m => m.status === 'COMPLETED').length;
-            assignment.overallProgress = Math.round((completed / assignment.milestones.length) * 100);
+            assignment.overallProgress = Math.round((completed / total) * 100);
+        } else {
+            assignment.overallProgress = 0;
         }
-        // Check for queried milestones
-        const queried = assignment.milestones.find(m => m.status === 'QUERIED');
-        if (queried) {
+
+        // Lift status to section level
+        // Rule: QUERIED > PENDING_APPROVAL > COMPLETED > IN_PROGRESS
+        const hasQueried = assignment.milestones.some(m => m.status === 'QUERIED');
+        const hasPending = assignment.milestones.some(m => m.status === 'PENDING_APPROVAL');
+        const allCompleted = total > 0 && assignment.milestones.every(m => m.status === 'COMPLETED');
+
+        if (hasQueried) {
             assignment.status = 'QUERIED';
-            assignment.milestoneTitle = queried.title;
-            assignment.queryReason = 'Consultant has flagged this milestone for review.';
+            const queriedMilestone = assignment.milestones.find(m => m.status === 'QUERIED');
+            if (queriedMilestone) {
+                assignment.milestoneTitle = queriedMilestone.title;
+                assignment.queryReason = 'Consultant has requested changes. Please review.';
+            }
+        } else if (hasPending) {
+            assignment.status = 'PENDING_APPROVAL';
+        } else if (allCompleted) {
+            assignment.status = 'COMPLETED';
+        } else {
+            assignment.status = 'IN_PROGRESS';
         }
     }
 
-    return Array.from(projectMap.values());
+    return Array.from(sectionMap.values());
 };
 
 export const getContractorNotifications = async (): Promise<Notification[]> => {

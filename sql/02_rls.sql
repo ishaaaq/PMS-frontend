@@ -223,6 +223,18 @@ on projects for all
 using (false)
 with check (false);
 
+create policy "contractor_view_assigned_projects"
+on projects for select
+using (
+    exists (
+        select 1 
+        from section_assignments sa
+        join sections s on s.id = sa.section_id
+        where s.project_id = projects.id
+        and sa.contractor_user_id = auth.uid()
+    )
+);
+
 -- ============================================================
 -- PROJECT ↔ CONSULTANT MAPPING
 -- ============================================================
