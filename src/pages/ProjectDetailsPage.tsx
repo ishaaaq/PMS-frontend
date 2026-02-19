@@ -25,6 +25,7 @@ export default function ProjectDetailsPage() {
     useEffect(() => {
         if (id) {
             getProject(id).then((data) => {
+                console.log('ProjectDetailsPage: Loaded project', data);
                 setProject(data);
                 setLoading(false);
             });

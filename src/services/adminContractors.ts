@@ -40,7 +40,7 @@ export const ZONE_LABELS: Record<GeographicZone, string> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mapContractor = (p: any): AdminContractor => {
     return {
-        id: p.id,
+        id: p.user_id || p.id,
         companyName: p.full_name || 'Unknown Company',
         registrationNumber: p.company_reg_number || 'PENDING',
         email: p.email || '',

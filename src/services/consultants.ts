@@ -22,7 +22,7 @@ export interface Consultant {
 const mapConsultant = (p: any): Consultant => {
     // In a real app, strict typing for `p` (PostgREST result) is better
     return {
-        id: p.id,
+        id: p.user_id || p.id,
         name: p.full_name || 'Unknown Consultant',
         email: p.email || '',
         phone: p.phone_number || '',
