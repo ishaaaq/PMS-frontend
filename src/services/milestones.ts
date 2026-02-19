@@ -119,7 +119,7 @@ export const getAllMilestones = async (): Promise<Milestone[]> => {
             projects (title, location),
             submissions (
                 id, status, submitted_at, work_description,
-                profiles (full_name)
+                profiles:contractor_user_id (full_name)
             ),
             section_milestones (
                 sections (
@@ -147,7 +147,7 @@ export const getProjectMilestones = async (projectId: string): Promise<Milestone
             projects (title, location),
             submissions (
                 id, status, submitted_at, work_description,
-                profiles (full_name)
+                profiles:contractor_user_id ( full_name )
             ),
             section_milestones (
                 sections (
@@ -158,7 +158,7 @@ export const getProjectMilestones = async (projectId: string): Promise<Milestone
             )
         `)
         .eq('project_id', projectId)
-        .order('sort_order', { ascending: true });
+        .order('due_date', { ascending: true });
 
     if (error) {
         logRpcError('milestones.getProject', error);
