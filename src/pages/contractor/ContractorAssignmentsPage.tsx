@@ -50,6 +50,7 @@ export default function ContractorAssignmentsPage() {
 
     const filteredAssignments = assignments.filter(a => {
         const matchesSearch = a.projectTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (a.sectionTitle?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
             a.location.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = filterStatus === 'All' || a.status === filterStatus;
         return matchesSearch && matchesStatus;
@@ -164,14 +165,19 @@ export default function ContractorAssignmentsPage() {
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <h3 className="font-bold text-gray-900 dark:text-white text-lg">{assignment.projectTitle}</h3>
+                                            {/* Primary: Section Title */}
+                                            <h3 className="font-bold text-gray-900 dark:text-white text-lg">{assignment.sectionTitle || 'Untitled Section'}</h3>
                                             <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase border ${config.color}`}>
                                                 {assignment.status.replace('_', ' ')}
                                             </span>
                                         </div>
+                                        {/* Secondary: Project Title */}
+                                        <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                                            {assignment.projectTitle}
+                                        </p>
                                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                                             <span className="flex items-center"><MapPin className="h-4 w-4 mr-1" />{assignment.location}</span>
-                                            <span className="flex items-center"><Calendar className="h-4 w-4 mr-1" />Updated {assignment.lastUpdated}</span>
+                                            <span className="flex items-center"><Calendar className="h-4 w-4 mr-1" />Updated {assignment.lastUpdated.split('T')[0]}</span>
                                             <span>{assignment.milestones.length} milestones</span>
                                         </div>
                                     </div>

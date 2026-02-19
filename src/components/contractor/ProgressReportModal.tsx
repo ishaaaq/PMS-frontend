@@ -101,12 +101,23 @@ export default function ProgressReportModal({
         setIsSubmitting(true);
         setSubmitError(null);
         try {
+            // Append materials to the comments if present
+            let finalDescription = comments;
+            if (materials.length > 0) {
+                const materialText = materials.map(m =>
+                    `- ${m.name}: ${m.quantity} ${m.unit}`
+                ).join('\n');
+                finalDescription = `${finalDescription}\n\n--- Material Usage ---\n${materialText}`;
+            }
+
             // 1. Create the submission record
             const submissionId = await SubmissionsService.createSubmission(
                 milestone.id,
-                comments
+                finalDescription
             );
+
             // 2. Upload each evidence file to Supabase Storage
+            // The current createSubmission RPC returns the UUID directly if success
             if (files.length > 0 && submissionId) {
                 await Promise.all(
                     files.map(file =>
@@ -119,14 +130,21 @@ export default function ProgressReportModal({
                     )
                 );
             }
+
+            // Call parent handler with the formatted data
             onSubmit({
                 milestoneId: milestone.id,
-                comments,
+                comments: finalDescription,
                 files,
                 materials
             });
         } catch (err) {
-            setSubmitError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
+            console.error('Submission failed:', err);
+            setSubmitError(
+                err instanceof Error
+                    ? err.message
+                    : 'Submission failed. Please try again.'
+            );
         } finally {
             setIsSubmitting(false);
         }
