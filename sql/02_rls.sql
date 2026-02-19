@@ -126,6 +126,63 @@ as $$
   );
 $$;
 
+-- ============================================================
+-- SECTION MILESTONES & ASSIGNMENTS (Missing Policies)
+-- ============================================================
+
+create policy "admin_section_milestones"
+on section_milestones for select
+using (is_admin());
+
+create policy "consultant_section_milestones"
+on section_milestones for select
+using (
+  exists (
+    select 1 from sections s
+    where s.id = section_milestones.section_id
+    and is_project_consultant(s.project_id)
+  )
+);
+
+create policy "contractor_section_milestones"
+on section_milestones for select
+using (
+  exists (
+    select 1 from section_assignments sa
+    where sa.section_id = section_milestones.section_id
+    and sa.contractor_user_id = auth.uid()
+  )
+);
+
+create policy "section_milestones_block_writes"
+on section_milestones for all
+using (false)
+with check (false);
+
+
+create policy "admin_section_assignments"
+on section_assignments for select
+using (is_admin());
+
+create policy "consultant_section_assignments"
+on section_assignments for select
+using (
+  exists (
+    select 1 from sections s
+    where s.id = section_assignments.section_id
+    and is_project_consultant(s.project_id)
+  )
+);
+
+create policy "contractor_section_assignments_self"
+on section_assignments for select
+using (contractor_user_id = auth.uid());
+
+create policy "section_assignments_block_writes"
+on section_assignments for all
+using (false)
+with check (false);
+
 
 -- ============================================================
 -- PROFILES
