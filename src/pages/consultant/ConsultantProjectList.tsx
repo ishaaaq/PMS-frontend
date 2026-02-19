@@ -1,53 +1,46 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, MoreVertical, CheckCircle, Clock } from 'lucide-react';
+import { Search, Filter, MoreVertical, CheckCircle, Clock, MapPin } from 'lucide-react';
+import { ProjectsService } from '../../services/projects.service';
+
+interface ProjectRow {
+    id: string;
+    title: string;
+    description: string | null;
+    location: string | null;
+    total_budget: number;
+    status: string;
+    created_at: string;
+}
 
 export default function ConsultantProjectList() {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
-    // const [filter, setFilter] = useState('All'); // Will be implemented later
+    const [projects, setProjects] = useState<ProjectRow[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        // Simulate data loading
-        const timer = setTimeout(() => {
-            setIsLoading(false);
-        }, 800);
-        return () => clearTimeout(timer);
+        ProjectsService.getMyProjects()
+            .then(data => {
+                setProjects((data || []) as ProjectRow[]);
+            })
+            .catch(err => console.error('Failed to fetch projects:', err))
+            .finally(() => setIsLoading(false));
     }, []);
 
-    // Mock data for consultant's assigned projects
-    const projects = [
-        {
-            id: '1',
-            title: 'ICT Center Construction',
-            contractor: 'BuildRight Ltd',
-            location: 'Lagos',
-            status: 'Ongoing',
-            progress: 45,
-            lastUpdate: '2 days ago',
-            pendingActions: 1
-        },
-        {
-            id: '2',
-            title: 'Solar Mini-Grid Installation',
-            contractor: 'GreenEnergy Solutions',
-            location: 'Kano',
-            status: 'Ongoing',
-            progress: 12,
-            lastUpdate: '5 hours ago',
-            pendingActions: 2
-        },
-        {
-            id: '3',
-            title: 'Laboratory Equipment Supply',
-            contractor: 'LabTech Nigeria',
-            location: 'Rivers',
-            status: 'Completed',
-            progress: 100,
-            lastUpdate: '1 month ago',
-            pendingActions: 0
-        },
-    ];
+    const filteredProjects = projects.filter(p =>
+        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.location || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const getStatusBadge = (status: string) => {
+        const s = status.toUpperCase();
+        if (s === 'COMPLETED') return { color: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400', icon: CheckCircle, label: 'Completed' };
+        if (s === 'ACTIVE') return { color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400', icon: Clock, label: 'Active' };
+        return { color: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300', icon: Clock, label: status };
+    };
+
+    const formatBudget = (amt: number) => `₦${Number(amt).toLocaleString()}`;
 
     if (isLoading) {
         return (
@@ -73,6 +66,8 @@ export default function ConsultantProjectList() {
                         <input
                             type="text"
                             placeholder="Search projects..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         />
                     </div>
@@ -82,70 +77,68 @@ export default function ConsultantProjectList() {
                 </div>
             </div>
 
-            {/* List View - different from Admin grid */}
+            {/* List View */}
             <div className="glass-card rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-800/50">
-                        <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Project</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Contractor</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Progress</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {projects.map((project) => (
-                            <tr
-                                key={project.id}
-                                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                                onClick={() => navigate(`/dashboard/consultant/projects/${project.id}`)}
-                            >
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-gray-900 dark:text-white">{project.title}</span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">{project.location}</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className="text-sm text-gray-600 dark:text-gray-300">{project.contractor}</span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${project.status === 'Completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
-                                        project.status === 'Ongoing' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' :
-                                            'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                                        }`}>
-                                        {project.status === 'Completed' ? <CheckCircle className="w-3 h-3 mr-1" /> : <Clock className="w-3 h-3 mr-1" />}
-                                        {project.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                            <div
-                                                className="bg-indigo-600 h-1.5 rounded-full"
-                                                style={{ width: `${project.progress}%` }}
-                                            ></div>
-                                        </div>
-                                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{project.progress}%</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div className="flex items-center gap-2">
-                                        {project.pendingActions > 0 && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400">
-                                                {project.pendingActions} Pending
-                                            </span>
-                                        )}
-                                        <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                                            <MoreVertical className="h-5 w-5" />
-                                        </button>
-                                    </div>
-                                </td>
+                {filteredProjects.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                        <p>{projects.length === 0 ? 'No projects assigned yet.' : 'No projects match your search.'}</p>
+                    </div>
+                ) : (
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-800/50">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Project</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Budget</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {filteredProjects.map((project) => {
+                                const badge = getStatusBadge(project.status);
+                                const StatusIcon = badge.icon;
+                                return (
+                                    <tr
+                                        key={project.id}
+                                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                                        onClick={() => navigate(`/dashboard/consultant/projects/${project.id}`)}
+                                    >
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-gray-900 dark:text-white">{project.title}</span>
+                                                {project.location && (
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                                                        <MapPin className="h-3 w-3" /> {project.location}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white">{formatBudget(project.total_budget)}</span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.color}`}>
+                                                <StatusIcon className="w-3 h-3 mr-1" />
+                                                {badge.label}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                                                {new Date(project.created_at).toLocaleDateString()}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                                <MoreVertical className="h-5 w-5" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                )}
             </div>
         </div>
     );

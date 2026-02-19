@@ -11,7 +11,7 @@ import {
     AlertTriangle
 } from 'lucide-react';
 import { SectionsService } from '../../services/sections.service';
-import { supabase } from '@/lib/supabase';
+import { ProjectsService } from '../../services/projects.service';
 import { logRpcError } from '@/lib/debug';
 
 export default function CreateSectionPage() {
@@ -22,7 +22,7 @@ export default function CreateSectionPage() {
     const [contractorMode, setContractorMode] = useState<'existing' | 'invite'>('existing');
     const [selectedContractor, setSelectedContractor] = useState('');
     const [inviteEmail, setInviteEmail] = useState('');
-    const [contractors, setContractors] = useState<{ id: string; full_name: string }[]>([]);
+    const [contractors, setContractors] = useState<{ id: string; name: string }[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -49,13 +49,12 @@ export default function CreateSectionPage() {
             })
             .catch(err => logRpcError('getProjectMilestones', err));
 
-        supabase
-            .from('profiles')
-            .select('user_id, full_name')
-            .eq('role', 'CONTRACTOR')
-            .then(({ data }) => {
-                if (data) setContractors(data.map(c => ({ id: c.user_id, full_name: c.full_name })));
-            });
+        ProjectsService.getProjectContractors(id)
+            .then(data => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                setContractors(data.map((c: any) => ({ id: c.id, name: c.name })));
+            })
+            .catch(err => logRpcError('getProjectContractors', err));
     }, [id]);
 
     const handleAddSection = () => {
@@ -111,6 +110,7 @@ export default function CreateSectionPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!id) return;
+
         setError(null);
         setSubmitting(true);
         try {
@@ -224,7 +224,7 @@ export default function CreateSectionPage() {
                                     >
                                         <option value="">Select a contractor...</option>
                                         {contractors.map(c => (
-                                            <option key={c.id} value={c.id}>{c.full_name}</option>
+                                            <option key={c.id} value={c.id}>{c.name}</option>
                                         ))}
                                     </select>
                                 </div>

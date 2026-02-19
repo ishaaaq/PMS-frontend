@@ -28,6 +28,8 @@ alter table project_comments enable row level security;
 create or replace function is_admin()
 returns boolean
 language sql stable
+security definer
+set search_path = public
 as $$
     select exists (
         select 1 from profiles
@@ -40,6 +42,8 @@ $$;
 create or replace function is_project_consultant(p_project_id uuid)
 returns boolean
 language sql stable
+security definer
+set search_path = public
 as $$
     select exists (
         select 1
@@ -52,6 +56,8 @@ $$;
 create or replace function is_section_contractor(p_section_id uuid)
 returns boolean
 language sql stable
+security definer
+set search_path = public
 as $$
     select exists (
         select 1

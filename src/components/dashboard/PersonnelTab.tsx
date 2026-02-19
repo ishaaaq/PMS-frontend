@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Users, Mail, Link as LinkIcon, UserPlus, AlertCircle } from 'lucide-react';
 import type { Project } from '../../services/projects';
 import { getConsultants } from '../../services/consultants';
@@ -28,16 +28,9 @@ export default function PersonnelTab({ project }: PersonnelTabProps) {
     const [availableUsers, setAvailableUsers] = useState<PickerUser[]>([]);
 
     // Derived state for current assignments
-    const assignedContractorId = project.contractorId;
+    // const assignedContractorId = project.contractorId;
 
-    // Load available users when picker opens
-    useEffect(() => {
-        if (isPickerOpen) {
-            loadAvailableUsers();
-        }
-    }, [isPickerOpen, activePersonnelTab]);
-
-    const loadAvailableUsers = async () => {
+    const loadAvailableUsers = useCallback(async () => {
         setLoading(true);
         try {
             if (activePersonnelTab === 'Consultant') {
@@ -56,13 +49,22 @@ export default function PersonnelTab({ project }: PersonnelTabProps) {
                     email: c.email,
                     role: 'Contractor'
                 })));
+            } else {
+                setAvailableUsers([]);
             }
         } catch (error) {
-            console.error('Failed to load users', error);
+            console.error('Failed to load users:', error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [activePersonnelTab]);
+
+    // Load available users when picker opens
+    useEffect(() => {
+        if (isPickerOpen) {
+            loadAvailableUsers();
+        }
+    }, [isPickerOpen, loadAvailableUsers]);
 
     const handleAddUserClick = () => {
         setIsPickerOpen(true);
