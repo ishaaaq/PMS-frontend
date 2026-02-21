@@ -1,8 +1,5 @@
 import { useState } from 'react';
-import {
-    FileText, RefreshCw
-} from 'lucide-react';
-import { generateRandomSeries } from '../utils/mockData';
+import { FileText, RefreshCw } from 'lucide-react';
 import ReportStats from '../components/reports/ReportStats';
 import MainAnalyticChart from '../components/reports/MainAnalyticChart';
 import ZoneSnapshot from '../components/reports/ZoneSnapshot';
@@ -11,15 +8,11 @@ import ReportList from '../components/reports/ReportList';
 export default function ReportsPage() {
     const [activeTab, setActiveTab] = useState<'overview' | 'financial' | 'consultants'>('overview');
     const [isGenerating, setIsGenerating] = useState(false);
-    const [statsData, setStatsData] = useState([65, 40, 75, 55, 80, 60]); // For chart animation
+    const [statsData, setStatsData] = useState([65, 40, 75, 55, 80, 60]); // Kept for zone snapshot pass-through
 
     const generateReport = () => {
         setIsGenerating(true);
         setTimeout(() => setIsGenerating(false), 2000);
-    };
-
-    const refreshCharts = () => {
-        setStatsData(generateRandomSeries(6, 30, 90));
     };
 
     return (
@@ -31,13 +24,6 @@ export default function ReportsPage() {
                     <p className="mt-1 text-gray-500 dark:text-gray-400">Deep insights and downloadable reports for executive decision making</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={refreshCharts}
-                        className="p-2 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors"
-                        title="Refresh Analytics"
-                    >
-                        <RefreshCw className="h-5 w-5" />
-                    </button>
                     <button
                         onClick={generateReport}
                         disabled={isGenerating}

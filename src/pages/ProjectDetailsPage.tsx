@@ -7,6 +7,8 @@ import { cn } from '../lib/utils';
 import MilestonesTab from '../components/dashboard/MilestonesTab';
 import AnalyticsTab from '../components/dashboard/AnalyticsTab';
 import PersonnelTab from '../components/dashboard/PersonnelTab';
+import SubmissionHistoryTab from '../components/dashboard/SubmissionHistoryTab';
+import CommentsSection from '../components/dashboard/CommentsSection';
 import type { LucideIcon } from 'lucide-react';
 
 interface DetailRowProps {
@@ -51,7 +53,7 @@ export default function ProjectDetailsPage() {
 
     if (!project) return <div className="p-8 text-center text-red-500">Project not found</div>;
 
-    const tabs = ['Details', 'Milestones', 'Personnel', 'Analytics'];
+    const tabs = ['Details', 'Milestones', 'Submissions', 'Personnel', 'Analytics'];
 
     return (
         <div className="space-y-6">
@@ -174,29 +176,7 @@ export default function ProjectDetailsPage() {
                             </div>
                         </div>
 
-                        <div className="glass-card rounded-lg p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Comments</h3>
-                                <a href="#" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">All comments</a>
-                            </div>
-                            {/* Mock Comment */}
-                            <div className="space-y-4">
-                                <div className="flex space-x-3">
-                                    <div className="flex-shrink-0">
-                                        <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-700 dark:text-indigo-400 text-xs font-bold">IA</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-sm">
-                                            <span className="font-medium text-gray-900 dark:text-white">Ishaq Abdullahi</span>
-                                            <span className="text-gray-500 dark:text-gray-400 ml-2">2 min ago</span>
-                                        </div>
-                                        <div className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                                            <p>Great progress on the foundation work! Ensure safety gear compliance.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <CommentsSection projectId={id!} />
 
                         {/* Admin Action: Rate Consultant */}
                         <div className="bg-indigo-50 dark:bg-indigo-900/10 shadow-sm border border-indigo-100 dark:border-indigo-500/20 rounded-lg p-6">
@@ -220,6 +200,10 @@ export default function ProjectDetailsPage() {
                 <div className="max-w-4xl">
                     <MilestonesTab projectId={id || '1'} />
                 </div>
+            )}
+
+            {activeTab === 'Submissions' && (
+                <SubmissionHistoryTab projectId={id!} />
             )}
 
             {activeTab === 'Analytics' && (

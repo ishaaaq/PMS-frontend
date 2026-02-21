@@ -1,13 +1,14 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import {
     Mail, Phone, MapPin, Calendar, Shield, Activity,
     CheckCircle, Key, Smartphone, Globe, LogIn,
     FileText, UserPlus, Download, ArrowLeft, Edit
 } from 'lucide-react';
-import { DETAILED_USERS } from '../utils/mockData';
 
 interface ActivityLog {
-    id: number;
+    id: string;
     action: string;
     text: string;
     icon: string;
@@ -16,12 +17,57 @@ interface ActivityLog {
 
 export default function UserDetailPage() {
     const { id } = useParams();
-    // Fallback to ID '1' if not found for demo purposes, or show "User not found"
-    // In a real app we'd fetch from API
-    const user = DETAILED_USERS[id as keyof typeof DETAILED_USERS] || DETAILED_USERS['1'];
+    const [user, setUser] = useState<any>(null);
+    const [activities, setActivities] = useState<ActivityLog[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function loadUser() {
+            setLoading(true);
+            try {
+                // Fetch Profile
+                const { data: profile, error: profileErr } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('user_id', id)
+                    .single();
+
+                if (profileErr) throw profileErr;
+                setUser(profile);
+
+                // Fetch logs
+                const { data: logs, error: logsErr } = await supabase
+                    .from('audit_logs')
+                    .select('*')
+                    .eq('actor_user_id', id)
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+
+                if (!logsErr && logs) {
+                    setActivities(logs.map(l => ({
+                        id: l.id,
+                        action: l.action.replace(/_/g, ' '),
+                        text: l.details || `Performed ${l.action}`,
+                        icon: l.action.includes('LOGIN') ? 'LogIn' : l.action.includes('REPORT') ? 'FileText' : 'Activity',
+                        time: new Date(l.created_at).toLocaleString()
+                    })));
+                }
+
+            } catch (err) {
+                console.error("User Detail Error: ", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        if (id) loadUser();
+    }, [id]);
+
+    if (loading) {
+        return <div className="p-8 text-center text-gray-500 animate-pulse">Loading Profile...</div>;
+    }
 
     if (!user) {
-        return <div className="p-8 text-center text-gray-500">User not found</div>;
+        return <div className="p-8 text-center text-gray-500">User not found in system</div>;
     }
 
     const getIcon = (iconName: string) => {
@@ -34,6 +80,8 @@ export default function UserDetailPage() {
             default: return Activity;
         }
     };
+
+    const initials = user.full_name ? user.full_name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
 
     return (
         <div className="space-y-8 max-w-7xl mx-auto">
@@ -48,7 +96,7 @@ export default function UserDetailPage() {
                         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                             <Link to="/dashboard/users" className="hover:text-ptdf-primary transition-colors">User Management</Link>
                             <span>/</span>
-                            <span>{user.name}</span>
+                            <span>{user.full_name}</span>
                         </div>
                     </div>
                 </div>
@@ -73,37 +121,37 @@ export default function UserDetailPage() {
 
                         <div className="relative flex flex-col items-center text-center mt-4">
                             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center text-2xl font-bold text-gray-500 dark:text-gray-300 border-4 border-white dark:border-gray-800 shadow-xl mb-4">
-                                {user.avatar}
+                                {initials}
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">{user.name}</h3>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">{user.full_name}</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{user.role}</p>
 
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${user.status === 'Active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-700'}`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'Active' ? 'bg-green-500' : 'bg-gray-500'}`} />
-                                {user.status}
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${user.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-700'}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${user.is_active ? 'bg-green-500' : 'bg-gray-500'}`} />
+                                {user.is_active ? 'Active' : 'Inactive'}
                             </span>
                         </div>
 
                         <div className="mt-8 space-y-4">
                             <div className="flex items-center gap-3 text-sm">
                                 <Mail className="h-4 w-4 text-gray-400" />
-                                <span className="text-gray-900 dark:text-white font-medium">{user.email}</span>
+                                <span className="text-gray-900 dark:text-white font-medium break-all">{user.user_id + '@ptdf.gov.ng'} {/* mock email if not in profile */}</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm">
                                 <Phone className="h-4 w-4 text-gray-400" />
-                                <span className="text-gray-600 dark:text-gray-300">{user.phone}</span>
+                                <span className="text-gray-600 dark:text-gray-300">{user.phone || 'No phone recorded'}</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm">
                                 <Shield className="h-4 w-4 text-gray-400" />
-                                <span className="text-gray-600 dark:text-gray-300">{user.department}</span>
+                                <span className="text-gray-600 dark:text-gray-300">{user.role} Department</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm">
                                 <MapPin className="h-4 w-4 text-gray-400" />
-                                <span className="text-gray-600 dark:text-gray-300">{user.location}</span>
+                                <span className="text-gray-600 dark:text-gray-300">Nigeria</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm">
                                 <Calendar className="h-4 w-4 text-gray-400" />
-                                <span className="text-gray-600 dark:text-gray-300">Joined {user.joinDate}</span>
+                                <span className="text-gray-600 dark:text-gray-300">Joined {new Date(user.created_at).toLocaleDateString()}</span>
                             </div>
                         </div>
                     </div>
@@ -121,11 +169,11 @@ export default function UserDetailPage() {
                                         <Smartphone className="h-4 w-4" />
                                     </div>
                                     <div>
-                                        <p className="text-xs font-bold text-gray-700 dark:text-gray-300">2-Factor Auth</p>
-                                        <p className="text-[10px] text-gray-500">{user.mfaEnabled ? 'Enabled' : 'Disabled'}</p>
+                                        <p className="text-xs font-bold text-gray-700 dark:text-gray-300">Auth Method</p>
+                                        <p className="text-[10px] text-gray-500">Supabase Auth</p>
                                     </div>
                                 </div>
-                                <div className={`h-2 w-2 rounded-full ${user.mfaEnabled ? 'bg-green-500' : 'bg-red-500'}`} />
+                                <div className={`h-2 w-2 rounded-full bg-green-500`} />
                             </div>
 
                             <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
@@ -134,11 +182,10 @@ export default function UserDetailPage() {
                                         <Globe className="h-4 w-4" />
                                     </div>
                                     <div>
-                                        <p className="text-xs font-bold text-gray-700 dark:text-gray-300">Last Login IP</p>
-                                        <p className="text-[10px] text-gray-500">192.168.1.1</p>
+                                        <p className="text-xs font-bold text-gray-700 dark:text-gray-300">Status</p>
+                                        <p className="text-[10px] text-gray-500">System user</p>
                                     </div>
                                 </div>
-                                <span className="text-[10px] font-mono text-gray-400">{user.lastLogin}</span>
                             </div>
                         </div>
                     </div>
@@ -153,15 +200,29 @@ export default function UserDetailPage() {
                             <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                                 <Key className="h-4 w-4 text-ptdf-primary" /> Role Permissions
                             </h4>
-                            <span className="text-xs font-medium text-gray-500">{user.permissions.length} Capabilities</span>
+                            <span className="text-xs font-medium text-gray-500">Capabilities Based on {user.role}</span>
                         </div>
 
                         <div className="flex flex-wrap gap-3">
-                            {user.permissions.map((perm: string) => (
-                                <span key={perm} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-                                    {perm}
-                                </span>
-                            ))}
+                            {user.role === 'ADMIN' && (
+                                <>
+                                    <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">View All Projects</span>
+                                    <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">Approve Budgets</span>
+                                    <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">Manage Users</span>
+                                </>
+                            )}
+                            {user.role === 'CONSULTANT' && (
+                                <>
+                                    <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">View Assigned Projects</span>
+                                    <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">Submit Reports</span>
+                                </>
+                            )}
+                            {user.role === 'CONTRACTOR' && (
+                                <>
+                                    <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">View Own Projects</span>
+                                    <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">Update Milestones</span>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -177,7 +238,7 @@ export default function UserDetailPage() {
                         </div>
 
                         <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                            {user.recentActivity.map((log: ActivityLog) => {
+                            {activities.length > 0 ? activities.map((log: ActivityLog) => {
                                 const Icon = getIcon(log.icon);
                                 return (
                                     <div key={log.id} className="p-4 flex items-start gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
@@ -185,13 +246,15 @@ export default function UserDetailPage() {
                                             <Icon className="h-4 w-4" />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-sm font-bold text-gray-900 dark:text-white">{log.action}</p>
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white capitalize">{log.action}</p>
                                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{log.text}</p>
                                         </div>
                                         <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap">{log.time}</span>
                                     </div>
                                 );
-                            })}
+                            }) : (
+                                <div className="p-8 text-center text-sm text-gray-500">No recent activities found for this user.</div>
+                            )}
                         </div>
                     </div>
                 </div>

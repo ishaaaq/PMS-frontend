@@ -1,88 +1,87 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Bell, CheckCircle, Info, AlertTriangle, X,
     Check
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 type Notification = {
     id: string;
     title: string;
     message: string;
     type: 'info' | 'success' | 'warning' | 'error';
-    time: string;
-    isRead: boolean;
+    created_at: string;
+    is_read: boolean;
     source: string;
 };
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-    {
-        id: '1',
-        title: 'Project Milestone Completed',
-        message: 'The "Foundation Phase" for Lagos-Ibadan Expressway Section B has been marked as complete by Julius Berger.',
-        type: 'success',
-        time: 'Just now',
-        isRead: false,
-        source: 'Project Update'
-    },
-    {
-        id: '2',
-        title: 'Budget Alert',
-        message: 'Project "Abuja Solar Farm" has reached 85% of its allocated budget usage.',
-        type: 'warning',
-        time: '2 hours ago',
-        isRead: false,
-        source: 'Financial System'
-    },
-    {
-        id: '3',
-        title: 'New Contractor Registration',
-        message: 'Dangote Construction Ltd has submitted a new registration application requiring review.',
-        type: 'info',
-        time: '5 hours ago',
-        isRead: true,
-        source: 'Admin'
-    },
-    {
-        id: '4',
-        title: 'Report Generated',
-        message: 'The Monthly Disbursement Report for December 2025 is ready for download.',
-        type: 'info',
-        time: 'Yesterday',
-        isRead: true,
-        source: 'System'
-    },
-    {
-        id: '5',
-        title: 'System Maintenance Scheduled',
-        message: 'The platform will undergo scheduled maintenance on Saturday, Jan 30th from 2:00 AM to 4:00 AM.',
-        type: 'info',
-        time: '2 days ago',
-        isRead: true,
-        source: 'System Announcement'
-    }
-];
+function timeAgo(dateStr: string): string {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'Yesterday';
+    return `${days}d ago`;
+}
 
 export default function NotificationsPage() {
-    const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
+    const [loading, setLoading] = useState(true);
 
-    const markAsRead = (id: string) => {
+    useEffect(() => {
+        async function loadNotifications() {
+            try {
+                const { data, error } = await supabase
+                    .from('admin_notifications')
+                    .select('id, title, message, type, source, is_read, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+
+                if (error) {
+                    console.warn('admin_notifications query failed:', error);
+                    return;
+                }
+
+                setNotifications((data || []).map(n => ({
+                    ...n,
+                    type: (n.type || 'info').toLowerCase() as Notification['type'],
+                })));
+            } catch (err) {
+                console.error('Load notifications error:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadNotifications();
+    }, []);
+
+    const markAsRead = async (id: string) => {
         setNotifications(notifications.map(n =>
-            n.id === id ? { ...n, isRead: true } : n
+            n.id === id ? { ...n, is_read: true } : n
         ));
+        await supabase.from('admin_notifications').update({ is_read: true }).eq('id', id);
     };
 
-    const markAllAsRead = () => {
-        setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+    const markAllAsRead = async () => {
+        setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+        const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+        if (unreadIds.length > 0) {
+            await supabase.from('admin_notifications').update({ is_read: true }).in('id', unreadIds);
+        }
     };
 
-    const deleteNotification = (id: string) => {
+    const deleteNotification = async (id: string) => {
         setNotifications(notifications.filter(n => n.id !== id));
+        await supabase.from('admin_notifications').delete().eq('id', id);
     };
 
     const filteredNotifications = filter === 'all'
         ? notifications
-        : notifications.filter(n => !n.isRead);
+        : notifications.filter(n => !n.is_read);
 
     const getIcon = (type: string) => {
         switch (type) {
@@ -102,6 +101,15 @@ export default function NotificationsPage() {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="space-y-4 animate-pulse">
+                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                {[1, 2, 3].map(i => <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>)}
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -114,8 +122,8 @@ export default function NotificationsPage() {
                         <button
                             onClick={() => setFilter('all')}
                             className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${filter === 'all'
-                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                                 }`}
                         >
                             All
@@ -123,14 +131,14 @@ export default function NotificationsPage() {
                         <button
                             onClick={() => setFilter('unread')}
                             className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${filter === 'unread'
-                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                                 }`}
                         >
                             Unread
                         </button>
                     </div>
-                    {notifications.some(n => !n.isRead) && (
+                    {notifications.some(n => !n.is_read) && (
                         <button
                             onClick={markAllAsRead}
                             className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-ptdf-primary hover:bg-ptdf-secondary transition-all"
@@ -153,9 +161,9 @@ export default function NotificationsPage() {
                     filteredNotifications.map((notification) => (
                         <div
                             key={notification.id}
-                            className={`relative group p-4 rounded-xl border transition-all duration-200 ${notification.isRead
-                                    ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'
-                                    : 'bg-white dark:bg-gray-800 border-l-4 border-l-ptdf-primary shadow-sm border-y-gray-100 border-r-gray-100 dark:border-y-gray-700 dark:border-r-gray-700'
+                            className={`relative group p-4 rounded-xl border transition-all duration-200 ${notification.is_read
+                                ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'
+                                : 'bg-white dark:bg-gray-800 border-l-4 border-l-ptdf-primary shadow-sm border-y-gray-100 border-r-gray-100 dark:border-y-gray-700 dark:border-r-gray-700'
                                 }`}
                         >
                             <div className="flex items-start gap-4">
@@ -164,16 +172,16 @@ export default function NotificationsPage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
-                                        <h4 className={`text-sm font-semibold ${notification.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-900 dark:text-white'}`}>
+                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                                             {notification.title}
                                         </h4>
-                                        <span className="text-xs text-gray-400 whitespace-nowrap">{notification.time}</span>
+                                        <span className="text-xs text-gray-400 whitespace-nowrap">{timeAgo(notification.created_at)}</span>
                                     </div>
                                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">{notification.message}</p>
                                     <p className="text-xs text-gray-400 mt-2 font-medium">{notification.source}</p>
                                 </div>
                                 <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    {!notification.isRead && (
+                                    {!notification.is_read && (
                                         <button
                                             onClick={() => markAsRead(notification.id)}
                                             className="p-1 text-gray-400 hover:text-ptdf-primary transition-colors"

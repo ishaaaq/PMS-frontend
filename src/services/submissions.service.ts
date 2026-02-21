@@ -81,5 +81,58 @@ export const SubmissionsService = {
             throw error
         }
         return data
+    },
+
+    async getProjectSubmissions(projectId: string) {
+        try {
+            // First get all milestone IDs for this project
+            const { data: milestones, error: mErr } = await supabase
+                .from('milestones')
+                .select('id')
+                .eq('project_id', projectId)
+
+            if (mErr) {
+                logRpcError('milestones.select for submissions', mErr)
+                return []
+            }
+
+            if (!milestones || milestones.length === 0) return []
+
+            const milestoneIds = milestones.map(m => m.id)
+
+            // Use PostgREST FK hint for disambiguation since submissions has
+            // two FKs to profiles (contractor_user_id, reviewed_by_consultant_id)
+            const { data, error } = await supabase
+                .from('submissions')
+                .select(`
+                    *,
+                    contractor:profiles!submissions_contractor_user_id_fkey ( full_name, role ),
+                    reviewer:profiles!submissions_reviewed_by_consultant_id_fkey ( full_name, role ),
+                    milestone:milestones!submissions_milestone_id_fkey ( id, title, due_date, budget )
+                `)
+                .in('milestone_id', milestoneIds)
+                .order('submitted_at', { ascending: false })
+
+            if (error) {
+                // Fallback: try without joins if FK hint names don't match
+                console.warn('Submissions with joins failed, trying simple fallback', error)
+                const { data: simpleData, error: simpleErr } = await supabase
+                    .from('submissions')
+                    .select('*')
+                    .in('milestone_id', milestoneIds)
+                    .order('submitted_at', { ascending: false })
+
+                if (simpleErr) {
+                    logRpcError('submissions.getProjectSubmissions.fallback', simpleErr)
+                    return []
+                }
+                return simpleData || []
+            }
+            return data || []
+        } catch (err) {
+            console.error('getProjectSubmissions unexpected error', err)
+            return []
+        }
     }
+
 }

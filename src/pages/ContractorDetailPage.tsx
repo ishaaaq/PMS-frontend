@@ -1,42 +1,72 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getAdminContractors, ZONE_LABELS } from '../services/adminContractors';
-import type { AdminContractor, GeographicZone, ContractorStatus } from '../services/adminContractors';
+import { getAdminContractors, ZONE_LABELS, type GeographicZone, type ContractorStatus } from '../services/adminContractors';
+import { supabase } from '../lib/supabase';
 import {
     ArrowLeft, Building2, MapPin, Phone, Mail, Calendar,
     Star, Briefcase, CheckCircle, Clock, Ban, TrendingUp,
     Award, FileText, MessageSquare, Edit, MoreVertical
 } from 'lucide-react';
 
-// Mock project history for the contractor
-const MOCK_PROJECT_HISTORY = [
-    { id: 'p1', name: 'Lagos-Ibadan Expressway Section B', status: 'COMPLETED', value: 450000000, startDate: '2024-03-15', endDate: '2025-08-20', rating: 4.8 },
-    { id: 'p2', name: 'Abuja Solar Farm Installation', status: 'IN_PROGRESS', value: 280000000, startDate: '2025-06-01', endDate: null, rating: null },
-    { id: 'p3', name: 'Port Harcourt Pipeline Rehabilitation', status: 'COMPLETED', value: 320000000, startDate: '2023-09-10', endDate: '2024-12-15', rating: 4.5 },
-    { id: 'p4', name: 'Kano Water Treatment Facility', status: 'IN_PROGRESS', value: 180000000, startDate: '2025-10-01', endDate: null, rating: null },
-];
+interface ProjectHistory {
+    id: string;
+    title: string;
+    status: string;
+    budget_allocated: number;
+    start_date: string;
+    end_date: string | null;
+    rating?: number;
+}
 
 export default function ContractorDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [contractor, setContractor] = useState<AdminContractor | null>(null);
+    const [contractor, setContractor] = useState<any | null>(null);
+    const [projects, setProjects] = useState<ProjectHistory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'reviews'>('overview');
 
     useEffect(() => {
-        const fetchContractor = async () => {
+        const fetchContractorDetails = async () => {
             setIsLoading(true);
             try {
+                // Fetch Contractor Data
                 const contractors = await getAdminContractors();
                 const found = contractors.find(c => c.id === id);
                 setContractor(found || null);
+
+                // Fetch Project History
+                if (found) {
+                    const { data, error } = await supabase
+                        .from('project_contractors')
+                        .select(`
+                            project_id,
+                            performance_rating,
+                            project:projects ( id, title, status, budget_allocated, start_date, end_date )
+                        `)
+                        .eq('contractor_user_id', id);
+
+                    if (error) throw error;
+
+                    const history = (data || []).map((row: any) => ({
+                        id: row.project.id,
+                        title: row.project.title,
+                        status: row.project.status,
+                        budget_allocated: row.project.budget_allocated,
+                        start_date: row.project.start_date,
+                        end_date: row.project.end_date,
+                        rating: row.performance_rating
+                    }));
+                    setProjects(history);
+                }
+
             } catch (error) {
-                console.error('Failed to fetch contractor', error);
+                console.error('Failed to fetch contractor details', error);
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchContractor();
+        fetchContractorDetails();
     }, [id]);
 
     const getStatusBadge = (status: ContractorStatus) => {
@@ -59,7 +89,7 @@ export default function ContractorDetailPage() {
             'SOUTH_EAST': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
             'SOUTH_SOUTH': 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
         };
-        return <span className={`px-3 py-1.5 text-sm font-medium rounded-full ${colors[zone]} flex items-center gap-1`}><MapPin className="h-4 w-4" /> {ZONE_LABELS[zone]}</span>;
+        return <span className={`px-3 py-1.5 text-sm font-medium rounded-full ${colors[zone]} flex items-center gap-1`}><MapPin className="h-4 w-4" /> {ZONE_LABELS[zone] || zone}</span>;
     };
 
     const renderStars = (rating: number) => {
@@ -136,12 +166,12 @@ export default function ContractorDetailPage() {
                             </div>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{contractor.registrationNumber}</p>
                             <div className="flex flex-wrap items-center gap-4 mt-3">
-                                {getZoneBadge(contractor.zone)}
+                                {contractor.zone && getZoneBadge(contractor.zone)}
                                 <span className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
                                     <Mail className="h-4 w-4 text-gray-400" /> {contractor.email}
                                 </span>
                                 <span className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
-                                    <Phone className="h-4 w-4 text-gray-400" /> {contractor.phone}
+                                    <Phone className="h-4 w-4 text-gray-400" /> {contractor.phone || 'N/A'}
                                 </span>
                             </div>
                         </div>
@@ -169,8 +199,8 @@ export default function ContractorDetailPage() {
                         </div>
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Projects</span>
                     </div>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white">{contractor.projectCount}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{contractor.activeProjects} active, {contractor.completedProjects} completed</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">{contractor.projectCount || projects.length}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{projects.filter(p => !p.end_date).length} active, {projects.filter(p => p.end_date).length} completed</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
                     <div className="flex items-center gap-3 mb-3">
@@ -183,7 +213,7 @@ export default function ContractorDetailPage() {
                         <p className="text-3xl font-bold text-gray-900 dark:text-white">{contractor.rating > 0 ? contractor.rating.toFixed(1) : '-'}</p>
                         {contractor.rating > 0 && <div className="flex">{renderStars(contractor.rating)}</div>}
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{contractor.totalReviews} reviews</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{contractor.totalReviews || 0} reviews</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
                     <div className="flex items-center gap-3 mb-3">
@@ -192,8 +222,8 @@ export default function ContractorDetailPage() {
                         </div>
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Value</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(1230000000)}</p>
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">+15% from last year</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(projects.reduce((acc, p) => acc + (p.budget_allocated || 0), 0))}</p>
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">Historically Awarded</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
                     <div className="flex items-center gap-3 mb-3">
@@ -202,8 +232,10 @@ export default function ContractorDetailPage() {
                         </div>
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Member Since</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{new Date(contractor.joinedAt).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{Math.floor((Date.now() - new Date(contractor.joinedAt).getTime()) / (365.25 * 24 * 60 * 60 * 1000))} years</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{contractor.joinedAt ? new Date(contractor.joinedAt).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' }) : 'N/A'}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {contractor.joinedAt ? Math.floor((Date.now() - new Date(contractor.joinedAt).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : 0} years
+                    </p>
                 </div>
             </div>
 
@@ -233,11 +265,14 @@ export default function ContractorDetailPage() {
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Specializations</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {contractor.specializations.map(spec => (
+                                    {(contractor.specializations || []).map((spec: string) => (
                                         <span key={spec} className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm flex items-center gap-1">
                                             <Award className="h-4 w-4 text-ptdf-primary" /> {spec}
                                         </span>
                                     ))}
+                                    {(!contractor.specializations || contractor.specializations.length === 0) && (
+                                        <span className="text-sm text-gray-500">None listed</span>
+                                    )}
                                 </div>
                             </div>
                             <div>
@@ -256,9 +291,9 @@ export default function ContractorDetailPage() {
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Quality Score</span>
                                         <div className="flex items-center gap-2">
                                             <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                <div className="h-full bg-blue-500 rounded-full" style={{ width: '88%' }}></div>
+                                                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(contractor.rating || 0) * 20}%` }}></div>
                                             </div>
-                                            <span className="text-sm font-medium text-gray-900 dark:text-white">88%</span>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white">{Math.round((contractor.rating || 0) * 20)}%</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between">
@@ -278,32 +313,34 @@ export default function ContractorDetailPage() {
                     {/* Projects Tab */}
                     {activeTab === 'projects' && (
                         <div className="space-y-4">
-                            {MOCK_PROJECT_HISTORY.map(project => (
-                                <div key={project.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                            {projects.length === 0 ? (
+                                <p className="text-center text-gray-500">No project history found for this contractor.</p>
+                            ) : projects.map(project => (
+                                <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-white dark:bg-gray-800 rounded-lg">
+                                        <div className="p-3 bg-white dark:bg-gray-800 rounded-lg hidden sm:block">
                                             <FileText className="h-5 w-5 text-gray-400" />
                                         </div>
                                         <div>
-                                            <p className="font-medium text-gray-900 dark:text-white">{project.name}</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                {new Date(project.startDate).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}
-                                                {project.endDate && ` - ${new Date(project.endDate).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}`}
+                                            <p className="font-bold text-gray-900 dark:text-white max-w-sm sm:max-w-md truncate" title={project.title}>{project.title}</p>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-tight font-medium mt-1">
+                                                {new Date(project.start_date).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}
+                                                {project.end_date && ` - ${new Date(project.end_date).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}`}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-6">
-                                        <div className="text-right">
-                                            <p className="font-semibold text-gray-900 dark:text-white">{formatCurrency(project.value)}</p>
+                                    <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-auto w-full border-t sm:border-t-0 border-gray-200 dark:border-gray-600 pt-3 sm:pt-0">
+                                        <div className="text-left sm:text-right">
+                                            <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(project.budget_allocated || 0)}</p>
                                             {project.rating && (
-                                                <div className="flex items-center gap-1 justify-end mt-1">
-                                                    <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                                                    <span className="text-sm text-gray-500 dark:text-gray-400">{project.rating}</span>
+                                                <div className="flex items-center gap-1 sm:justify-end mt-1">
+                                                    <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
+                                                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400">{project.rating}</span>
                                                 </div>
                                             )}
                                         </div>
-                                        <span className={`px-3 py-1 text-xs font-bold rounded-full ${project.status === 'COMPLETED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
-                                            {project.status === 'COMPLETED' ? 'Completed' : 'In Progress'}
+                                        <span className={`px-3 py-1 text-[10px] uppercase font-bold tracking-wider rounded-full ${project.status === 'COMPLETED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                                            {project.status.replace(/_/g, ' ')}
                                         </span>
                                     </div>
                                 </div>
@@ -314,7 +351,7 @@ export default function ContractorDetailPage() {
                     {/* Reviews Tab */}
                     {activeTab === 'reviews' && (
                         <div className="space-y-4">
-                            {contractor.totalReviews === 0 ? (
+                            {(contractor.totalReviews || 0) === 0 ? (
                                 <div className="text-center py-8">
                                     <Star className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                                     <p className="text-gray-500 dark:text-gray-400">No reviews yet</p>

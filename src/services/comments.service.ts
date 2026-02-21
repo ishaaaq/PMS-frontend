@@ -18,15 +18,30 @@ export const CommentsService = {
     },
 
     async getProjectComments(projectId: string) {
-        const { data, error } = await supabase
-            .from('project_comments')
-            .select('*')
-            .eq('project_id', projectId)
+        try {
+            const { data, error } = await supabase
+                .from('project_comments')
+                .select(`
+                    *,
+                    author:author_user_id ( full_name, role )
+                `)
+                .eq('project_id', projectId)
+                .order('created_at', { ascending: false })
 
-        if (error) {
-            logRpcError('project_comments.select', error)
-            throw error
+            if (error) {
+                // Fallback: try without join
+                console.warn('Comments with author join failed, trying simple fallback', error)
+                const { data: simpleData } = await supabase
+                    .from('project_comments')
+                    .select('*')
+                    .eq('project_id', projectId)
+                    .order('created_at', { ascending: false })
+                return simpleData || []
+            }
+            return data || []
+        } catch (err) {
+            console.error('getProjectComments unexpected error', err)
+            return []
         }
-        return data
     }
 }

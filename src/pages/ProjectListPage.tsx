@@ -10,8 +10,7 @@ export default function ProjectListPage() {
 
     useEffect(() => {
         getProjects().then((data) => {
-            // Duplicate data to fill grid for demo
-            setProjects([...data, ...data, ...data]);
+            setProjects(data);
             setLoading(false);
         });
     }, []);
