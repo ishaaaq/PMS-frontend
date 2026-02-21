@@ -98,28 +98,32 @@ export const DashboardService = {
         try {
             const { data: contractors } = await supabase
                 .from('profiles')
-                .select('user_id, full_name, rating')
+                .select('user_id, full_name')
                 .eq('role', 'CONTRACTOR')
                 .eq('is_active', true)
-                .order('rating', { ascending: false })
-                .limit(5)
+                .limit(10)
 
             if (!contractors || contractors.length === 0) return []
 
             const result: TopContractor[] = []
             for (const c of contractors) {
-                const { count } = await supabase
+                const { data: assignments } = await supabase
                     .from('project_contractors')
-                    .select('*', { count: 'exact', head: true })
+                    .select('performance_rating')
                     .eq('contractor_user_id', c.user_id)
+
+                const projectCount = assignments?.length || 0
+                const avgRating = projectCount > 0
+                    ? (assignments!.reduce((sum, a) => sum + (Number(a.performance_rating) || 0), 0) / projectCount)
+                    : 0
 
                 result.push({
                     name: c.full_name || 'Unknown',
-                    rating: Number(c.rating) || 0,
-                    projectCount: count || 0,
+                    rating: Math.round(avgRating * 10) / 10,
+                    projectCount,
                 })
             }
-            return result
+            return result.sort((a, b) => b.rating - a.rating).slice(0, 5)
         } catch (err) {
             console.error('DashboardService.getTopContractors error', err)
             return []
@@ -130,27 +134,36 @@ export const DashboardService = {
         try {
             const { data: projects } = await supabase
                 .from('projects')
-                .select('location, progress, status')
+                .select('id, location, status')
 
             if (!projects || projects.length === 0) return []
 
-            const zoneMap = new Map<string, { count: number; totalProgress: number }>()
+            const zoneMap = new Map<string, { count: number; projectIds: string[] }>()
             for (const p of projects) {
                 const zone = p.location?.split(',')[0]?.trim() || 'Unknown'
-                const existing = zoneMap.get(zone) || { count: 0, totalProgress: 0 }
+                const existing = zoneMap.get(zone) || { count: 0, projectIds: [] }
                 existing.count++
-                existing.totalProgress += Number(p.progress || 0)
+                existing.projectIds.push(p.id)
                 zoneMap.set(zone, existing)
             }
 
-            return Array.from(zoneMap.entries())
-                .map(([name, data]) => ({
-                    name,
-                    projectCount: data.count,
-                    progress: Math.round(data.totalProgress / data.count),
-                }))
-                .sort((a, b) => b.projectCount - a.projectCount)
-                .slice(0, 6)
+            // Compute progress from milestone completion
+            const entries = Array.from(zoneMap.entries())
+            const result: ZoneCluster[] = []
+            for (const [name, data] of entries) {
+                const { data: milestones } = await supabase
+                    .from('milestones')
+                    .select('status')
+                    .in('project_id', data.projectIds)
+
+                const total = milestones?.length || 0
+                const completed = milestones?.filter(m => m.status === 'VERIFIED').length || 0
+                const progress = total > 0 ? Math.round((completed / total) * 100) : 0
+
+                result.push({ name, projectCount: data.count, progress })
+            }
+
+            return result.sort((a, b) => b.projectCount - a.projectCount).slice(0, 6)
         } catch (err) {
             console.error('DashboardService.getZoneClusters error', err)
             return []
