@@ -34,7 +34,7 @@ export interface Project {
     projectContractors?: { id: string; name: string; role: string }[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const mapProject = (p: any): Project => {
     // Parse location if it's stored as "State, LGA" string
     let state = p.state || '';

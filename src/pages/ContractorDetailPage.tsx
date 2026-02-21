@@ -21,7 +21,7 @@ interface ProjectHistory {
 export default function ContractorDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [contractor, setContractor] = useState<any | null>(null);
+    const [contractor, setContractor] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
     const [projects, setProjects] = useState<ProjectHistory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'reviews'>('overview');
@@ -48,7 +48,7 @@ export default function ContractorDetailPage() {
 
                     if (error) throw error;
 
-                    const history = (data || []).map((row: any) => ({
+                    const history = (data || []).map((row: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
                         id: row.project.id,
                         title: row.project.title,
                         status: row.project.status,

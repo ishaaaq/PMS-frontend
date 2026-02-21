@@ -49,7 +49,7 @@ export default function InviteResolutionPage() {
 
                 const invite = await InvitationsService.getPendingInvitation(id);
                 setInvitation(invite);
-            } catch (err: any) {
+            } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
                 console.error('Failed to verify invite:', err);
                 setError(err.message || 'This invitation is invalid or has already been accepted.');
             } finally {
@@ -107,7 +107,7 @@ export default function InviteResolutionPage() {
             // 4. Redirect based on role
             navigate(invitation.role === 'CONTRACTOR' ? '/dashboard/contractor' : '/dashboard/consultant');
 
-        } catch (err: any) {
+        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Registration Error:', err);
             setError(err.message || 'An error occurred during registration. Please try again.');
 

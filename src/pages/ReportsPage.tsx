@@ -8,7 +8,7 @@ import ReportList from '../components/reports/ReportList';
 export default function ReportsPage() {
     const [activeTab, setActiveTab] = useState<'overview' | 'financial' | 'consultants'>('overview');
     const [isGenerating, setIsGenerating] = useState(false);
-    const [statsData, setStatsData] = useState([65, 40, 75, 55, 80, 60]); // Kept for zone snapshot pass-through
+    const [statsData] = useState([65, 40, 75, 55, 80, 60]); // Kept for zone snapshot pass-through
 
     const generateReport = () => {
         setIsGenerating(true);

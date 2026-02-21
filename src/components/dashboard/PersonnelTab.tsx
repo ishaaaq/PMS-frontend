@@ -113,7 +113,7 @@ export default function PersonnelTab({ project, onProjectUpdated }: PersonnelTab
             }
             // Let the parent component refresh data instead of hard reload
             onProjectUpdated?.();
-        } catch (error: any) {
+        } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Assignment failed', error);
             setToast({ type: 'error', message: error.message || 'Failed to assign user. Please try again.' });
         } finally {
@@ -157,7 +157,7 @@ export default function PersonnelTab({ project, onProjectUpdated }: PersonnelTab
             const link = `${window.location.origin}/invite/${inviteId}`;
             setInviteLink(link);
             setEmail('');
-        } catch (err: any) {
+        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Invite Error:', err);
             setInviteError(err.message || 'Failed to send invitation.');
         } finally {
@@ -202,8 +202,8 @@ export default function PersonnelTab({ project, onProjectUpdated }: PersonnelTab
             {/* Inline Toast Notification */}
             {toast && (
                 <div className={`flex items-center gap-3 p-4 rounded-xl border animate-in fade-in slide-in-from-top-2 duration-300 ${toast.type === 'success'
-                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300'
-                        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300'
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
                     }`}>
                     {toast.type === 'success'
                         ? <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
@@ -234,8 +234,8 @@ export default function PersonnelTab({ project, onProjectUpdated }: PersonnelTab
                             {type}
                             {tabCounts[type] > 0 && (
                                 <span className={`ml-2 text-xs font-bold px-1.5 py-0.5 rounded-full ${activePersonnelTab === type
-                                        ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                                    ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                                     }`}>
                                     {tabCounts[type]}
                                 </span>
@@ -339,8 +339,8 @@ export default function PersonnelTab({ project, onProjectUpdated }: PersonnelTab
                                     <button
                                         onClick={copyInviteLink}
                                         className={`px-3 py-2.5 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 ${linkCopied
-                                                ? 'bg-green-100 dark:bg-green-800 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300'
-                                                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                            ? 'bg-green-100 dark:bg-green-800 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300'
+                                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                                             }`}
                                     >
                                         {linkCopied ? <><Check className="h-3.5 w-3.5" /> Copied</> : <><Copy className="h-3.5 w-3.5" /> Copy</>}

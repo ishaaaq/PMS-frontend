@@ -17,7 +17,7 @@ interface ActivityLog {
 
 export default function UserDetailPage() {
     const { id } = useParams();
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
     const [activities, setActivities] = useState<ActivityLog[]>([]);
     const [loading, setLoading] = useState(true);
 

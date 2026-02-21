@@ -58,7 +58,7 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
             const inviteId = await InvitationsService.createInvitation(email, role);
             const link = `${window.location.origin}/invite/${inviteId}`;
             setInviteLink(link);
-        } catch (err: any) {
+        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Invite Error:', err);
             setError(err.message || 'Failed to send invitation. They might already be invited.');
         } finally {
@@ -124,8 +124,8 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
                                 <button
                                     onClick={copyLink}
                                     className={`px-4 py-3 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-medium ${copied
-                                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400'
-                                            : 'bg-white dark:bg-gray-700 border-gray-100 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400'
+                                        : 'bg-white dark:bg-gray-700 border-gray-100 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
                                         }`}
                                 >
                                     {copied ? <><Check className="h-4 w-4" /> Copied</> : <><Copy className="h-4 w-4" /> Copy</>}
@@ -160,8 +160,8 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
                                             key={r}
                                             onClick={() => setRole(r)}
                                             className={`py-3 px-3 text-left rounded-xl border transition-all ${role === r
-                                                    ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-600 ring-1 ring-indigo-200 dark:ring-indigo-800'
-                                                    : 'bg-white dark:bg-gray-700/50 border-gray-100 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                                ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-600 ring-1 ring-indigo-200 dark:ring-indigo-800'
+                                                : 'bg-white dark:bg-gray-700/50 border-gray-100 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                                                 }`}
                                         >
                                             <p className={`text-xs font-bold ${role === r ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'}`}>
@@ -185,8 +185,8 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
                                         onChange={(e) => { setEmail(e.target.value); setError(null); }}
                                         onKeyDown={(e) => { if (e.key === 'Enter') handleInvite(); }}
                                         className={`w-full pl-10 pr-4 py-3 text-sm rounded-xl focus:ring-2 bg-gray-50/50 dark:bg-gray-700/50 text-gray-900 dark:text-white dark:placeholder-gray-500 border outline-none transition-colors ${error
-                                                ? 'border-red-300 focus:ring-red-500 dark:border-red-500/50'
-                                                : 'border-gray-100 dark:border-gray-600 focus:ring-indigo-500'
+                                            ? 'border-red-300 focus:ring-red-500 dark:border-red-500/50'
+                                            : 'border-gray-100 dark:border-gray-600 focus:ring-indigo-500'
                                             }`}
                                     />
                                 </div>
