@@ -8,6 +8,20 @@
 alter type audit_action add value if not exists 'INVITATION_CREATED';
 alter type audit_action add value if not exists 'INVITATION_ACCEPTED';
 
+-- Fix 1: Add STAFF to user_role enum if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_type t
+        JOIN pg_enum e ON t.oid = e.enumtypid
+        WHERE t.typname = 'user_role' AND e.enumlabel = 'STAFF'
+    ) THEN
+        ALTER TYPE user_role ADD VALUE 'STAFF';
+    END IF;
+END
+$$;
+
 -- ============================================================
 -- 3. FIX INVITATION ACCEPTANCE PIPELINE
 -- ============================================================
@@ -16,11 +30,11 @@ alter type audit_action add value if not exists 'INVITATION_ACCEPTED';
 drop function if exists rpc_create_invitation(text, user_role, uuid, uuid);
 drop function if exists rpc_create_invitation(text, user_role, uuid);
 
--- Recreate rpc_create_invitation to include audit logging
+-- Recreate rpc_create_invitation to include audit logging and default null
 create or replace function rpc_create_invitation(
     p_invitee_email text,
     p_role user_role,
-    p_project_id uuid,
+    p_project_id uuid default null,
     p_section_id uuid default null
 )
 returns uuid
@@ -35,10 +49,10 @@ begin
     if is_admin() then
         null;
     -- Consultant can invite contractor only
-    elsif p_role = 'CONTRACTOR' and is_project_consultant(p_project_id) then
+    elsif p_role = 'CONTRACTOR' and p_project_id is not null and is_project_consultant(p_project_id) then
         null;
     else
-        raise exception 'Unauthorized';
+        raise exception 'Unauthorized to create this invitation';
     end if;
 
     insert into invitations (
@@ -142,10 +156,6 @@ begin
             values (v_project_id, v_user_id)
             on conflict do nothing;
         elsif v_role = 'CONTRACTOR' then
-            -- Note: We assume the user accepting has authority over themselves, 
-            -- added_by_admin_id can be null or the original inviter. 
-            -- For simplicity, we just leave added_by_admin_id null 
-            -- or note it in the audit log.
             insert into project_contractors (project_id, contractor_user_id)
             values (v_project_id, v_user_id)
             on conflict do nothing;

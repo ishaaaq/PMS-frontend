@@ -17,7 +17,7 @@ import ContractorDetailPage from './pages/ContractorDetailPage';
 import SettingsPage from './pages/SettingsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import MilestonesPage from './pages/MilestonesPage';
-
+import InviteResolutionPage from './pages/InviteResolutionPage';
 // Consultant Pages
 import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
 import ConsultantProjectList from './pages/consultant/ConsultantProjectList';
@@ -64,6 +64,9 @@ function App() {
           <Route path="/auth" element={<AuthLayout />}>
             <Route path="login" element={<LoginPage />} />
           </Route>
+
+          {/* Invite Resolution Route (Unprotected, handles its own auth state) */}
+          <Route path="/invite/:id" element={<InviteResolutionPage />} />
 
           {/* Dashboard Routes */}
           <Route path="/dashboard" element={

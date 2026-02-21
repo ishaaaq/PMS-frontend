@@ -1,26 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserPlus, Shield, MoreVertical, Search, Filter, ShieldCheck, ShieldAlert, Mail, MapPin } from 'lucide-react';
+import { Users, UserPlus, Shield, MoreVertical, Search, Filter, ShieldCheck, ShieldAlert, Mail } from 'lucide-react';
 import InviteModal from '../components/dashboard/InviteModal';
+import { supabase } from '../lib/supabase';
+
+interface UserProfile {
+    user_id: string;
+    full_name: string;
+    role: string;
+    phone: string | null;
+    is_active: boolean;
+    created_at: string;
+    email?: string;
+}
 
 export default function UsersPage() {
     const navigate = useNavigate();
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('ALL');
+    const [users, setUsers] = useState<UserProfile[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [counts, setCounts] = useState({ total: 0, consultants: 0, contractors: 0, admins: 0 });
 
-    const users = [
-        { id: '1', name: 'Ishaq Abdullahi', email: 'i.abdullahi@ptdf.gov.ng', role: 'ADMIN', status: 'Active', zone: 'FCT' },
-        { id: '2', name: 'Amina Bello', email: 'a.bello@consulting.com', role: 'CONSULTANT', status: 'Active', zone: 'Kaduna' },
-        { id: '3', name: 'John Contractor', email: 'j.smith@buildright.com', role: 'CONTRACTOR', status: 'Active', zone: 'Lagos' },
-        { id: '4', name: 'Fatus Yusuf', email: 'f.yusuf@ptdf.gov.ng', role: 'STAFF', status: 'Inactive', zone: 'Abuja' },
-        { id: '5', name: 'Chioma Okeke', email: 'c.okeke@ptdf.gov.ng', role: 'ADMIN', status: 'Active', zone: 'Enugu' },
-        { id: '6', name: 'Emmanuel Sani', email: 'e.sani@projects.com', role: 'CONSULTANT', status: 'Pending', zone: 'Kano' },
-    ];
+    useEffect(() => {
+        async function loadUsers() {
+            try {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('user_id, full_name, role, phone, is_active, created_at')
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('Failed to load users:', error);
+                    return;
+                }
+
+                const profiles = (data || []) as UserProfile[];
+                setUsers(profiles);
+                setCounts({
+                    total: profiles.length,
+                    consultants: profiles.filter(u => u.role === 'CONSULTANT').length,
+                    contractors: profiles.filter(u => u.role === 'CONTRACTOR').length,
+                    admins: profiles.filter(u => u.role === 'ADMIN').length,
+                });
+            } catch (err) {
+                console.error('Load users error:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadUsers();
+    }, []);
 
     const filteredUsers = users.filter(user => {
-        const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (user.email || '').toLowerCase().includes(searchQuery.toLowerCase());
         const matchesRole = roleFilter === 'ALL' || user.role === roleFilter;
         return matchesSearch && matchesRole;
     });
@@ -33,6 +68,18 @@ export default function UsersPage() {
             default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
         }
     };
+
+    if (loading) {
+        return (
+            <div className="space-y-8 animate-pulse">
+                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>)}
+                </div>
+                <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8">
@@ -52,10 +99,10 @@ export default function UsersPage() {
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                    { label: 'Total Users', value: '1,204', icon: Users, color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-800' },
-                    { label: 'Consultants', value: '84', icon: Shield, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-                    { label: 'Contractors', value: '256', icon: ShieldCheck, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' },
-                    { label: 'Platform Health', value: '99.9%', icon: ShieldAlert, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+                    { label: 'Total Users', value: String(counts.total), icon: Users, color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-800' },
+                    { label: 'Consultants', value: String(counts.consultants), icon: Shield, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+                    { label: 'Contractors', value: String(counts.contractors), icon: ShieldCheck, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' },
+                    { label: 'Admins', value: String(counts.admins), icon: ShieldAlert, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
                 ].map(stat => (
                     <div key={stat.label} className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between">
                         <div>
@@ -96,7 +143,6 @@ export default function UsersPage() {
                                 <option value="ADMIN">Admins</option>
                                 <option value="CONSULTANT">Consultants</option>
                                 <option value="CONTRACTOR">Contractors</option>
-                                <option value="STAFF">Staff</option>
                             </select>
                         </div>
                     </div>
@@ -108,7 +154,6 @@ export default function UsersPage() {
                             <tr>
                                 <th className="px-6 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest text-nowrap">User Details</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest text-nowrap">Role</th>
-                                <th className="px-6 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest text-nowrap">Location</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest text-nowrap">Status</th>
                                 <th className="px-6 py-4 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest text-nowrap">Actions</th>
                             </tr>
@@ -116,25 +161,25 @@ export default function UsersPage() {
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-900">
                             {filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                                         No users found matching your search.
                                     </td>
                                 </tr>
                             ) : filteredUsers.map(user => (
                                 <tr
-                                    key={user.id}
-                                    onClick={() => navigate(`/dashboard/users/${user.id}`)}
+                                    key={user.user_id}
+                                    onClick={() => navigate(`/dashboard/users/${user.user_id}`)}
                                     className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group cursor-pointer"
                                 >
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300 font-bold text-xs shadow-sm border border-gray-200 dark:border-gray-600 uppercase">
-                                                {user.name.split(' ').map(n => n[0]).join('')}
+                                                {user.full_name?.split(' ').map(n => n[0]).join('') || '??'}
                                             </div>
                                             <div className="ml-4">
-                                                <div className="text-sm font-bold text-gray-900 dark:text-white">{user.name}</div>
+                                                <div className="text-sm font-bold text-gray-900 dark:text-white">{user.full_name}</div>
                                                 <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                                    <Mail className="h-3 w-3" /> {user.email}
+                                                    <Mail className="h-3 w-3" /> {user.email || user.phone || '—'}
                                                 </div>
                                             </div>
                                         </div>
@@ -146,21 +191,11 @@ export default function UsersPage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 font-medium bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md w-fit">
-                                            <MapPin className="h-3.5 w-3.5 text-gray-400" />
-                                            {user.zone} Project Zone
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold ${user.status === 'Active' ? 'text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-900/20' :
-                                            user.status === 'Pending' ? 'text-yellow-700 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-900/20' :
-                                                'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-800'
+                                        <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold ${user.is_active ? 'text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-900/20' :
+                                            'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-800'
                                             }`}>
-                                            <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'Active' ? 'bg-green-500' :
-                                                user.status === 'Pending' ? 'bg-yellow-500' :
-                                                    'bg-gray-400'
-                                                }`}></span>
-                                            {user.status}
+                                            <span className={`w-1.5 h-1.5 rounded-full ${user.is_active ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                                            {user.is_active ? 'Active' : 'Inactive'}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
