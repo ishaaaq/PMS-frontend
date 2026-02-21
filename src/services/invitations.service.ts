@@ -31,7 +31,7 @@ export const InvitationsService = {
     async getPendingInvitation(invitationId: string): Promise<Invitation> {
         const { data, error } = await supabase
             .from('invitations')
-            .select('*')
+            .select('id, invitee_email, role, project_id, section_id, status')
             .eq('id', invitationId)
             .eq('status', 'PENDING')
             .single()

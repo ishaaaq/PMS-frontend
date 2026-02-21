@@ -15,10 +15,13 @@ export const StorageService = {
         submissionId: string,
         file: File
     ): Promise<string> {
-        const path = `project/${projectId}/milestone/${milestoneId}/submission/${submissionId}/${file.name}`
+        // Append a random suffix to prevent filename collisions and evidence tampering
+        const suffix = crypto.randomUUID().slice(0, 8)
+        const safeName = `${suffix}_${file.name}`
+        const path = `project/${projectId}/milestone/${milestoneId}/submission/${submissionId}/${safeName}`
         const { error } = await supabase.storage
             .from(BUCKET)
-            .upload(path, file, { upsert: true })
+            .upload(path, file, { upsert: false })
         if (error) {
             logRpcError('storage.upload', error)
             throw error

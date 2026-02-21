@@ -11,15 +11,16 @@ function createSupabaseClient(): SupabaseClient {
             throw new Error('Invalid protocol')
         }
     } catch {
-        console.error(
-            '⚠️ SUPABASE NOT CONFIGURED — set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env'
-        )
-        // Create a client with a dummy URL so the app can at least render;
-        // all Supabase calls will fail gracefully.
+        // In production, throw hard to prevent silent misconfiguration
+        const msg = '⚠️ SUPABASE NOT CONFIGURED — set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env'
+        if (import.meta.env.PROD) {
+            throw new Error(msg)
+        }
+        console.error(msg)
+        // In dev, fall back to a dummy client so the app can at least render
         return createClient('https://placeholder.supabase.co', 'placeholder-key')
     }
     return createClient(supabaseUrl, supabaseAnonKey)
 }
 
 export const supabase = createSupabaseClient()
-
