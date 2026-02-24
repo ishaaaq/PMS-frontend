@@ -1,26 +1,17 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-function createSupabaseClient(): SupabaseClient {
-    // Validate URL — createClient throws if it's not a valid HTTP(S) URL
-    try {
-        const url = new URL(supabaseUrl)
-        if (!['http:', 'https:'].includes(url.protocol)) {
-            throw new Error('Invalid protocol')
-        }
-    } catch {
-        // In production, throw hard to prevent silent misconfiguration
-        const msg = '⚠️ SUPABASE NOT CONFIGURED — set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env'
-        if (import.meta.env.PROD) {
-            throw new Error(msg)
-        }
-        console.error(msg)
-        // In dev, fall back to a dummy client so the app can at least render
-        return createClient('https://placeholder.supabase.co', 'placeholder-key')
+if (!supabaseUrl || !supabaseAnonKey) {
+    const msg = '⚠️ SUPABASE NOT CONFIGURED — set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env'
+    if (import.meta.env.PROD) {
+        throw new Error(msg)
     }
-    return createClient(supabaseUrl, supabaseAnonKey)
+    console.error(msg)
 }
 
-export const supabase = createSupabaseClient()
+export const supabase = createClient(
+    supabaseUrl ?? 'https://placeholder.supabase.co',
+    supabaseAnonKey ?? 'placeholder-key'
+)

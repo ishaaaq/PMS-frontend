@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import {
     User, Bell, Lock, Shield, Moon, Sun, Globe,
-    Smartphone, Mail, Camera, Save, LogOut
+    Smartphone, Mail, Camera, Save, LogOut, CheckCircle2, X
 } from 'lucide-react';
 
 import { useTheme } from '../hooks/useTheme';
+import { useAuth } from '../hooks/useAuth';
+import TotpSetup from '../components/auth/TotpSetup';
 
 export default function SettingsPage() {
     const { resolvedTheme, toggleTheme } = useTheme();
     const isDark = resolvedTheme === 'dark';
+    const { user, mfaStatus, refreshMfa } = useAuth();
+    const [showMfaSetup, setShowMfaSetup] = useState(false);
 
     const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security'>('profile');
     const [notifications, setNotifications] = useState({
@@ -17,6 +21,11 @@ export default function SettingsPage() {
         marketing: false,
         security: true
     });
+
+    const handleMfaSuccess = async () => {
+        await refreshMfa();
+        setShowMfaSetup(false);
+    };
 
     return (
         <div className="space-y-8">
@@ -110,8 +119,9 @@ export default function SettingsPage() {
                                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                                 <input
                                                     type="email"
-                                                    defaultValue="i.abdullahi@ptdf.gov.ng"
-                                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-ptdf-primary/20 focus:border-ptdf-primary transition-all"
+                                                    disabled
+                                                    value={user?.email || "i.abdullahi@ptdf.gov.ng"}
+                                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 cursor-not-allowed"
                                                 />
                                             </div>
                                         </div>
@@ -208,10 +218,22 @@ export default function SettingsPage() {
                                                 </div>
                                                 <div>
                                                     <h4 className="text-lg font-bold text-gray-900 dark:text-white">Two-Factor Authentication</h4>
-                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-4">Add an extra layer of security to your account.</p>
-                                                    <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
-                                                        Enable 2FA
-                                                    </button>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-4">
+                                                        {mfaStatus?.hasFactors ? 'Your account is secured with two-factor authentication.' : 'Add an extra layer of security to your account.'}
+                                                    </p>
+
+                                                    {mfaStatus?.hasFactors ? (
+                                                        <div className="flex items-center gap-2 text-green-600 dark:text-green-500 font-medium">
+                                                            <CheckCircle2 className="w-5 h-5" /> Enabled
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => setShowMfaSetup(true)}
+                                                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                                                        >
+                                                            Enable 2FA
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -239,6 +261,24 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* MFA Setup Modal */}
+            {showMfaSetup && (
+                <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                    <div className="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
+                        <div className="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/80 backdrop-blur-sm transition-opacity" onClick={() => setShowMfaSetup(false)}></div>
+                        <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full mx-auto shadow-2xl">
+                            <TotpSetup onComplete={handleMfaSuccess} />
+                            <button
+                                onClick={() => setShowMfaSetup(false)}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import TotpSetup from '../components/auth/TotpSetup';
+import TotpChallenge from '../components/auth/TotpChallenge';
 
 interface LocationState {
     from?: { pathname: string };
@@ -13,18 +16,24 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
-    const { login } = useAuth();
+    const { login, mfaStatus, refreshMfa, logout, user } = useAuth();
 
     const from = (location.state as LocationState | null)?.from?.pathname || '/dashboard';
+
+    // Once user object is populated (AAL2 reached), navigate to dashboard
+    useEffect(() => {
+        if (user) {
+            navigate(from, { replace: true });
+        }
+    }, [user, navigate, from]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
-
         try {
             await login(email, password);
-            navigate(from, { replace: true });
+            // onAuthStateChange fires and updates mfaStatus → component re-renders appropriately
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Invalid credentials or server unavailable';
             setError(msg);
@@ -33,6 +42,50 @@ export default function LoginPage() {
         }
     };
 
+    const handleMfaSuccess = async () => {
+        await refreshMfa();
+        // refreshMfa updates mfaStatus + user → useEffect above navigates if user is set
+    };
+
+    const handleMfaCancel = async () => {
+        await logout();
+    };
+
+    // ─── MFA Screens ──────────────────────────────────────────────────────────
+    // Only shown AFTER a successful password login (mfaStatus is populated).
+    // These checks run regardless of any loading state so the user is never stuck.
+
+    if (mfaStatus?.currentLevel === 'aal1') {
+        const factorId = mfaStatus.verifiedFactors?.[0]?.id;
+
+        if (mfaStatus.hasFactors && factorId) {
+            // Enrolled – challenge the user
+            return (
+                <div className="w-full">
+                    <TotpChallenge
+                        factorId={factorId}
+                        onSuccess={handleMfaSuccess}
+                        onCancel={handleMfaCancel}
+                    />
+                </div>
+            );
+        }
+
+        // Not enrolled – force setup
+        return (
+            <div className="w-full">
+                <TotpSetup onComplete={handleMfaSuccess} />
+                <button
+                    onClick={handleMfaCancel}
+                    className="mt-6 w-full text-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                    Cancel and Sign Out
+                </button>
+            </div>
+        );
+    }
+
+    // ─── Login Form ───────────────────────────────────────────────────────────
     return (
         <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
@@ -85,8 +138,9 @@ export default function LoginPage() {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-ptdf-primary hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:ring-offset-gray-900 focus:ring-ptdf-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-ptdf-primary hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:ring-offset-gray-900 focus:ring-ptdf-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
+                    {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                     {loading ? 'Signing in...' : 'Sign in'}
                 </button>
             </div>
