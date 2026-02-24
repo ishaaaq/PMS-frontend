@@ -112,8 +112,11 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
             }
         };
 
-        // If mock data is provided directly in submission, use it (for preview)
-        if (submission?.images || submission?.documents) {
+        // If pre-populated data is provided directly in submission, use it (for preview).
+        // Check for arrays with actual contents — empty arrays should NOT skip the real fetch.
+        const hasImages = Array.isArray(submission?.images) && submission.images.length > 0;
+        const hasDocs = Array.isArray(submission?.documents) && submission.documents.length > 0;
+        if (hasImages || hasDocs) {
             setImages(submission.images || []);
             setDocuments(submission.documents || []);
             setMaterialUsage(submission.materialUsage || []);
@@ -134,9 +137,9 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
     // Derived data for display
     const displayData = {
         milestone: submission?.milestone || milestone?.title || 'Unknown Milestone',
-        description: submission?.description || submission?.work_description || 'No description provided.',
+        description: submission?.description || submission?.work_description || submission?.workDescription || 'No description provided.',
         contractor: submission?.contractor || 'Unknown Contractor',
-        date: submission?.date || new Date(submission?.submitted_at || Date.now()).toLocaleDateString(),
+        date: submission?.date || submission?.submitted || new Date(submission?.submitted_at || submission?.submittedRaw || Date.now()).toLocaleDateString(),
         location: submission?.location || 'Unknown Location'
     };
 

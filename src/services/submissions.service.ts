@@ -83,9 +83,63 @@ export const SubmissionsService = {
         return data
     },
 
+    /**
+     * Fetch all submissions for a project with contractor, reviewer, and milestone info.
+     *
+     * Primary path: SECURITY DEFINER RPC that joins profiles server-side
+     * (bypasses profiles RLS so consultants can see contractor/reviewer names).
+     *
+     * Fallback: direct PostgREST query with FK hints — works for admin
+     * (whose RLS allows reading all profiles).
+     */
     async getProjectSubmissions(projectId: string) {
+        // --- Primary: RPC (works for ALL roles) ---
         try {
-            // First get all milestone IDs for this project
+            const { data: rpcData, error: rpcError } = await supabase.rpc(
+                'rpc_get_project_submissions_with_profiles',
+                { p_project_id: projectId }
+            )
+
+            if (!rpcError && rpcData) {
+                // Map flat RPC rows → shape expected by SubmissionHistoryTab UI:
+                //   { id, status, submitted_at, work_description, query_note, reviewed_at,
+                //     contractor: { full_name, role }, reviewer: { full_name },
+                //     milestone: { id, title, due_date, budget } }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                return rpcData.map((row: any) => ({
+                    id: row.submission_id,
+                    status: row.status,
+                    submitted_at: row.submitted_at,
+                    work_description: row.work_description,
+                    query_note: row.query_note,
+                    reviewed_at: row.reviewed_at,
+                    milestone_id: row.milestone_id,
+                    contractor_user_id: row.contractor_user_id,
+                    contractor: {
+                        full_name: row.contractor_full_name,
+                        role: row.contractor_role,
+                    },
+                    reviewer: row.reviewer_full_name
+                        ? { full_name: row.reviewer_full_name }
+                        : null,
+                    milestone: {
+                        id: row.milestone_id,
+                        title: row.milestone_title,
+                        due_date: row.milestone_due_date,
+                        budget: row.milestone_budget,
+                    },
+                }))
+            }
+
+            if (rpcError) {
+                console.warn('rpc_get_project_submissions_with_profiles failed, falling back to direct query', rpcError)
+            }
+        } catch (err) {
+            console.warn('RPC call failed, falling back to direct query', err)
+        }
+
+        // --- Fallback: direct PostgREST query (works for admin only) ---
+        try {
             const { data: milestones, error: mErr } = await supabase
                 .from('milestones')
                 .select('id')
@@ -100,8 +154,6 @@ export const SubmissionsService = {
 
             const milestoneIds = milestones.map(m => m.id)
 
-            // Use PostgREST FK hint for disambiguation since submissions has
-            // two FKs to profiles (contractor_user_id, reviewed_by_consultant_id)
             const { data, error } = await supabase
                 .from('submissions')
                 .select(`
@@ -114,18 +166,12 @@ export const SubmissionsService = {
                 .order('submitted_at', { ascending: false })
 
             if (error) {
-                // Fallback: try without joins if FK hint names don't match
-                console.warn('Submissions with joins failed, trying simple fallback', error)
-                const { data: simpleData, error: simpleErr } = await supabase
+                console.warn('Submissions direct query with joins failed', error)
+                const { data: simpleData } = await supabase
                     .from('submissions')
                     .select('*')
                     .in('milestone_id', milestoneIds)
                     .order('submitted_at', { ascending: false })
-
-                if (simpleErr) {
-                    logRpcError('submissions.getProjectSubmissions.fallback', simpleErr)
-                    return []
-                }
                 return simpleData || []
             }
             return data || []

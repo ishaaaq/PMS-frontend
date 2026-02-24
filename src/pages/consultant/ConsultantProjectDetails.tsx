@@ -13,12 +13,17 @@ import {
     ChevronLeft,
     CheckCircle,
     Clock,
-    AlertCircle
+    AlertCircle,
+    MessageSquare,
+    Send,
+    Loader2
 } from 'lucide-react';
 import AssignSectionModal from '../../components/consultant/AssignSectionModal';
 import { SectionsService } from '../../services/sections.service';
 import { supabase } from '@/lib/supabase';
 import { ProjectsService } from '../../services/projects.service';
+import { SubmissionsService } from '../../services/submissions.service';
+import { CommentsService } from '../../services/comments.service';
 
 // ---------- types for fetched data ----------
 interface ProjectRow {
@@ -57,6 +62,32 @@ interface ContractorInfo {
     sectionName: string;
 }
 
+interface SubmissionRow {
+    id: string;
+    status: string;
+    submitted_at: string;
+    work_description: string | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    milestone?: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    contractor?: any;
+}
+
+interface CommentRow {
+    id: string;
+    body: string;
+    created_at: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    author?: any;
+}
+
+const SUBMISSION_STATUS_CONFIG: Record<string, { color: string; label: string }> = {
+    PENDING_APPROVAL: { color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400', label: 'Pending Approval' },
+    APPROVED: { color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400', label: 'Approved' },
+    QUERIED: { color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400', label: 'Queried' },
+    REJECTED: { color: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400', label: 'Rejected' },
+}
+
 // ---------- component ----------
 export default function ConsultantProjectDetails() {
     const { id } = useParams();
@@ -72,6 +103,19 @@ export default function ConsultantProjectDetails() {
     const [milestones, setMilestones] = useState<MilestoneRow[]>([]);
     const [sectionMilestoneMap, setSectionMilestoneMap] = useState<Record<string, string[]>>({});
     const [contractors, setContractors] = useState<ContractorInfo[]>([]);
+
+    // Submissions tab state (loaded lazily when tab is first activated)
+    const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
+    const [submissionsLoading, setSubmissionsLoading] = useState(false);
+    const [submissionsLoaded, setSubmissionsLoaded] = useState(false);
+
+    // Comments tab state
+    const [comments, setComments] = useState<CommentRow[]>([]);
+    const [commentsLoading, setCommentsLoading] = useState(false);
+    const [commentsLoaded, setCommentsLoaded] = useState(false);
+    const [commentDraft, setCommentDraft] = useState('');
+    const [postingComment, setPostingComment] = useState(false);
+    const [commentError, setCommentError] = useState('');
 
     const fetchData = useCallback(async () => {
         if (!id) return;
@@ -140,6 +184,56 @@ export default function ConsultantProjectDetails() {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
+    // Lazy-load submissions when the tab is activated
+    useEffect(() => {
+        if (activeTab !== 'submissions' || submissionsLoaded || !id) return;
+        setSubmissionsLoading(true);
+        SubmissionsService.getProjectSubmissions(id)
+            .then(data => {
+                setSubmissions((data || []) as SubmissionRow[]);
+                setSubmissionsLoaded(true);
+            })
+            .catch(err => console.error('[ProjectDetails] submissions fetch:', err))
+            .finally(() => setSubmissionsLoading(false));
+    }, [activeTab, id, submissionsLoaded]);
+
+    // Lazy-load comments when the tab is activated
+    const loadComments = useCallback(async () => {
+        if (!id) return;
+        setCommentsLoading(true);
+        try {
+            const data = await CommentsService.getProjectComments(id);
+            setComments((data || []) as CommentRow[]);
+            setCommentsLoaded(true);
+        } catch (err) {
+            console.error('[ProjectDetails] comments fetch:', err);
+        } finally {
+            setCommentsLoading(false);
+        }
+    }, [id]);
+
+    useEffect(() => {
+        if (activeTab !== 'comments' || commentsLoaded) return;
+        void loadComments();
+    }, [activeTab, commentsLoaded, loadComments]);
+
+    const handlePostComment = async () => {
+        if (!commentDraft.trim() || !id) return;
+        setPostingComment(true);
+        setCommentError('');
+        try {
+            await CommentsService.addProjectComment(id, commentDraft.trim());
+            setCommentDraft('');
+            setCommentsLoaded(false); // force refetch
+            await loadComments();
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Failed to post comment';
+            setCommentError(msg);
+        } finally {
+            setPostingComment(false);
+        }
+    };
+
     // Helpers
     const getMilestonesForSection = (sectionId: string) => {
         const ids = sectionMilestoneMap[sectionId] || [];
@@ -160,6 +254,14 @@ export default function ConsultantProjectDetails() {
     const progressPercent = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
 
     const formatBudget = (amt: number) => `₦${Number(amt).toLocaleString()}`;
+    const timeAgo = (dateStr: string) => {
+        const diff = Date.now() - new Date(dateStr).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 60) return `${mins}m ago`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `${hrs}h ago`;
+        return `${Math.floor(hrs / 24)}d ago`;
+    };
 
     if (isLoading) {
         return (
@@ -255,7 +357,7 @@ export default function ConsultantProjectDetails() {
             <div className="glass-card rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="border-b border-gray-200 dark:border-gray-700">
                     <nav className="flex -mb-px">
-                        {['Sections', 'Milestones', 'Contractors', 'Submissions'].map((tab) => (
+                        {['Sections', 'Milestones', 'Contractors', 'Submissions', 'Comments'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab.toLowerCase())}
@@ -479,6 +581,136 @@ export default function ConsultantProjectDetails() {
                                             </button>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── Submissions Tab ── */}
+                    {activeTab === 'submissions' && (
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Submissions</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">All contractor submissions for this project</p>
+                            </div>
+
+                            {submissionsLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
+                                </div>
+                            ) : submissions.length === 0 ? (
+                                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                                    <FileText className="h-8 w-8 mx-auto mb-3 opacity-40" />
+                                    <p>No submissions yet for this project.</p>
+                                </div>
+                            ) : (
+                                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                        <thead className="bg-gray-50 dark:bg-gray-800/50">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Milestone</th>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Contractor</th>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Submitted</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-transparent">
+                                            {submissions.map((sub) => {
+                                                const cfg = SUBMISSION_STATUS_CONFIG[sub.status] || { color: 'bg-gray-100 dark:bg-gray-700 text-gray-600', label: sub.status };
+                                                const milestoneTitle = sub.milestone?.title || '—';
+                                                const contractorName = sub.contractor?.full_name || '—';
+                                                return (
+                                                    <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                                                        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{milestoneTitle}</td>
+                                                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{contractorName}</td>
+                                                        <td className="px-4 py-3">
+                                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${cfg.color}`}>
+                                                                {cfg.label}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                                                            {new Date(sub.submitted_at).toLocaleDateString()}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── Comments Tab ── */}
+                    {activeTab === 'comments' && (
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <MessageSquare className="h-5 w-5 text-indigo-500" />
+                                    Project Comments
+                                </h3>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">{comments.length} comment{comments.length !== 1 ? 's' : ''}</span>
+                            </div>
+
+                            {/* Post a comment */}
+                            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50/50 dark:bg-gray-800/30">
+                                <textarea
+                                    value={commentDraft}
+                                    onChange={e => setCommentDraft(e.target.value)}
+                                    placeholder="Add a comment about this project..."
+                                    rows={3}
+                                    className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                />
+                                {commentError && (
+                                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{commentError}</p>
+                                )}
+                                <div className="flex justify-end mt-2">
+                                    <button
+                                        onClick={handlePostComment}
+                                        disabled={postingComment || !commentDraft.trim()}
+                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {postingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                        Post Comment
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Comments list */}
+                            {commentsLoading ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
+                                </div>
+                            ) : comments.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                    <MessageSquare className="h-8 w-8 mx-auto mb-3 opacity-40" />
+                                    <p>No comments yet. Be the first to comment.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {comments.map((comment) => {
+                                        const authorName = comment.author?.full_name || 'Unknown';
+                                        const authorRole = comment.author?.role || '';
+                                        return (
+                                            <div key={comment.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800/30">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-7 w-7 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-xs font-bold text-indigo-700 dark:text-indigo-400">
+                                                            {authorName.charAt(0)}
+                                                        </div>
+                                                        <span className="text-sm font-medium text-gray-900 dark:text-white">{authorName}</span>
+                                                        {authorRole && (
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 uppercase font-bold">
+                                                                {authorRole}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-xs text-gray-400 dark:text-gray-500">{timeAgo(comment.created_at)}</span>
+                                                </div>
+                                                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{comment.body}</p>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

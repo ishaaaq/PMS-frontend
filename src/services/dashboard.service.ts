@@ -55,7 +55,74 @@ export interface Disbursement {
     approvedBy: string
 }
 
+export interface PendingSubmission {
+    id: string;
+    status: string;
+    submitted_at: string;
+    work_description: string | null;
+    milestoneTitle: string;
+    projectTitle: string;
+    projectId: string;
+    contractorName: string;
+}
+
 export const DashboardService = {
+    async getPendingSubmissions(): Promise<PendingSubmission[]> {
+        try {
+            const { data, error } = await supabase
+                .from('submissions')
+                .select(`
+                    id, status, submitted_at, work_description,
+                    milestone:milestone_id ( id, title, project_id,
+                        project:project_id ( id, title )
+                    ),
+                    contractor:contractor_user_id ( full_name )
+                `)
+                .eq('status', 'PENDING_APPROVAL')
+                .order('submitted_at', { ascending: false })
+                .limit(10)
+
+            if (error) {
+                console.warn('getPendingSubmissions join failed, trying fallback:', error)
+                const { data: simple } = await supabase
+                    .from('submissions')
+                    .select('id, status, submitted_at, work_description, milestone_id')
+                    .eq('status', 'PENDING_APPROVAL')
+                    .order('submitted_at', { ascending: false })
+                    .limit(10)
+                return (simple || []).map((s: Record<string, unknown>) => ({
+                    id: s.id as string,
+                    status: s.status as string,
+                    submitted_at: s.submitted_at as string,
+                    work_description: s.work_description as string | null,
+                    milestoneTitle: 'Milestone',
+                    projectTitle: 'Unknown Project',
+                    projectId: '',
+                    contractorName: 'Unknown',
+                }))
+            }
+
+            return (data || []).map((s: Record<string, unknown>) => {
+                const milestone = s.milestone as { id?: string; title?: string; project?: { id?: string; title?: string } } | null
+                const contractor = s.contractor as { full_name?: string } | null
+                return {
+                    id: s.id as string,
+                    status: s.status as string,
+                    submitted_at: s.submitted_at as string,
+                    work_description: s.work_description as string | null,
+                    milestoneTitle: milestone?.title || 'Milestone',
+                    projectTitle: milestone?.project?.title || 'Unknown Project',
+                    projectId: milestone?.project?.id || '',
+                    contractorName: contractor?.full_name || 'Unknown',
+                }
+            })
+        } catch (err) {
+            console.error('DashboardService.getPendingSubmissions error', err)
+            return []
+        }
+    },
+
+
     async getStats(): Promise<DashboardStats> {
         try {
             const { data: projects } = await supabase

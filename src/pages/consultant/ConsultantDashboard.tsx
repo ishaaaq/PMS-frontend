@@ -12,16 +12,7 @@ import {
     Bell
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-
-interface UrgentTask {
-    id: string;
-    submissionId: string;
-    type: string;
-    project: string;
-    contractor: string;
-    submitted: string;
-    deadline: string;
-}
+import { SubmissionsVerificationService, SUBMISSION_STATUS, type VerificationSubmission } from '../../services/submissionsVerification.service';
 
 interface ActiveProject {
     id: string;
@@ -36,7 +27,7 @@ export default function ConsultantDashboard() {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
 
-    const [urgentTasks, setUrgentTasks] = useState<UrgentTask[]>([]);
+    const [urgentTasks, setUrgentTasks] = useState<VerificationSubmission[]>([]);
     const [activeProjects, setActiveProjects] = useState<ActiveProject[]>([]);
 
     useEffect(() => {
@@ -46,45 +37,14 @@ export default function ConsultantDashboard() {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) return;
 
-                // Fetch urgent tasks (Pending Submissions)
-                const { data: tasks, error: taskError } = await supabase
-                    .from('submissions')
-                    .select(`
-                        id, 
-                        status, 
-                        submitted_at, 
-                        milestones (
-                            title,
-                            sections (
-                                projects (
-                                    title
-                                )
-                            )
-                        ),
-                        profiles!submissions_contractor_user_id_fkey (
-                            full_name
-                        )
-                    `)
-                    .eq('status', 'PENDING_APPROVAL')
-                    .order('submitted_at', { ascending: false })
-                    .limit(5);
+                // Use centralized service — RLS scopes this to the consultant automatically.
+                // Only PENDING_APPROVAL = needs action.
+                const tasks = await SubmissionsVerificationService.getConsultantVerificationQueue({
+                    status: SUBMISSION_STATUS.PENDING,
+                });
+                setUrgentTasks(tasks.slice(0, 5)); // cap dashboard widget at 5 cards
 
-                if (taskError) console.error('Error fetching tasks', taskError);
-
-                if (tasks) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    setUrgentTasks(tasks.map((t: any) => ({
-                        id: t.id,
-                        submissionId: t.id,
-                        type: 'Verification',
-                        project: t.milestones?.sections?.projects?.title || 'Unknown Project',
-                        contractor: t.profiles?.full_name || 'Unknown Contractor',
-                        submitted: new Date(t.submitted_at).toLocaleDateString(),
-                        deadline: '24h' // Placeholder
-                    })));
-                }
-
-                // Fetch active projects
+                // Fetch active projects via project_consultants (RLS-scoped)
                 const { data: projData, error: projError } = await supabase
                     .from('project_consultants')
                     .select(`
@@ -107,7 +67,7 @@ export default function ConsultantDashboard() {
                         title: p.projects.title,
                         location: p.projects.location,
                         status: p.projects.status,
-                        progress: 0, // TODO: Calculate progress
+                        progress: 0,
                         nextMilestone: 'TBD'
                     })));
                 }
@@ -179,17 +139,18 @@ export default function ConsultantDashboard() {
                         <div key={task.id} className="glass-card p-5 rounded-xl shadow-sm border border-l-4 border-gray-200 dark:border-gray-700 border-l-indigo-500 dark:border-l-indigo-500 hover:shadow-md transition-shadow cursor-pointer">
                             <div className="flex justify-between items-start mb-3">
                                 <span className="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
-                                    {task.type}
+                                    Verification
                                 </span>
                                 <span className="flex items-center text-xs text-orange-600 dark:text-orange-400 font-medium">
-                                    <Clock className="h-3 w-3 mr-1" /> {task.deadline} left
+                                    <Clock className="h-3 w-3 mr-1" /> {task.submitted}
                                 </span>
                             </div>
                             <h3 className="font-bold text-gray-900 dark:text-white mb-1">{task.project}</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1 truncate">{task.milestone}</p>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Submitted by <span className="font-medium text-gray-700 dark:text-gray-300">{task.contractor}</span></p>
 
                             <button
-                                onClick={() => navigate(`/dashboard/consultant/verification-queue?submissionId=${task.submissionId}`)}
+                                onClick={() => navigate(`/dashboard/consultant/verification-queue?submissionId=${task.id}`)}
                                 className="w-full py-2 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-lg text-sm font-medium transition-colors"
                             >
                                 Review Submission
