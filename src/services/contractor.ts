@@ -101,52 +101,7 @@ export const MOCK_ASSIGNMENTS: Assignment[] = [
     },
 ];
 
-export const MOCK_NOTIFICATIONS: Notification[] = [
-    {
-        id: 'n1',
-        type: 'QUERY',
-        title: 'Query on Foundation Works',
-        message: 'Consultant requested additional photos of reinforcement work. Please update your submission.',
-        projectTitle: 'Construction of ICT Center',
-        timestamp: '2025-01-23T10:30:00Z',
-        isRead: false,
-    },
-    {
-        id: 'n2',
-        type: 'PAYMENT',
-        title: 'Payment Disbursed',
-        message: 'You have received a payment of ₦30,000,000 for Mobilization & Site Clearing.',
-        projectTitle: 'Construction of ICT Center',
-        timestamp: '2025-01-18T14:00:00Z',
-        isRead: true,
-    },
-    {
-        id: 'n3',
-        type: 'APPROVAL',
-        title: 'Milestone Approved',
-        message: 'Site Survey & Planning milestone has been verified and approved by the consultant.',
-        projectTitle: 'Solar Power Installation',
-        timestamp: '2025-01-12T09:15:00Z',
-        isRead: true,
-    },
-    {
-        id: 'n4',
-        type: 'SYSTEM',
-        title: 'New Project Assigned',
-        message: 'You have been assigned to a new project: Bridge Rehabilitation in Enugu.',
-        timestamp: '2024-08-20T08:00:00Z',
-        isRead: true,
-    },
-    {
-        id: 'n5',
-        type: 'QUERY',
-        title: 'Materials Log Missing',
-        message: 'Please submit the materials usage log for the Equipment Procurement phase.',
-        projectTitle: 'Solar Power Installation',
-        timestamp: '2025-01-22T16:45:00Z',
-        isRead: false,
-    },
-];
+
 
 // Monthly earnings data for chart
 export const MOCK_MONTHLY_EARNINGS = [
@@ -346,7 +301,112 @@ export const getContractorAssignments = async (): Promise<Assignment[]> => {
 };
 
 export const getContractorNotifications = async (): Promise<Notification[]> => {
-    return new Promise((resolve) => setTimeout(() => resolve(MOCK_NOTIFICATIONS), 300));
+    const results: Notification[] = [];
+
+    // ── Source 1: Section notifications (consultant → contractor) ──
+    // RLS "contractor_notification_deliveries": contractor_user_id = auth.uid()
+    try {
+        const { data, error } = await supabase
+            .from('notification_deliveries')
+            .select(`
+                notification_id,
+                is_read,
+                read_at,
+                notifications (
+                    id,
+                    title,
+                    message,
+                    created_at,
+                    section_id,
+                    sections (
+                        id,
+                        project_id,
+                        projects ( id, title )
+                    )
+                )
+            `)
+            .order('notification_id', { ascending: false })
+
+        if (!error && data) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            for (const row of data as any[]) {
+                const notif = row.notifications
+                const section = notif?.sections
+                const project = section?.projects
+                results.push({
+                    id: row.notification_id,
+                    type: 'SYSTEM',
+                    title: notif?.title || 'Notification',
+                    message: notif?.message || '',
+                    projectTitle: project?.title || undefined,
+                    timestamp: notif?.created_at || new Date().toISOString(),
+                    isRead: row.is_read ?? false,
+                })
+            }
+        } else if (error) {
+            console.warn('notification_deliveries query failed', error)
+        }
+    } catch (err) {
+        console.warn('notification_deliveries fetch error', err)
+    }
+
+    // ── Source 2: Submission status changes (APPROVED / QUERIED) ──
+    // RLS "contractor_submissions": contractor_user_id = auth.uid()
+    // These are synthesised into notification items because the DB
+    // does not automatically create notification rows for status changes.
+    try {
+        const { data: subs, error: subErr } = await supabase
+            .from('submissions')
+            .select(`
+                id,
+                status,
+                work_description,
+                query_note,
+                submitted_at,
+                reviewed_at,
+                milestone_id,
+                milestones (
+                    id,
+                    title,
+                    project_id,
+                    projects ( id, title )
+                )
+            `)
+            .in('status', ['APPROVED', 'QUERIED'])
+            .order('reviewed_at', { ascending: false })
+
+        if (!subErr && subs) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            for (const sub of subs as any[]) {
+                const ms = sub.milestones
+                const proj = ms?.projects
+                const isApproved = sub.status === 'APPROVED'
+
+                results.push({
+                    id: `sub-${sub.id}`,
+                    type: isApproved ? 'APPROVAL' : 'QUERY',
+                    title: isApproved
+                        ? `Milestone Approved: ${ms?.title || 'Unknown'}`
+                        : `Submission Queried: ${ms?.title || 'Unknown'}`,
+                    message: isApproved
+                        ? `Your submission for "${ms?.title || 'a milestone'}" has been approved by the consultant.`
+                        : (sub.query_note || `The consultant has raised a query on your submission for "${ms?.title || 'a milestone'}". Please review and resubmit.`),
+                    projectTitle: proj?.title || undefined,
+                    timestamp: sub.reviewed_at || sub.submitted_at || new Date().toISOString(),
+                    isRead: true, // Historical status changes are treated as read
+                })
+            }
+        } else if (subErr) {
+            console.warn('submissions status query failed', subErr)
+        }
+    } catch (err) {
+        console.warn('submissions fetch error', err)
+    }
+
+    // Sort all notifications newest-first
+    results.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
+    return results
 };
 
 export const getMonthlyEarnings = async (): Promise<typeof MOCK_MONTHLY_EARNINGS> => {
