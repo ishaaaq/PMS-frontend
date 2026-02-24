@@ -104,3 +104,50 @@ begin
         order by s.submitted_at desc;
 end;
 $$;
+
+
+-- ============================================================
+-- 3. RPC: Get contractor notifications with full content
+-- Problem: notifications table RLS only allows consultant reads
+--          (is_project_consultant). Contractors can read their
+--          notification_deliveries but the PostgREST join to
+--          notifications returns null, causing fallback titles.
+-- Solution: SECURITY DEFINER RPC that joins server-side.
+-- ============================================================
+
+create or replace function rpc_get_contractor_notifications()
+returns table (
+    notification_id uuid,
+    title text,
+    message text,
+    created_at timestamptz,
+    is_read boolean,
+    read_at timestamptz,
+    section_name text,
+    project_title text
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+    -- No auth check needed beyond auth.uid() — the WHERE clause
+    -- guarantees we only return deliveries for the calling user.
+    return query
+        select
+            n.id            as notification_id,
+            n.title,
+            n.message,
+            n.created_at,
+            nd.is_read,
+            nd.read_at,
+            s.name          as section_name,
+            p.title         as project_title
+        from notification_deliveries nd
+        join notifications n on n.id = nd.notification_id
+        join sections s on s.id = n.section_id
+        join projects p on p.id = s.project_id
+        where nd.contractor_user_id = auth.uid()
+        order by n.created_at desc;
+end;
+$$;

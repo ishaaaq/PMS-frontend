@@ -304,50 +304,62 @@ export const getContractorNotifications = async (): Promise<Notification[]> => {
     const results: Notification[] = [];
 
     // ── Source 1: Section notifications (consultant → contractor) ──
-    // RLS "contractor_notification_deliveries": contractor_user_id = auth.uid()
+    // Uses SECURITY DEFINER RPC because RLS on the `notifications` table
+    // only allows consultant reads (is_project_consultant). The RPC
+    // joins notification_deliveries → notifications → sections → projects
+    // server-side and returns flat rows with full content.
     try {
-        const { data, error } = await supabase
-            .from('notification_deliveries')
-            .select(`
-                notification_id,
-                is_read,
-                read_at,
-                notifications (
-                    id,
-                    title,
-                    message,
-                    created_at,
-                    section_id,
-                    sections (
-                        id,
-                        project_id,
-                        projects ( id, title )
-                    )
-                )
-            `)
-            .order('notification_id', { ascending: false })
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+            'rpc_get_contractor_notifications'
+        )
 
-        if (!error && data) {
+        if (!rpcError && rpcData) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            for (const row of data as any[]) {
-                const notif = row.notifications
-                const section = notif?.sections
-                const project = section?.projects
+            for (const row of rpcData as any[]) {
                 results.push({
                     id: row.notification_id,
                     type: 'SYSTEM',
-                    title: notif?.title || 'Notification',
-                    message: notif?.message || '',
-                    projectTitle: project?.title || undefined,
-                    timestamp: notif?.created_at || new Date().toISOString(),
+                    title: row.title || 'Notification',
+                    message: row.message || '',
+                    projectTitle: row.project_title || undefined,
+                    timestamp: row.created_at || new Date().toISOString(),
                     isRead: row.is_read ?? false,
                 })
             }
-        } else if (error) {
-            console.warn('notification_deliveries query failed', error)
+        } else if (rpcError) {
+            console.warn('rpc_get_contractor_notifications failed, trying direct query', rpcError)
+
+            // Fallback: direct query (will show "Notification" if notifications RLS blocks)
+            const { data, error } = await supabase
+                .from('notification_deliveries')
+                .select(`
+                    notification_id,
+                    is_read,
+                    notifications (
+                        id, title, message, created_at,
+                        sections ( id, project_id, projects ( id, title ) )
+                    )
+                `)
+                .order('notification_id', { ascending: false })
+
+            if (!error && data) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                for (const row of data as any[]) {
+                    const notif = row.notifications
+                    results.push({
+                        id: row.notification_id,
+                        type: 'SYSTEM',
+                        title: notif?.title || 'Notification',
+                        message: notif?.message || '',
+                        projectTitle: notif?.sections?.projects?.title || undefined,
+                        timestamp: notif?.created_at || new Date().toISOString(),
+                        isRead: row.is_read ?? false,
+                    })
+                }
+            }
         }
     } catch (err) {
-        console.warn('notification_deliveries fetch error', err)
+        console.warn('section notifications fetch error', err)
     }
 
     // ── Source 2: Submission status changes (APPROVED / QUERIED) ──
