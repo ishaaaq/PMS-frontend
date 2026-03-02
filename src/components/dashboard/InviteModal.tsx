@@ -5,9 +5,10 @@ import { InvitationsService } from '../../services/invitations.service';
 interface InviteModalProps {
     isOpen: boolean;
     onClose: () => void;
+    projectId?: string;
 }
 
-export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
+export default function InviteModal({ isOpen, onClose, projectId }: InviteModalProps) {
     const [role, setRole] = useState('CONTRACTOR');
     const [email, setEmail] = useState('');
     const [copied, setCopied] = useState(false);
@@ -55,9 +56,16 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
         setError(null);
 
         try {
-            const inviteId = await InvitationsService.createInvitation(email, role);
+            const inviteId = await InvitationsService.createInvitation(email, role, projectId);
             const link = `${window.location.origin}/invite/${inviteId}`;
             setInviteLink(link);
+
+            // Auto-open email client with pre-filled invite
+            const subject = encodeURIComponent(`You're invited to PTDF PMS as ${role}`);
+            const body = encodeURIComponent(
+                `Hello,\n\nYou have been invited to join the PTDF Project Management System as a ${role}.\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF PMS Team`
+            );
+            window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Invite Error:', err);
             setError(err.message || 'Failed to send invitation. They might already be invited.');

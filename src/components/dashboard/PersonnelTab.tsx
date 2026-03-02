@@ -156,6 +156,13 @@ export default function PersonnelTab({ project, onProjectUpdated }: PersonnelTab
             const inviteId = await InvitationsService.createInvitation(email, apiRole, project.id);
             const link = `${window.location.origin}/invite/${inviteId}`;
             setInviteLink(link);
+
+            // Auto-open email client with pre-filled invite
+            const subject = encodeURIComponent(`You're invited to PTDF PMS as ${apiRole}`);
+            const body = encodeURIComponent(
+                `Hello,\n\nYou have been invited to join the PTDF Project Management System as a ${apiRole} for project "${project.title}".\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF PMS Team`
+            );
+            window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
             setEmail('');
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Invite Error:', err);
