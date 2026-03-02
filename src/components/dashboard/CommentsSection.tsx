@@ -66,9 +66,9 @@ export default function CommentsSection({ projectId }: { projectId: string }) {
         setPosting(true);
         setError(null);
         try {
-            console.log('Posting comment to project:', projectId, 'body:', body.trim());
+
             await CommentsService.addProjectComment(projectId, body.trim());
-            console.log('Comment posted successfully');
+
 
             // Optimistically add the comment
             const optimistic: Comment = {

@@ -97,7 +97,6 @@ export const SubmissionsVerificationService = {
                 return m?.project?.id || m?.project_id
             }).filter(Boolean))]
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const contractorNameMap: Record<string, string> = {}
 
             // Fetch contractor names for each project in parallel

@@ -84,7 +84,7 @@ export async function inviteConsultant(email: string): Promise<{ success: boolea
     // For now, we'll keep it as a simulation or basic RPC call if implemented.
     // We'll return mock success to not block UI, as invitation flow is complex (SMTP setup etc).
 
-    console.log('Inviting consultant:', email);
+
     // Real implementation would be: 
     // await supabase.auth.admin.inviteUserByEmail(email) (only from server side)
     // or call an RPC that inserts into an invitations table.

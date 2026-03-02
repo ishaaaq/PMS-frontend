@@ -99,8 +99,9 @@ export interface InviteContractorData {
     message?: string;
 }
 
-export const inviteContractor = async (data: InviteContractorData): Promise<{ success: boolean }> => {
-    console.log('Inviting contractor:', data);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const inviteContractor = async (_data: InviteContractorData): Promise<{ success: boolean }> => {
+
     // Real implementation: RPC call or edge function
     return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 800));
 };

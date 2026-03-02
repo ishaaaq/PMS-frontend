@@ -4,7 +4,7 @@ import type { Session } from '@supabase/supabase-js';
 import { MfaService } from '../services/mfa.service';
 
 // Set to true temporarily to debug auth flow in the browser console
-const DEBUG_AUTH = true;
+const DEBUG_AUTH = import.meta.env.DEV;
 const log = (...args: unknown[]) => { if (DEBUG_AUTH) console.log('[Auth]', new Date().toISOString(), ...args); };
 
 export type UserRole = 'ADMIN' | 'CONSULTANT' | 'CONTRACTOR';

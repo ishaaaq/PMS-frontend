@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { supabase } from '@/lib/supabase';
 import { logRpcError } from '@/lib/debug';
 
@@ -54,13 +54,9 @@ const mapProject = (p: any): Project => {
     // Determine status from DB or default
     const status = (p.status?.toUpperCase() as ProjectStatus) || ProjectStatus.DRAFT;
 
-    // Extract consultant from project_consultants join table
-    if (p.project_consultants) {
-        console.log('mapProject: HAS project_consultants', p.project_consultants);
-    } else {
-        console.log('mapProject: NO project_consultants property found (likely raw fetch)');
-    }
 
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const assignedConsultants = (p.project_consultants || []).map((pc: any) => ({
         id: pc.consultant_user_id,
         name: pc.profiles?.full_name || 'Unassigned Consultant',

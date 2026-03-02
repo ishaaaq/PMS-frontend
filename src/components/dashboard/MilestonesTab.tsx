@@ -142,7 +142,7 @@ export default function MilestonesTab({ projectId }: { projectId: string }) {
                         setSelectedMilestone(null);
                     }}
                     onSubmit={(data) => {
-                        console.log('Milestone submission data:', data);
+
                         // Update the milestone in the list
                         setMilestones(milestones.map(m =>
                             m.id === data.milestoneId
@@ -166,7 +166,7 @@ export default function MilestonesTab({ projectId }: { projectId: string }) {
                         setSelectedMilestone(null);
                     }}
                     onVerify={(data) => {
-                        console.log('Verification data:', data);
+
                         // Update the milestone status based on approval
                         setMilestones(milestones.map(m =>
                             m.id === data.milestoneId

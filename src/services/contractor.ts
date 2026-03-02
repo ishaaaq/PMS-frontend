@@ -141,10 +141,10 @@ export const getContractorAssignments = async (): Promise<Assignment[]> => {
     if (!assignmentsData || assignmentsData.length === 0) return [];
 
     // Verification / Debug Logging
-    console.log(`[Assignments] Raw count: ${assignmentsData.length}`);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const uniqueSections = new Set(assignmentsData.map((a: any) => a.section_id));
-    console.log(`[Assignments] Unique sections: ${uniqueSections.size}`);
+
 
     if (assignmentsData.length !== uniqueSections.size) {
         console.warn('[Assignments] Duplicates detected in raw fetch! Deduplicating...');
