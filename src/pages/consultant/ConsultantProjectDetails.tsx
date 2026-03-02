@@ -288,7 +288,7 @@ export default function ConsultantProjectDetails() {
             const body = encodeURIComponent(
                 `Hello,\n\nYou have been invited to join the PTDF Project Management System as a CONTRACTOR for project "${project?.title}".\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF PMS Team`
             );
-            window.open(`mailto:${inviteEmail}?subject=${subject}&body=${body}`, '_blank');
+            window.open(`https://mail.google.com/mail/?view=cm&to=${inviteEmail}&su=${subject}&body=${body}`, '_blank');
             setInviteEmail('');
         } catch (err) {
             const msg = err instanceof Error ? err.message : 'Failed to create invitation';

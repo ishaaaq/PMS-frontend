@@ -65,7 +65,7 @@ export default function InviteModal({ isOpen, onClose, projectId }: InviteModalP
             const body = encodeURIComponent(
                 `Hello,\n\nYou have been invited to join the PTDF Project Management System as a ${role}.\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF PMS Team`
             );
-            window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+            window.open(`https://mail.google.com/mail/?view=cm&to=${email}&su=${subject}&body=${body}`, '_blank');
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Invite Error:', err);
             setError(err.message || 'Failed to send invitation. They might already be invited.');

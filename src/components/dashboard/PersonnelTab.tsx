@@ -162,7 +162,7 @@ export default function PersonnelTab({ project, onProjectUpdated }: PersonnelTab
             const body = encodeURIComponent(
                 `Hello,\n\nYou have been invited to join the PTDF Project Management System as a ${apiRole} for project "${project.title}".\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF PMS Team`
             );
-            window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+            window.open(`https://mail.google.com/mail/?view=cm&to=${email}&su=${subject}&body=${body}`, '_blank');
             setEmail('');
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Invite Error:', err);
