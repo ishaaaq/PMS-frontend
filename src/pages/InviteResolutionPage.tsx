@@ -2,8 +2,16 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { InvitationsService, type Invitation } from '../services/invitations.service';
 import { supabase } from '../lib/supabase';
-import { Loader2, ShieldCheck, Building2, UserCircle, Briefcase, AlertCircle } from 'lucide-react';
+import { Loader2, ShieldCheck, Building2, UserCircle, Briefcase, AlertCircle, Eye, EyeOff, CheckCircle2, XCircle, Mail } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+
+// Password validation rules
+const PASSWORD_RULES = [
+    { id: 'length', label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
+    { id: 'upper', label: 'One uppercase letter (A-Z)', test: (p: string) => /[A-Z]/.test(p) },
+    { id: 'lower', label: 'One lowercase letter (a-z)', test: (p: string) => /[a-z]/.test(p) },
+    { id: 'number', label: 'One number (0-9)', test: (p: string) => /[0-9]/.test(p) },
+];
 
 export default function InviteResolutionPage() {
     const { id } = useParams<{ id: string }>();
@@ -19,6 +27,8 @@ export default function InviteResolutionPage() {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Contractor State
     const [companyName, setCompanyName] = useState('');
@@ -32,6 +42,9 @@ export default function InviteResolutionPage() {
 
     const [submitting, setSubmitting] = useState(false);
 
+    // Email confirmation modal state
+    const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+
     useEffect(() => {
         if (!id) {
             setError('No invitation ID provided.');
@@ -41,8 +54,6 @@ export default function InviteResolutionPage() {
 
         const verifyInvite = async () => {
             try {
-                // If a user is already logged in, log them out automatically
-                // Because accepting an invite requires creating a NEW auth account
                 if (currentUser) {
                     await logout();
                 }
@@ -60,21 +71,24 @@ export default function InviteResolutionPage() {
         verifyInvite();
     }, [id, currentUser, logout]);
 
+    // Inline password validation
+    const passwordValid = PASSWORD_RULES.every(rule => rule.test(password));
+    const passwordsMatch = password.length > 0 && password === confirmPassword;
+    const passwordTouched = password.length > 0;
+    const confirmTouched = confirmPassword.length > 0;
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!invitation || !id) return;
 
-        if (password !== confirmPassword) {
-            setError('Passwords do not match.');
+        // Validate password inline (shouldn't reach here, but safety net)
+        if (!passwordValid) {
+            setError('Please fix the password requirements above.');
             return;
         }
 
-        if (password.length < 8) {
-            setError('Password must be at least 8 characters.');
-            return;
-        }
-        if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
-            setError('Password must contain uppercase, lowercase, and a number.');
+        if (!passwordsMatch) {
+            setError('Passwords do not match.');
             return;
         }
 
@@ -102,22 +116,12 @@ export default function InviteResolutionPage() {
                 consultantData: invitation.role === 'CONSULTANT' ? { specialization, department, region } : undefined,
             });
 
-            // 3. Re-login manually to ensure session is perfectly synced
-            await supabase.auth.signInWithPassword({
-                email: invitation.invitee_email,
-                password: password,
-            });
-
-            // 4. Redirect based on role
-            navigate(invitation.role === 'CONTRACTOR' ? '/dashboard/contractor' : '/dashboard/consultant');
+            // 3. Show email confirmation modal instead of auto-login
+            setShowConfirmationModal(true);
 
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Registration Error:', err);
             setError(err.message || 'An error occurred during registration. Please try again.');
-
-            // Cleanup auth if RPC failed
-            // Note: In a real production app, we'd need a robust way to rollback
-            // the auth account if the RPC fails so they can retry.
         } finally {
             setSubmitting(false);
         }
@@ -132,7 +136,7 @@ export default function InviteResolutionPage() {
         );
     }
 
-    if (error || !invitation) {
+    if (error && !invitation) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border-t-4 border-red-500">
@@ -149,6 +153,42 @@ export default function InviteResolutionPage() {
             </div>
         );
     }
+
+    // Email Confirmation Modal
+    if (showConfirmationModal) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950 flex items-center justify-center p-4 sm:p-8">
+                <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 p-8 text-center">
+                    <div className="mx-auto h-20 w-20 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-6">
+                        <Mail className="h-10 w-10 text-green-600 dark:text-green-400" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Check Your Email</h2>
+                    <p className="text-gray-600 dark:text-gray-400 mb-2">
+                        A confirmation email has been sent to:
+                    </p>
+                    <p className="text-indigo-600 dark:text-indigo-400 font-semibold mb-6">
+                        {invitation?.invitee_email}
+                    </p>
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-6">
+                        <p className="text-sm text-amber-800 dark:text-amber-300">
+                            <strong>Important:</strong> Please verify your email address by clicking the confirmation link in the email before logging in.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => navigate('/auth/login')}
+                        className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-sm"
+                    >
+                        Go to Login
+                    </button>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+                        Didn't receive it? Check your spam folder or contact your administrator.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!invitation) return null;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950 flex items-center justify-center p-4 sm:p-8 transition-colors">
@@ -214,13 +254,20 @@ export default function InviteResolutionPage() {
                                     <div className="space-y-1">
                                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Company Name</label>
                                         <input required type="text" value={companyName} onChange={e => setCompanyName(e.target.value)}
+                                            placeholder="Enter your company's legal name"
                                             className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all" />
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Registration Number</label>
-                                            <input required type="text" value={registrationNumber} onChange={e => setRegistrationNumber(e.target.value)} placeholder="e.g. RC-123456"
+                                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                CAC Registration Number
+                                                <span className="text-gray-400 dark:text-gray-500 font-normal ml-1">(optional)</span>
+                                            </label>
+                                            <input type="text" value={registrationNumber} onChange={e => setRegistrationNumber(e.target.value)} placeholder="e.g. RC-123456"
                                                 className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all" />
+                                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                                Your Corporate Affairs Commission registration number. Can be added later.
+                                            </p>
                                         </div>
                                         <div className="space-y-1">
                                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Geographic Zone</label>
@@ -266,7 +313,7 @@ export default function InviteResolutionPage() {
                             </div>
                         )}
 
-                        {/* 3. Security */}
+                        {/* 3. Security — with inline validation + show/hide toggle */}
                         <div>
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center border-b dark:border-gray-700 pb-2 mt-6">
                                 <ShieldCheck className="w-5 h-5 mr-2 text-indigo-600" /> Security
@@ -274,25 +321,60 @@ export default function InviteResolutionPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Set Password</label>
-                                    <input required type="password" value={password} onChange={e => setPassword(e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all" />
+                                    <div className="relative">
+                                        <input required type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                                            className={`w-full px-4 py-2.5 pr-10 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all ${passwordTouched && !passwordValid ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-700'}`} />
+                                        <button type="button" onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Confirm Password</label>
-                                    <input required type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all" />
+                                    <div className="relative">
+                                        <input required type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                                            className={`w-full px-4 py-2.5 pr-10 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all ${confirmTouched && !passwordsMatch ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-700'}`} />
+                                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                    {confirmTouched && !passwordsMatch && (
+                                        <p className="text-xs text-red-500 flex items-center mt-1">
+                                            <XCircle className="h-3 w-3 mr-1" /> Passwords do not match
+                                        </p>
+                                    )}
                                 </div>
                             </div>
+
+                            {/* Inline password rules checklist */}
+                            {passwordTouched && (
+                                <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">Password Requirements</p>
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                        {PASSWORD_RULES.map(rule => {
+                                            const passed = rule.test(password);
+                                            return (
+                                                <div key={rule.id} className={`flex items-center text-xs ${passed ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                    {passed ? <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" /> : <XCircle className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />}
+                                                    {rule.label}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Submit */}
                         <div className="pt-6 border-t dark:border-gray-700 mt-8">
                             <button
                                 type="submit"
-                                disabled={submitting}
-                                className="w-full flex items-center justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 transition-all font-bold tracking-wide"
+                                disabled={submitting || !passwordValid || !passwordsMatch}
+                                className="w-full flex items-center justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-bold tracking-wide"
                             >
-                                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Complete Registration & Enter Dashboard'}
+                                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Complete Registration'}
                             </button>
                             <p className="text-xs text-center text-gray-500 mt-4">
                                 By completing registration, you agree to the Platform Terms of Service and Privacy Policy.
