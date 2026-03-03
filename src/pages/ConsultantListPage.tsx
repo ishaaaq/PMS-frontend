@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getConsultants, type Consultant } from '../services/consultants';
 import { Search, Star, UserPlus, Filter, CheckCircle, Briefcase, MapPin, Mail, ChevronRight } from 'lucide-react';
-// import DashboardLayout from '../layouts/DashboardLayout';
+import InviteModal from '../components/dashboard/InviteModal';
 
 export default function ConsultantListPage() {
     const navigate = useNavigate();
@@ -12,6 +12,7 @@ export default function ConsultantListPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRegion, setFilterRegion] = useState<string>('All');
     const [filterStatus, setFilterStatus] = useState<string>('All');
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
     useEffect(() => {
         getConsultants().then((data) => {
@@ -62,7 +63,7 @@ export default function ConsultantListPage() {
                     </p>
                 </div>
                 <button
-                    onClick={() => {/* TODO: Open invite modal */ }}
+                    onClick={() => setIsInviteModalOpen(true)}
                     className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
                 >
                     <UserPlus className="h-5 w-5" />
@@ -247,6 +248,8 @@ export default function ConsultantListPage() {
                     </p>
                 </div>
             )}
+
+            <InviteModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
         </div>
     );
 }
