@@ -39,42 +39,74 @@ const mapConsultant = (p: any, cp: any, email: string): Consultant => {
 
 // Service functions
 export async function getConsultants(): Promise<Consultant[]> {
+    let consultants: Consultant[] = [];
+
     // Try RPC first (includes real email from auth.users + extended profile)
     const { data: rpcData, error: rpcErr } = await supabase.rpc('rpc_admin_list_consultants');
 
     if (!rpcErr && rpcData && Array.isArray(rpcData)) {
-        return rpcData.map((r: any) => mapConsultant( // eslint-disable-line @typescript-eslint/no-explicit-any
+        consultants = rpcData.map((r: any) => mapConsultant( // eslint-disable-line @typescript-eslint/no-explicit-any
             { user_id: r.user_id, full_name: r.full_name, role: r.role, phone: r.phone, is_active: r.is_active, created_at: r.created_at },
             { specialization: r.specialization, department: r.department, region: r.region },
             r.email || ''
         ));
+    } else {
+        // Fallback: direct queries
+        console.warn('rpc_admin_list_consultants unavailable, falling back:', rpcErr?.message);
+        const { data: profiles, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('role', 'CONSULTANT')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            logRpcError('getConsultants', error);
+            return [];
+        }
+
+        if (!profiles || profiles.length === 0) return [];
+
+        // Fetch extended consultant profiles
+        const userIds = profiles.map(p => p.user_id);
+        const { data: consultantProfiles } = await supabase
+            .from('consultant_profiles')
+            .select('*')
+            .in('user_id', userIds);
+
+        const cpMap = new Map((consultantProfiles || []).map(cp => [cp.user_id, cp]));
+        consultants = profiles.map(p => mapConsultant(p, cpMap.get(p.user_id), ''));
     }
 
-    // Fallback: direct queries
-    console.warn('rpc_admin_list_consultants unavailable, falling back:', rpcErr?.message);
-    const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'CONSULTANT')
-        .order('created_at', { ascending: false });
+    // Fetch real project counts from project_consultants + projects
+    if (consultants.length > 0) {
+        const consultantIds = consultants.map(c => c.id);
+        const { data: assignments } = await supabase
+            .from('project_consultants')
+            .select('consultant_user_id, projects!inner(status)')
+            .in('consultant_user_id', consultantIds);
 
-    if (error) {
-        logRpcError('getConsultants', error);
-        return [];
+        if (assignments) {
+            // Count active and completed per consultant
+            const activeCounts = new Map<string, number>();
+            const completedCounts = new Map<string, number>();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            for (const a of assignments as any[]) {
+                const uid = a.consultant_user_id;
+                const status = a.projects?.status;
+                if (status === 'ACTIVE' || status === 'DRAFT') {
+                    activeCounts.set(uid, (activeCounts.get(uid) || 0) + 1);
+                } else if (status === 'COMPLETED') {
+                    completedCounts.set(uid, (completedCounts.get(uid) || 0) + 1);
+                }
+            }
+            for (const c of consultants) {
+                c.activeProjects = activeCounts.get(c.id) || 0;
+                c.completedProjects = completedCounts.get(c.id) || 0;
+            }
+        }
     }
 
-    if (!profiles || profiles.length === 0) return [];
-
-    // Fetch extended consultant profiles
-    const userIds = profiles.map(p => p.user_id);
-    const { data: consultantProfiles } = await supabase
-        .from('consultant_profiles')
-        .select('*')
-        .in('user_id', userIds);
-
-    const cpMap = new Map((consultantProfiles || []).map(cp => [cp.user_id, cp]));
-
-    return profiles.map(p => mapConsultant(p, cpMap.get(p.user_id), ''));
+    return consultants;
 }
 
 export async function getConsultant(id: string): Promise<Consultant | undefined> {
@@ -105,7 +137,22 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
         email = rpcData.email || '';
     }
 
-    return mapConsultant(profile, cp, email);
+    const consultant = mapConsultant(profile, cp, email);
+
+    // Fetch real project counts
+    const { data: assignments } = await supabase
+        .from('project_consultants')
+        .select('project_id, projects!inner(status)')
+        .eq('consultant_user_id', id);
+
+    if (assignments) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        consultant.activeProjects = (assignments as any[]).filter(a => a.projects?.status === 'ACTIVE' || a.projects?.status === 'DRAFT').length;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        consultant.completedProjects = (assignments as any[]).filter(a => a.projects?.status === 'COMPLETED').length;
+    }
+
+    return consultant;
 }
 
 export async function inviteConsultant(email: string): Promise<{ success: boolean; message: string }> {
