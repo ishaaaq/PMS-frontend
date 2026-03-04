@@ -25,15 +25,26 @@ export default function UserDetailPage() {
         async function loadUser() {
             setLoading(true);
             try {
-                // Fetch Profile
-                const { data: profile, error: profileErr } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('user_id', id)
-                    .single();
+                // Try RPC first (returns email from auth.users + extended profile)
+                const { data: rpcData, error: rpcErr } = await supabase.rpc(
+                    'rpc_get_user_detail',
+                    { p_user_id: id }
+                );
 
-                if (profileErr) throw profileErr;
-                setUser(profile);
+                if (!rpcErr && rpcData) {
+                    setUser(rpcData);
+                } else {
+                    // Fallback: direct profile query (no email)
+                    console.warn('rpc_get_user_detail unavailable, falling back to profiles:', rpcErr?.message);
+                    const { data: profile, error: profileErr } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('user_id', id)
+                        .single();
+
+                    if (profileErr) throw profileErr;
+                    setUser(profile);
+                }
 
                 // Fetch logs
                 const { data: logs, error: logsErr } = await supabase
@@ -135,7 +146,7 @@ export default function UserDetailPage() {
                         <div className="mt-8 space-y-4">
                             <div className="flex items-center gap-3 text-sm">
                                 <Mail className="h-4 w-4 text-gray-400" />
-                                <span className="text-gray-900 dark:text-white font-medium break-all">{user.user_id + '@ptdf.gov.ng'} {/* mock email if not in profile */}</span>
+                                <span className="text-gray-900 dark:text-white font-medium break-all">{user.email || 'No email on record'}</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm">
                                 <Phone className="h-4 w-4 text-gray-400" />
@@ -143,7 +154,16 @@ export default function UserDetailPage() {
                             </div>
                             <div className="flex items-center gap-3 text-sm">
                                 <Shield className="h-4 w-4 text-gray-400" />
-                                <span className="text-gray-600 dark:text-gray-300">{user.role} Department</span>
+                                <span className="text-gray-600 dark:text-gray-300">
+                                    {user.role === 'CONSULTANT' && user.department
+                                        ? `${user.department} — ${user.specialization || ''}`
+                                        : user.role === 'CONTRACTOR' && user.company_name
+                                            ? user.company_name
+                                            : user.role === 'CONTRACTOR' && user.zone
+                                                ? `Zone: ${user.zone.replace('_', ' ')}`
+                                                : user.role
+                                    }
+                                </span>
                             </div>
                             <div className="flex items-center gap-3 text-sm">
                                 <MapPin className="h-4 w-4 text-gray-400" />
