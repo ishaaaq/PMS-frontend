@@ -1,4 +1,4 @@
-import { Home, Users, Bell, Settings, PieChart, Flag, DollarSign, Search, ShieldCheck, LogOut, Briefcase, X, FileText, MessageSquare, User } from 'lucide-react';
+import { Home, Users, Bell, Settings, PieChart, Flag, DollarSign, Search, ShieldCheck, LogOut, Briefcase, X, FileText, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../hooks/useAuth';
@@ -35,7 +35,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps = {}) 
         { name: 'Verifications', href: '/dashboard/consultant/verification-queue', icon: ShieldCheck, roles: ['CONSULTANT'] },
         { name: 'Assignments', href: '/dashboard/contractor/assignments', icon: Briefcase, roles: ['CONTRACTOR'] },
         { name: 'Documents', href: '/dashboard/contractor/documents', icon: FileText, roles: ['CONTRACTOR'] },
-        { name: 'Messages', href: '/dashboard/contractor/messages', icon: MessageSquare, roles: ['CONTRACTOR'] },
+        { name: 'Notifications', href: '/dashboard/contractor/messages', icon: Bell, roles: ['CONTRACTOR'] },
         { name: 'Profile', href: '/dashboard/contractor/profile', icon: User, roles: ['CONTRACTOR'] },
         { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, roles: ['ADMIN', 'CONSULTANT'] },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings, roles: ['ADMIN', 'CONSULTANT'] },

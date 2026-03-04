@@ -3,13 +3,15 @@ import { getContractorAssignments, getContractorBudget, getContractorNotificatio
 import type { Assignment, BudgetSummary, Notification } from '../../services/contractor';
 import {
     Wallet, ClipboardList, AlertTriangle, CheckCircle, Clock,
-    ArrowUpRight, ArrowDownRight, TrendingUp, Bell, ChevronRight,
-    MapPin
+    TrendingUp, Bell, ChevronRight,
+    MapPin, BarChart3
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function ContractorDashboard() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [budget, setBudget] = useState<BudgetSummary | null>(null);
     const [assignments, setAssignments] = useState<Assignment[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -59,10 +61,10 @@ export default function ContractorDashboard() {
     const queriedMilestone = urgentAction?.milestones.find(m => m.status === 'QUERIED');
 
     const stats = [
-        { name: 'Active Milestones', stat: activeMilestones, icon: ClipboardList, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30', change: '+2', changeType: 'increase' },
-        { name: 'Pending Approvals', stat: pendingApprovals, icon: Clock, color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-100 dark:bg-yellow-900/30', change: pendingApprovals > 0 ? 'Awaiting' : 'None', changeType: 'neutral' },
-        { name: 'Payments Received', stat: formatMoney(budget?.amountDisbursed || 0), icon: Wallet, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30', change: '+₦30M', changeType: 'increase' },
-        { name: 'Completion Rate', stat: `${completionRate}%`, icon: CheckCircle, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30', change: '+8%', changeType: 'increase' },
+        { name: 'Active Milestones', stat: activeMilestones, icon: ClipboardList, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+        { name: 'Pending Approvals', stat: pendingApprovals, icon: Clock, color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
+        { name: 'Payments Received', stat: formatMoney(budget?.amountDisbursed || 0), icon: Wallet, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30' },
+        { name: 'Completion Rate', stat: `${completionRate}%`, icon: CheckCircle, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
     ];
 
     const maxEarning = Math.max(...earnings.map(e => e.amount), 1);
@@ -88,7 +90,7 @@ export default function ContractorDashboard() {
             <header className="md:flex md:items-center md:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">Dashboard</h1>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Welcome back, BuildRight Construction Ltd.</p>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Welcome back, {user?.full_name || 'Contractor'}</p>
                 </div>
                 <div className="mt-4 flex gap-3 md:mt-0">
                     <button
@@ -140,19 +142,6 @@ export default function ContractorDashboard() {
                                 <item.icon className={`h-5 w-5 ${item.color}`} />
                             </div>
                         </div>
-                        {item.changeType !== 'neutral' && (
-                            <div className="mt-3 flex items-center">
-                                {item.changeType === 'increase' ? (
-                                    <ArrowUpRight className="h-3.5 w-3.5 text-green-500 mr-1" />
-                                ) : (
-                                    <ArrowDownRight className="h-3.5 w-3.5 text-red-500 mr-1" />
-                                )}
-                                <span className={`text-xs font-medium ${item.changeType === 'increase' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                    {item.change}
-                                </span>
-                                <span className="ml-1.5 text-xs text-gray-400 dark:text-gray-500">vs last month</span>
-                            </div>
-                        )}
                     </div>
                 ))}
             </div>
@@ -168,47 +157,57 @@ export default function ContractorDashboard() {
                         <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Last 6 months</span>
                     </div>
                     {/* Chart Container */}
-                    <div className="relative h-52 border-b border-l border-gray-200 dark:border-gray-700">
-                        {/* Y-axis labels */}
-                        <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-[10px] text-gray-400 dark:text-gray-500 -ml-1 py-1">
-                            <span>{formatMoney(maxEarning)}</span>
-                            <span>{formatMoney(maxEarning / 2)}</span>
-                            <span>₦0</span>
-                        </div>
-                        {/* Bars */}
-                        <div className="absolute left-12 right-0 top-0 bottom-0 flex items-end justify-around gap-2 px-2 pb-1">
-                            {earnings.map((e, i) => {
-                                const heightPercent = maxEarning > 0 ? (e.amount / maxEarning) * 100 : 0;
-                                return (
-                                    <div key={i} className="flex-1 flex flex-col items-center group relative h-full justify-end">
-                                        {/* Tooltip */}
-                                        <div className="absolute bottom-full mb-2 bg-gray-900 dark:bg-gray-700 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                                            {formatMoney(e.amount)}
-                                        </div>
-                                        {/* Bar */}
-                                        <div
-                                            className="w-full max-w-[48px] bg-gradient-to-t from-green-600 to-green-400 dark:from-green-500 dark:to-green-700 rounded-t-md transition-all duration-700 ease-out group-hover:from-green-500 group-hover:to-green-300 shadow-sm"
-                                            style={{
-                                                height: `${Math.max(heightPercent, 2)}%`,
-                                                animation: `growUp 0.8s ease-out ${i * 0.1}s both`
-                                            }}
-                                        />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                    {/* X-axis labels */}
-                    <div className="flex justify-around mt-2 pl-12 pr-2 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">
-                        {earnings.map(e => <span key={e.month} className="flex-1 text-center">{e.month}</span>)}
-                    </div>
-                    {/* CSS Animation */}
-                    <style>{`
+                    {earnings.length > 0 ? (
+                        <>
+                            <div className="relative h-52 border-b border-l border-gray-200 dark:border-gray-700">
+                                {/* Y-axis labels */}
+                                <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between text-[10px] text-gray-400 dark:text-gray-500 -ml-1 py-1">
+                                    <span>{formatMoney(maxEarning)}</span>
+                                    <span>{formatMoney(maxEarning / 2)}</span>
+                                    <span>₦0</span>
+                                </div>
+                                {/* Bars */}
+                                <div className="absolute left-12 right-0 top-0 bottom-0 flex items-end justify-around gap-2 px-2 pb-1">
+                                    {earnings.map((e, i) => {
+                                        const heightPercent = maxEarning > 0 ? (e.amount / maxEarning) * 100 : 0;
+                                        return (
+                                            <div key={i} className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                                                {/* Tooltip */}
+                                                <div className="absolute bottom-full mb-2 bg-gray-900 dark:bg-gray-700 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                                                    {formatMoney(e.amount)}
+                                                </div>
+                                                {/* Bar */}
+                                                <div
+                                                    className="w-full max-w-[48px] bg-gradient-to-t from-green-600 to-green-400 dark:from-green-500 dark:to-green-700 rounded-t-md transition-all duration-700 ease-out group-hover:from-green-500 group-hover:to-green-300 shadow-sm"
+                                                    style={{
+                                                        height: `${Math.max(heightPercent, 2)}%`,
+                                                        animation: `growUp 0.8s ease-out ${i * 0.1}s both`
+                                                    }}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            {/* X-axis labels */}
+                            <div className="flex justify-around mt-2 pl-12 pr-2 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">
+                                {earnings.map(e => <span key={e.month} className="flex-1 text-center">{e.month}</span>)}
+                            </div>
+                            {/* CSS Animation */}
+                            <style>{`
                         @keyframes growUp {
                             from { transform: scaleY(0); transform-origin: bottom; }
                             to { transform: scaleY(1); transform-origin: bottom; }
                         }
                     `}</style>
+                        </>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-52 text-gray-400 dark:text-gray-500">
+                            <BarChart3 className="h-10 w-10 mb-2 opacity-40" />
+                            <p className="text-sm font-medium">No payment data yet</p>
+                            <p className="text-xs mt-1">Payment history will appear here as milestones are completed</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Recent Activity */}

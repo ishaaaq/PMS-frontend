@@ -114,7 +114,28 @@ export const MOCK_MONTHLY_EARNINGS = [
 ];
 
 export const getContractorBudget = async (): Promise<BudgetSummary> => {
-    return new Promise((resolve) => setTimeout(() => resolve(MOCK_BUDGET), 300));
+    // Derive budget from real milestone data for this contractor
+    try {
+        const assignments = await getContractorAssignments();
+        const allMilestones = assignments.flatMap(a => a.milestones);
+        const totalAllocated = allMilestones.reduce((sum, m) => sum + m.amount, 0);
+        const completedAmount = allMilestones
+            .filter(m => m.status === 'COMPLETED')
+            .reduce((sum, m) => sum + m.amount, 0);
+        const pendingAmount = allMilestones
+            .filter(m => m.status === 'PENDING_APPROVAL')
+            .reduce((sum, m) => sum + m.amount, 0);
+
+        return {
+            currency: 'NGN',
+            totalAllocated,
+            amountDisbursed: completedAmount,
+            amountPending: pendingAmount,
+            lastDisbursementDate: new Date().toISOString().split('T')[0],
+        };
+    } catch {
+        return { currency: 'NGN', totalAllocated: 0, amountDisbursed: 0, amountPending: 0, lastDisbursementDate: '' };
+    }
 };
 
 export const getContractorAssignments = async (): Promise<Assignment[]> => {
@@ -421,8 +442,9 @@ export const getContractorNotifications = async (): Promise<Notification[]> => {
     return results
 };
 
-export const getMonthlyEarnings = async (): Promise<typeof MOCK_MONTHLY_EARNINGS> => {
-    return new Promise((resolve) => setTimeout(() => resolve(MOCK_MONTHLY_EARNINGS), 200));
+export const getMonthlyEarnings = async (): Promise<{ month: string; amount: number }[]> => {
+    // Return empty — no mock data. This chart will show "No data yet".
+    return [];
 };
 
 // Contractor Profile Types
@@ -505,7 +527,59 @@ export const MOCK_CONTRACTOR_PROFILE: ContractorProfile = {
 };
 
 export const getContractorProfile = async (): Promise<ContractorProfile> => {
-    return new Promise((resolve) => setTimeout(() => resolve(MOCK_CONTRACTOR_PROFILE), 300));
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return MOCK_CONTRACTOR_PROFILE;
+
+        // Fetch profile + contractor record
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+        const { data: contractor } = await supabase
+            .from('contractors')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+        // Get real assignments for stats
+        const assignments = await getContractorAssignments();
+        const allMilestones = assignments.flatMap(a => a.milestones);
+        const completedProjects = assignments.filter(a => a.status === 'COMPLETED').length;
+        const totalValue = allMilestones.reduce((sum, m) => sum + m.amount, 0);
+
+        return {
+            id: user.id,
+            companyName: contractor?.company_name || profile?.full_name || 'Your Company',
+            registrationNumber: contractor?.registration_number || 'Not provided',
+            email: profile?.email || user.email || '',
+            phone: profile?.phone || 'Not provided',
+            address: contractor?.zone ? `Zone: ${contractor.zone.replace('_', ' ')}` : 'Not provided',
+            description: `Contractor registered on the PTDF Project Management System.`,
+            establishedYear: new Date(profile?.created_at || Date.now()).getFullYear(),
+            employeeCount: 0,
+            specializations: contractor?.zone ? [contractor.zone.replace('_', ' ')] : [],
+            // Keep mock data for fields not yet in DB
+            performanceMetrics: MOCK_CONTRACTOR_PROFILE.performanceMetrics,
+            certifications: MOCK_CONTRACTOR_PROFILE.certifications,
+            portfolio: assignments.filter(a => a.status === 'COMPLETED').map(a => ({
+                id: a.id,
+                title: a.projectTitle,
+                location: a.location,
+                completedDate: a.lastUpdated,
+                value: a.milestones.reduce((sum, m) => sum + m.amount, 0),
+                rating: 5,
+            })),
+            overallRating: 0,
+            totalProjectsCompleted: completedProjects,
+            totalContractValue: totalValue,
+        };
+    } catch (err) {
+        console.error('Failed to fetch contractor profile:', err);
+        return MOCK_CONTRACTOR_PROFILE;
+    }
 };
 
 // Document Repository Types
