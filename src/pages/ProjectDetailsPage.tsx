@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getProject, type Project, ProjectStatus } from '../services/projects';
 import { ChevronRight, ArrowLeft, Calendar, MapPin, DollarSign, Clock, Users, ShieldCheck, Star } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { supabase } from '../lib/supabase';
 import MilestonesTab from '../components/dashboard/MilestonesTab';
 import AnalyticsTab from '../components/dashboard/AnalyticsTab';
 import PersonnelTab from '../components/dashboard/PersonnelTab';
@@ -23,14 +24,25 @@ export default function ProjectDetailsPage() {
     const [project, setProject] = useState<Project | undefined>(undefined);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('Details');
+    const [dynamicProgress, setDynamicProgress] = useState(0);
 
     useEffect(() => {
         if (id) {
             getProject(id).then((data) => {
-
                 setProject(data);
                 setLoading(false);
             });
+            // Compute progress dynamically from milestone statuses
+            supabase
+                .from('milestones')
+                .select('status')
+                .eq('project_id', id)
+                .then(({ data }) => {
+                    if (data && data.length > 0) {
+                        const completed = data.filter(m => m.status === 'COMPLETED').length;
+                        setDynamicProgress(Math.round((completed / data.length) * 100));
+                    }
+                });
         }
     }, [id]);
 
@@ -130,10 +142,10 @@ export default function ProjectDetailsPage() {
                                 <div className="sm:col-span-2 space-y-2">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-500 dark:text-gray-400">Progress</span>
-                                        <span className="font-medium text-gray-900 dark:text-white">{project.progress}%</span>
+                                        <span className="font-medium text-gray-900 dark:text-white">{dynamicProgress}%</span>
                                     </div>
                                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                        <div className="bg-green-600 h-2 rounded-full" style={{ width: `${project.progress}%` }}></div>
+                                        <div className="bg-green-600 h-2 rounded-full" style={{ width: `${dynamicProgress}%` }}></div>
                                     </div>
                                 </div>
 

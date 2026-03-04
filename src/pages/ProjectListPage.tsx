@@ -2,16 +2,42 @@ import { useEffect, useState } from 'react';
 import { getProjects, type Project } from '../services/projects';
 import { Search, Filter, Plus, MapPin, Link as LinkIcon, Calendar, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export default function ProjectListPage() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
+    const [progressMap, setProgressMap] = useState<Record<string, number>>({});
     const navigate = useNavigate();
 
     useEffect(() => {
-        getProjects().then((data) => {
+        getProjects().then(async (data) => {
             setProjects(data);
             setLoading(false);
+
+            // Fetch all milestones at once and compute per-project progress
+            const ids = data.map(p => p.id);
+            if (ids.length > 0) {
+                const { data: milestones } = await supabase
+                    .from('milestones')
+                    .select('project_id, status')
+                    .in('project_id', ids);
+
+                if (milestones) {
+                    const map: Record<string, number> = {};
+                    // Group by project_id
+                    const grouped: Record<string, { total: number; completed: number }> = {};
+                    for (const m of milestones) {
+                        if (!grouped[m.project_id]) grouped[m.project_id] = { total: 0, completed: 0 };
+                        grouped[m.project_id].total++;
+                        if (m.status === 'COMPLETED') grouped[m.project_id].completed++;
+                    }
+                    for (const [pid, counts] of Object.entries(grouped)) {
+                        map[pid] = counts.total > 0 ? Math.round((counts.completed / counts.total) * 100) : 0;
+                    }
+                    setProgressMap(map);
+                }
+            }
         });
     }, []);
 
@@ -101,12 +127,12 @@ export default function ProjectListPage() {
                                     <div className="space-y-1.5">
                                         <div className="flex justify-between text-xs font-semibold text-gray-500">
                                             <span>Progress</span>
-                                            <span>{project.progress}%</span>
+                                            <span>{progressMap[project.id] ?? 0}%</span>
                                         </div>
                                         <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                                             <div
                                                 className="h-full bg-gradient-to-r from-ptdf-primary to-emerald-400 rounded-full"
-                                                style={{ width: `${project.progress}%` }}
+                                                style={{ width: `${progressMap[project.id] ?? 0}%` }}
                                             />
                                         </div>
                                     </div>

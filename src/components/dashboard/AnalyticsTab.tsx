@@ -23,7 +23,7 @@ export default function AnalyticsTab({ project }: AnalyticsTabProps) {
                 if (data && !error) {
                     setMilestones({
                         total: data.length,
-                        completed: data.filter(m => m.status === 'VERIFIED').length
+                        completed: data.filter(m => m.status === 'COMPLETED').length
                     });
                 }
             } catch (err) {
