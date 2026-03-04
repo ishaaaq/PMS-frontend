@@ -38,22 +38,22 @@ export const ZONE_LABELS: Record<GeographicZone, string> = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mapContractor = (p: any): AdminContractor => {
+const mapContractor = (p: any, cp: any, email: string): AdminContractor => {
     return {
         id: p.user_id || p.id,
-        companyName: p.full_name || 'Unknown Company',
-        registrationNumber: p.company_reg_number || 'PENDING',
-        email: p.email || '',
-        phone: p.phone_number || '',
+        companyName: cp?.company_name || p.full_name || 'Unknown Company',
+        registrationNumber: cp?.registration_number || 'Not provided',
+        email: email || '',
+        phone: p.phone || '',
         logo: p.avatar_url,
-        zone: (p.zone as GeographicZone) || 'NORTH_CENTRAL',
-        status: (p.status as ContractorStatus) || 'PENDING',
-        rating: p.rating || 0,
-        totalReviews: 0, // Requires reviews table
-        projectCount: 0, // Requires projects count
+        zone: (cp?.zone as GeographicZone) || 'NORTH_CENTRAL',
+        status: p.is_active ? 'ACTIVE' as ContractorStatus : 'PENDING' as ContractorStatus,
+        rating: 0,
+        totalReviews: 0,
+        projectCount: 0,
         activeProjects: 0,
         completedProjects: 0,
-        specializations: p.specialization ? [p.specialization] : [],
+        specializations: cp?.zone ? [cp.zone.replace('_', ' ')] : [],
         lastActiveAt: p.updated_at || new Date().toISOString(),
         joinedAt: p.created_at || new Date().toISOString(),
     };
@@ -76,7 +76,20 @@ export const getContractorStats = (contractors: AdminContractor[]): ContractorSt
 };
 
 export const getAdminContractors = async (): Promise<AdminContractor[]> => {
-    const { data, error } = await supabase
+    // Try RPC first (includes real email from auth.users)
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('rpc_admin_list_contractors');
+
+    if (!rpcErr && rpcData && Array.isArray(rpcData)) {
+        return rpcData.map((r: any) => mapContractor( // eslint-disable-line @typescript-eslint/no-explicit-any
+            { user_id: r.user_id, full_name: r.full_name, role: r.role, phone: r.phone, is_active: r.is_active, created_at: r.created_at },
+            { company_name: r.company_name, registration_number: r.registration_number, zone: r.zone },
+            r.email || ''
+        ));
+    }
+
+    // Fallback: direct queries (no email available)
+    console.warn('rpc_admin_list_contractors unavailable, falling back:', rpcErr?.message);
+    const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('role', 'CONTRACTOR')
@@ -87,7 +100,18 @@ export const getAdminContractors = async (): Promise<AdminContractor[]> => {
         return [];
     }
 
-    return (data || []).map(mapContractor);
+    if (!profiles || profiles.length === 0) return [];
+
+    // Fetch extended contractor profiles
+    const userIds = profiles.map(p => p.user_id);
+    const { data: contractorProfiles } = await supabase
+        .from('contractor_profiles')
+        .select('*')
+        .in('user_id', userIds);
+
+    const cpMap = new Map((contractorProfiles || []).map(cp => [cp.user_id, cp]));
+
+    return profiles.map(p => mapContractor(p, cpMap.get(p.user_id), ''));
 };
 
 export interface InviteContractorData {
