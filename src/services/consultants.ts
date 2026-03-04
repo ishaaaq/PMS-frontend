@@ -19,32 +19,40 @@ export interface Consultant {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mapConsultant = (p: any): Consultant => {
-    // In a real app, strict typing for `p` (PostgREST result) is better
+const mapConsultant = (p: any, cp: any, email: string): Consultant => {
     return {
         id: p.user_id || p.id,
         name: p.full_name || 'Unknown Consultant',
-        email: p.email || '',
-        phone: p.phone_number || '',
-        company: p.company_name || 'PTDF Consulting',
-        department: p.department || 'Infrastructure',
-        region: p.zone || 'North Central', // map zone to region if needed
-        activeProjects: 0, // Requires separate count query or view
-        completedProjects: 0, // Requires separate count query
-        rating: p.rating || 0,
-        specialization: p.specialization || 'General',
+        email: email || '',
+        phone: p.phone || '',
+        company: 'PTDF',
+        department: cp?.department || 'Not provided',
+        region: cp?.region || 'Not provided',
+        activeProjects: 0,
+        completedProjects: 0,
+        rating: 0,
+        specialization: cp?.specialization || 'Not provided',
         joinedDate: p.created_at ? p.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
-        status: (p.status as 'Active' | 'Inactive' | 'On Leave') || 'Active'
+        status: p.is_active === false ? 'Inactive' : 'Active'
     };
 };
 
 // Service functions
 export async function getConsultants(): Promise<Consultant[]> {
-    // Fetch users with role 'CONSULTANT' from profiles
-    // We assume 'profiles' has role column.
-    // If not, we might need to join auth.users (not possible from client) or check metadata.
-    // But usually profiles has role.
-    const { data, error } = await supabase
+    // Try RPC first (includes real email from auth.users + extended profile)
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('rpc_admin_list_consultants');
+
+    if (!rpcErr && rpcData && Array.isArray(rpcData)) {
+        return rpcData.map((r: any) => mapConsultant( // eslint-disable-line @typescript-eslint/no-explicit-any
+            { user_id: r.user_id, full_name: r.full_name, role: r.role, phone: r.phone, is_active: r.is_active, created_at: r.created_at },
+            { specialization: r.specialization, department: r.department, region: r.region },
+            r.email || ''
+        ));
+    }
+
+    // Fallback: direct queries
+    console.warn('rpc_admin_list_consultants unavailable, falling back:', rpcErr?.message);
+    const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('role', 'CONSULTANT')
@@ -55,15 +63,23 @@ export async function getConsultants(): Promise<Consultant[]> {
         return [];
     }
 
-    const consultants = (data || []).map(mapConsultant);
+    if (!profiles || profiles.length === 0) return [];
 
-    // Ideally we would fetch project counts here. 
-    // For MVP, we'll leave them as 0 or implement a separate count query later if critical.
-    return consultants;
+    // Fetch extended consultant profiles
+    const userIds = profiles.map(p => p.user_id);
+    const { data: consultantProfiles } = await supabase
+        .from('consultant_profiles')
+        .select('*')
+        .in('user_id', userIds);
+
+    const cpMap = new Map((consultantProfiles || []).map(cp => [cp.user_id, cp]));
+
+    return profiles.map(p => mapConsultant(p, cpMap.get(p.user_id), ''));
 }
 
 export async function getConsultant(id: string): Promise<Consultant | undefined> {
-    const { data, error } = await supabase
+    // Fetch profile
+    const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', id)
@@ -75,7 +91,21 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
         return undefined;
     }
 
-    return mapConsultant(data);
+    // Fetch extended consultant profile
+    const { data: cp } = await supabase
+        .from('consultant_profiles')
+        .select('*')
+        .eq('user_id', id)
+        .single();
+
+    // Try to get email via the user detail RPC
+    let email = '';
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('rpc_get_user_detail', { p_user_id: id });
+    if (!rpcErr && rpcData) {
+        email = rpcData.email || '';
+    }
+
+    return mapConsultant(profile, cp, email);
 }
 
 export async function inviteConsultant(email: string): Promise<{ success: boolean; message: string }> {
