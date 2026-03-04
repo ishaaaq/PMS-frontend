@@ -116,18 +116,22 @@ export default function ProgressReportModal({
                 finalDescription
             );
 
-            // 2. Upload each evidence file to Supabase Storage
-            // The current createSubmission RPC returns the UUID directly if success
+            // 2. Upload each evidence file to Supabase Storage and link in database
             if (files.length > 0 && submissionId) {
                 await Promise.all(
-                    files.map(file =>
-                        StorageService.uploadEvidence(
+                    files.map(async (file) => {
+                        const path = await StorageService.uploadEvidence(
                             projectId,
                             milestone.id,
                             String(submissionId),
                             file
-                        )
-                    )
+                        );
+                        await SubmissionsService.addSubmissionEvidence(
+                            String(submissionId),
+                            path,
+                            file.size
+                        );
+                    })
                 );
             }
 

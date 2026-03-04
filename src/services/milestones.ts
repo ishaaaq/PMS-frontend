@@ -51,9 +51,8 @@ const mapMilestone = (m: any): Milestone => {
         : MilestoneStatus.NOT_STARTED) as MilestoneStatus;
 
     // Progress calculation
-    let progress = 0;
+    let progress = Number(m.progress || 0);
     if (status === MilestoneStatus.COMPLETED) progress = 100;
-    else if (status === MilestoneStatus.IN_PROGRESS) progress = 50;
 
     // Contractor Name Logic
     let contractorName = 'Unassigned';

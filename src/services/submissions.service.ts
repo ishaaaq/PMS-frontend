@@ -17,6 +17,22 @@ export const SubmissionsService = {
         return data
     },
 
+    async addSubmissionEvidence(submissionId: string, filePath: string, fileSize: number) {
+        const { data, error } = await supabase.rpc(
+            'rpc_add_submission_evidence',
+            {
+                p_submission_id: submissionId,
+                p_file_path: filePath,
+                p_file_size: fileSize
+            }
+        )
+        if (error) {
+            logRpcError('rpc_add_submission_evidence', error)
+            throw error
+        }
+        return data
+    },
+
     async querySubmission(submissionId: string, note: string) {
         const { error } = await supabase.rpc(
             'rpc_query_submission',

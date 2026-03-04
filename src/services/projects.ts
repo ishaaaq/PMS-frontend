@@ -96,7 +96,7 @@ const mapProject = (p: any): Project => {
         consultantId: consultantId,
         assignedConsultants,
         projectContractors,
-        startDate: p.start_date || new Date().toISOString().split('T')[0],
+        startDate: p.start_date || (p.created_at ? p.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
         endDate: p.end_date || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         gallery: p.gallery || [],
         department: p.department || 'Project',
@@ -111,6 +111,10 @@ export const getProjects = async (): Promise<Project[]> => {
             project_consultants (
                 consultant_user_id,
                 profiles:consultant_user_id ( full_name )
+            ),
+            project_contractors (
+                contractor_user_id,
+                profiles:contractor_user_id ( full_name )
             )
         `)
         .order('created_at', { ascending: false });

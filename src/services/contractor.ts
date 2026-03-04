@@ -194,7 +194,7 @@ export const getContractorAssignments = async (): Promise<Assignment[]> => {
 
         // DETERMINE STATUS
         let displayStatus: AssignmentStatus = 'IN_PROGRESS';
-        let progress = 0;
+        let progress = Number(ms.progress || 0);
 
         if (ms.status === 'COMPLETED') {
             displayStatus = 'COMPLETED';
@@ -203,13 +203,10 @@ export const getContractorAssignments = async (): Promise<Assignment[]> => {
             const subStatus = submissionMap.get(ms.id);
             if (subStatus === 'PENDING_APPROVAL') {
                 displayStatus = 'PENDING_APPROVAL';
-                progress = 75;
             } else if (subStatus === 'QUERIED') {
                 displayStatus = 'QUERIED';
-                progress = 50;
             } else {
                 displayStatus = 'IN_PROGRESS';
-                progress = ms.status === 'IN_PROGRESS' ? 50 : 0;
             }
         }
 
