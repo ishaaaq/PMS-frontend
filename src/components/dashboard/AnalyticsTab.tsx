@@ -1,12 +1,45 @@
 
+import { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 import type { Project } from '../../services/projects';
+import { supabase } from '../../lib/supabase';
 
 interface AnalyticsTabProps {
     project: Project;
 }
 
 export default function AnalyticsTab({ project }: AnalyticsTabProps) {
+    const [milestones, setMilestones] = useState({ total: 0, completed: 0 });
+    const [loadingMilestones, setLoadingMilestones] = useState(true);
+
+    useEffect(() => {
+        const fetchMilestones = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('milestones')
+                    .select('status')
+                    .eq('project_id', project.id);
+
+                if (data && !error) {
+                    setMilestones({
+                        total: data.length,
+                        completed: data.filter(m => m.status === 'VERIFIED').length
+                    });
+                }
+            } catch (err) {
+                console.error('Error fetching milestones:', err);
+            } finally {
+                setLoadingMilestones(false);
+            }
+        };
+
+        if (project?.id) {
+            fetchMilestones();
+        } else {
+            setLoadingMilestones(false);
+        }
+    }, [project?.id]);
+
     // Calculate metrics
     const budgetUtilization = project.approvedBudget
         ? ((project.amountSpent || 0) / project.approvedBudget * 100).toFixed(1)
@@ -40,7 +73,7 @@ export default function AnalyticsTab({ project }: AnalyticsTabProps) {
         },
         {
             name: 'Milestones Completed',
-            value: '3/5',
+            value: loadingMilestones ? '...' : `${milestones.completed}/${milestones.total}`,
             icon: CheckCircle,
             color: 'text-green-600 dark:text-green-400',
             bgColor: 'bg-green-100 dark:bg-green-900/30'
@@ -183,18 +216,18 @@ export default function AnalyticsTab({ project }: AnalyticsTabProps) {
             <div className="glass-card rounded-lg p-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Milestone Completion Rate</h3>
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-300">3 of 5 milestones completed</span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">60%</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                        {loadingMilestones ? 'Loading...' : (milestones.total > 0 ? `${milestones.completed} of ${milestones.total} milestones completed` : 'No milestones defined')}
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {milestones.total > 0 ? Math.round((milestones.completed / milestones.total) * 100) : 0}%
+                    </span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div className="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full" style={{ width: '60%' }}></div>
-                </div>
-                <div className="mt-4 grid grid-cols-5 gap-2">
-                    <div className="h-12 bg-green-500 dark:bg-green-600 rounded flex items-center justify-center text-white text-xs font-medium">M1</div>
-                    <div className="h-12 bg-green-500 dark:bg-green-600 rounded flex items-center justify-center text-white text-xs font-medium">M2</div>
-                    <div className="h-12 bg-green-500 dark:bg-green-600 rounded flex items-center justify-center text-white text-xs font-medium">M3</div>
-                    <div className="h-12 bg-blue-500 dark:bg-blue-600 rounded flex items-center justify-center text-white text-xs font-medium">M4</div>
-                    <div className="h-12 bg-gray-300 dark:bg-gray-600 rounded flex items-center justify-center text-gray-600 dark:text-gray-300 text-xs font-medium">M5</div>
+                    <div
+                        className="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${milestones.total > 0 ? Math.round((milestones.completed / milestones.total) * 100) : 0}%` }}
+                    ></div>
                 </div>
             </div>
         </div>

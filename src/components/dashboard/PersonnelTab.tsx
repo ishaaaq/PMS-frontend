@@ -126,7 +126,7 @@ export default function PersonnelTab({ project, onProjectUpdated }: PersonnelTab
         ? project.assignedConsultants.map(c => ({
             id: c.id,
             name: c.name,
-            email: 'consultant@ptdf.gov.ng',
+            email: 'N/A',
             role: 'Consultant'
         }))
         : [];
@@ -135,7 +135,7 @@ export default function PersonnelTab({ project, onProjectUpdated }: PersonnelTab
         ? project.projectContractors.map(c => ({
             id: c.id,
             name: c.name,
-            email: 'contractor@ptdf.gov.ng',
+            email: 'N/A',
             role: 'Contractor'
         }))
         : [];
