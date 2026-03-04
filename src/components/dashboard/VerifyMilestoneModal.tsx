@@ -89,7 +89,15 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                     for (const file of evidence) {
                         try {
                             const url = await StorageService.getSignedUrl(file.file_path);
-                            if (file.file_type && file.file_type.startsWith('image/')) {
+
+                            // Determine if image: use file_type if available, otherwise infer from extension
+                            const ext = file.file_path.split('.').pop()?.toLowerCase() || '';
+                            const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'heic', 'avif'];
+                            const isImage = file.file_type
+                                ? file.file_type.startsWith('image/')
+                                : imageExts.includes(ext);
+
+                            if (isImage) {
                                 imgs.push(url);
                             } else {
                                 docs.push({
