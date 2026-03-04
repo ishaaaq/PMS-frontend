@@ -1,86 +1,68 @@
 import React, { useState, useEffect } from 'react';
 import { Briefcase, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
 import { SectionsService } from '../../services/sections.service';
-import { supabase } from '@/lib/supabase';
+import { ProjectsService } from '../../services/projects.service';
 
-interface AssignSectionModalProps {
+interface AssignContractorModalProps {
     isOpen: boolean;
     onClose: () => void;
     projectId?: string;
-    contractorName?: string;
-    contractorId?: string;
+    sectionId?: string;
 }
 
-export default function AssignSectionModal({ isOpen, onClose, projectId, contractorName, contractorId }: AssignSectionModalProps) {
-    const [selectedSection, setSelectedSection] = useState('');
-    const [sections, setSections] = useState<{ id: string; name: string }[]>([]);
+export default function AssignContractorModal({ isOpen, onClose, projectId, sectionId }: AssignContractorModalProps) {
+    const [selectedContractor, setSelectedContractor] = useState('');
+    const [contractors, setContractors] = useState<{ id: string; name: string }[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
-    const [loadingSections, setLoadingSections] = useState(false);
+    const [loadingContractors, setLoadingContractors] = useState(false);
 
     useEffect(() => {
         if (!isOpen) {
-            setSelectedSection('');
+            setSelectedContractor('');
             setError(null);
             setSuccess(false);
             return;
         }
 
-        const fetchSections = async () => {
-            if (!projectId || projectId === 'All Projects') return;
+        const fetchContractors = async () => {
+            if (!projectId) return;
 
-            setLoadingSections(true);
+            setLoadingContractors(true);
             try {
-                // Fetch sections for this project that aren't already assigned to a contractor
-                const { data, error: pbError } = await supabase
-                    .from('sections')
-                    .select('id, name')
-                    .eq('project_id', projectId);
-
-                if (pbError) throw pbError;
-                if (data) setSections(data);
+                const data = await ProjectsService.getProjectContractors(projectId);
+                setContractors(data);
             } catch (err) {
-                console.error("Error fetching sections:", err);
-                setError("Failed to load available sections.");
+                console.error("Error fetching contractors:", err);
+                setError("Failed to load contractors for this project.");
             } finally {
-                setLoadingSections(false);
+                setLoadingContractors(false);
             }
         };
 
-        fetchSections();
+        fetchContractors();
     }, [isOpen, projectId]);
 
     if (!isOpen) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!projectId || projectId === 'All Projects') {
-            setError('No project selected. Please select a project first.');
-            return;
-        }
-
-        if (!selectedSection) {
-            setError('Please select a section to assign.');
-            return;
-        }
-
-        if (!contractorId) {
-            setError('Contractor information is missing.');
+        if (!sectionId || !selectedContractor) {
+            setError('Please select a contractor to assign.');
             return;
         }
 
         setError(null);
         setSubmitting(true);
         try {
-            await SectionsService.assignContractor(selectedSection, contractorId);
+            await SectionsService.assignContractor(sectionId, selectedContractor);
             setSuccess(true);
             setTimeout(() => {
                 onClose();
             }, 1500);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to assign section. Please try again.');
+            setError(err instanceof Error ? err.message : 'Failed to assign contractor. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -94,8 +76,8 @@ export default function AssignSectionModal({ isOpen, onClose, projectId, contrac
                         <Briefcase className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Assign Section</h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Assign {contractorName || 'this contractor'} to a section</p>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Assign Contractor</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Select an existing project contractor for this section</p>
                     </div>
                 </div>
 
@@ -106,47 +88,34 @@ export default function AssignSectionModal({ isOpen, onClose, projectId, contrac
                                 <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
                             </div>
                             <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Assigned Successfully!</h4>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">The section has been assigned to the contractor.</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">The contractor has been added to the section.</p>
                         </div>
-                    </div>
-                ) : !projectId || projectId === 'All Projects' ? (
-                    <div className="py-6 text-center">
-                        <AlertCircle className="h-10 w-10 text-yellow-500 mx-auto mb-3" />
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Please select a specific project from the dropdown filter before assigning sections.
-                        </p>
-                        <button
-                            onClick={onClose}
-                            className="mt-6 w-full py-2.5 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-                        >
-                            Got it
-                        </button>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Section</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Contractor</label>
 
-                            {loadingSections ? (
+                            {loadingContractors ? (
                                 <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
                                     <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />
-                                    Loading sections...
+                                    Loading contractors...
                                 </div>
-                            ) : sections.length === 0 ? (
+                            ) : contractors.length === 0 ? (
                                 <div className="flex items-center gap-2 text-sm text-orange-600 py-2">
                                     <AlertCircle className="h-4 w-4" />
-                                    No sections available in this project.
+                                    No contractors available in this project.
                                 </div>
                             ) : (
                                 <select
                                     className="w-full px-4 py-3 text-sm rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700/50 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                    value={selectedSection}
-                                    onChange={(e) => { setSelectedSection(e.target.value); setError(null); }}
+                                    value={selectedContractor}
+                                    onChange={(e) => { setSelectedContractor(e.target.value); setError(null); }}
                                     required
                                 >
-                                    <option value="" disabled>Choose a section...</option>
-                                    {sections.map(s => (
-                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                    <option value="" disabled>Choose a contractor...</option>
+                                    {contractors.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
                             )}
@@ -167,7 +136,7 @@ export default function AssignSectionModal({ isOpen, onClose, projectId, contrac
                             </button>
                             <button
                                 type="submit"
-                                disabled={submitting || !selectedSection || loadingSections || sections.length === 0}
+                                disabled={submitting || !selectedContractor || loadingContractors || contractors.length === 0}
                                 className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Assign'}

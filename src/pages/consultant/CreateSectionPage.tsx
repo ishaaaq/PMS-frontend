@@ -8,10 +8,17 @@ import {
     DollarSign,
     CheckCircle,
     ListChecks,
-    AlertTriangle
+    AlertTriangle,
+    CheckCircle2
 } from 'lucide-react';
+
+interface ToastState {
+    type: 'success' | 'error';
+    message: string;
+}
 import { SectionsService } from '../../services/sections.service';
 import { ProjectsService } from '../../services/projects.service';
+import { InvitationsService } from '../../services/invitations.service';
 import { logRpcError } from '@/lib/debug';
 
 export default function CreateSectionPage() {
@@ -25,6 +32,14 @@ export default function CreateSectionPage() {
     const [contractors, setContractors] = useState<{ id: string; name: string }[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [toast, setToast] = useState<ToastState | null>(null);
+
+    // Auto-dismiss toast
+    useEffect(() => {
+        if (!toast) return;
+        const timer = setTimeout(() => setToast(null), 4000);
+        return () => clearTimeout(timer);
+    }, [toast]);
 
     const [sections, setSections] = useState([
         { title: '', budget: '', startDate: '', endDate: '', description: '', milestoneIds: [] as string[] }
@@ -114,6 +129,7 @@ export default function CreateSectionPage() {
         setError(null);
         setSubmitting(true);
         try {
+            let invitesSent = 0;
             for (const section of sections) {
                 const sectionId = await SectionsService.createSection(
                     id,
@@ -124,9 +140,17 @@ export default function CreateSectionPage() {
                 // Assign contractor if one is selected (UUID from dropdown)
                 if (contractorMode === 'existing' && selectedContractor && sectionId) {
                     await SectionsService.assignContractor(String(sectionId), selectedContractor);
+                } else if (contractorMode === 'invite' && inviteEmail && sectionId) {
+                    await InvitationsService.createInvitation(inviteEmail, 'CONTRACTOR', id, String(sectionId));
+                    invitesSent++;
                 }
             }
-            navigate(`/dashboard/consultant/projects/${id}`);
+            if (invitesSent > 0) {
+                setToast({ type: 'success', message: `Invitations created for ${invitesSent} recipient(s).` });
+                setTimeout(() => navigate(`/dashboard/consultant/projects/${id}`), 2000);
+            } else {
+                navigate(`/dashboard/consultant/projects/${id}`);
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to create sections. Please try again.');
         } finally {
@@ -153,6 +177,23 @@ export default function CreateSectionPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Inline Toast Notification */}
+            {toast && (
+                <div className={`flex items-center gap-3 p-4 rounded-xl border animate-in fade-in slide-in-from-top-2 duration-300 ${toast.type === 'success'
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300'
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
+                    }`}>
+                    {toast.type === 'success'
+                        ? <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+                        : <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+                    }
+                    <p className="text-sm font-medium flex-1">{toast.message}</p>
+                    <button onClick={() => setToast(null)} className="text-current opacity-50 hover:opacity-100 transition-opacity text-sm">
+                        Dismiss
+                    </button>
+                </div>
+            )}
 
             {error && (
                 <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">

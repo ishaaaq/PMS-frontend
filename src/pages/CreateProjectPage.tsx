@@ -1,8 +1,13 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProjectsService } from '../services/projects.service';
-import { ArrowLeft, Save, Plus, Trash2, DollarSign, Target, AlertTriangle } from 'lucide-react';
+import { InvitationsService } from '../services/invitations.service';
+import { ArrowLeft, Save, Plus, Trash2, DollarSign, Target, AlertTriangle, CheckCircle2 } from 'lucide-react';
+
+interface ToastState {
+    type: 'success' | 'error';
+    message: string;
+}
 
 interface Milestone {
     id: string;
@@ -16,6 +21,14 @@ export default function CreateProjectPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [toast, setToast] = useState<ToastState | null>(null);
+
+    // Auto-dismiss toast
+    useEffect(() => {
+        if (!toast) return;
+        const timer = setTimeout(() => setToast(null), 4000);
+        return () => clearTimeout(timer);
+    }, [toast]);
 
     // Minimal form state management
     const [formData, setFormData] = useState({
@@ -106,7 +119,7 @@ export default function CreateProjectPage() {
 
         setLoading(true);
         try {
-            await ProjectsService.createProject({
+            const newProjectId = await ProjectsService.createProject({
                 title: formData.title.trim(),
                 description: formData.description.trim() || '',
                 location: `${formData.state}, ${formData.lga}`.trim(),
@@ -121,7 +134,24 @@ export default function CreateProjectPage() {
                 })),
 
             });
-            navigate('/dashboard/projects');
+
+            let invitesSent = 0;
+            if (formData.consultant && formData.consultant.includes('@')) {
+                await InvitationsService.createInvitation(formData.consultant.trim(), 'CONSULTANT', String(newProjectId));
+                invitesSent++;
+            }
+            if (formData.contractor && formData.contractor.includes('@')) {
+                await InvitationsService.createInvitation(formData.contractor.trim(), 'CONTRACTOR', String(newProjectId));
+                invitesSent++;
+            }
+
+            if (invitesSent > 0) {
+                setToast({ type: 'success', message: `Invitations created for ${invitesSent} recipient(s).` });
+                // Delay navigation slightly so the user sees the toast
+                setTimeout(() => navigate('/dashboard/projects'), 2000);
+            } else {
+                navigate('/dashboard/projects');
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to create project. Please try again.');
         } finally {
@@ -144,6 +174,23 @@ export default function CreateProjectPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Inline Toast Notification */}
+            {toast && (
+                <div className={`mb-6 flex items-center gap-3 p-4 rounded-xl border animate-in fade-in slide-in-from-top-2 duration-300 ${toast.type === 'success'
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300'
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
+                    }`}>
+                    {toast.type === 'success'
+                        ? <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+                        : <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+                    }
+                    <p className="text-sm font-medium flex-1">{toast.message}</p>
+                    <button onClick={() => setToast(null)} className="text-current opacity-50 hover:opacity-100 transition-opacity text-sm">
+                        Dismiss
+                    </button>
+                </div>
+            )}
 
             {error && (
                 <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">

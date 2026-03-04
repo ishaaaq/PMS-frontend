@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ProjectsService } from '../../services/projects.service';
 import { Search, MapPin, Star, MoreVertical, UserPlus, Briefcase, Filter } from 'lucide-react';
 import AssignSectionModal from '../../components/consultant/AssignSectionModal';
+import InviteContractorModal from '../../components/consultant/InviteContractorModal';
 
 interface Contractor {
     id: string;
@@ -19,6 +20,7 @@ interface Contractor {
 export default function ConsultantContractors() {
     const [searchTerm, setSearchTerm] = useState('');
     const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null);
     const [selectedProject, setSelectedProject] = useState('All Projects');
 
@@ -80,6 +82,14 @@ export default function ConsultantContractors() {
         setAssignModalOpen(true);
     };
 
+    const handleInviteClick = () => {
+        if (selectedProject === 'All Projects') {
+            alert('Please select a project first to invite a contractor.');
+            return;
+        }
+        setIsInviteModalOpen(true);
+    };
+
     return (
         <div className="max-w-6xl mx-auto space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -116,7 +126,10 @@ export default function ConsultantContractors() {
                         />
                     </div>
 
-                    <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95">
+                    <button
+                        onClick={handleInviteClick}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95"
+                    >
                         <UserPlus className="h-4 w-4" />
                         <span className="hidden sm:inline">Invite</span>
                     </button>
@@ -216,8 +229,18 @@ export default function ConsultantContractors() {
             <AssignSectionModal
                 isOpen={assignModalOpen}
                 onClose={() => setAssignModalOpen(false)}
+                projectId={selectedProject !== 'All Projects' ? selectedProject : undefined}
                 contractorName={selectedContractor?.name}
+                contractorId={selectedContractor?.id}
+            />
+
+            <InviteContractorModal
+                isOpen={isInviteModalOpen}
+                onClose={() => setIsInviteModalOpen(false)}
+                projectId={selectedProject !== 'All Projects' ? selectedProject : undefined}
+                projectName={selectedProject !== 'All Projects' ? projects.find(p => p.id === selectedProject)?.title : undefined}
             />
         </div>
     );
 }
+
