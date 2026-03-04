@@ -224,11 +224,26 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                         <div className="w-full md:w-2/3 bg-gray-900 flex flex-col relative h-64 md:h-auto">
                             {/* Main Image */}
                             <div className="flex-1 flex items-center justify-center overflow-hidden relative group">
-                                <img
-                                    src={images[activeImage]}
-                                    alt="Evidence"
-                                    className="max-h-full max-w-full object-contain"
-                                />
+                                {images.length > 0 ? (
+                                    <img
+                                        src={images[activeImage]}
+                                        alt="Evidence"
+                                        className="max-h-full max-w-full object-contain"
+                                        crossOrigin="anonymous"
+                                        onError={(e) => {
+                                            const target = e.currentTarget;
+                                            target.style.display = 'none';
+                                            const fallback = target.nextElementSibling;
+                                            if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="text-gray-500 text-sm">No images uploaded</div>
+                                )}
+                                <div className="hidden items-center justify-center flex-col gap-2 text-gray-400">
+                                    <FileText className="h-8 w-8" />
+                                    <span className="text-sm">Image could not be loaded</span>
+                                </div>
 
                                 {/* Navigation Arrows */}
                                 <button

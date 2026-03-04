@@ -32,7 +32,7 @@ export const StorageService = {
     /**
      * Get a signed URL for a storage path with a 60-second expiry.
      */
-    async getSignedUrl(path: string, expiresIn = 60): Promise<string> {
+    async getSignedUrl(path: string, expiresIn = 3600): Promise<string> {
         const { data, error } = await supabase.storage
             .from(BUCKET)
             .createSignedUrl(path, expiresIn)
