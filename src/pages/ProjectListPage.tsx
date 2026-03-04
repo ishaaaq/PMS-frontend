@@ -115,7 +115,7 @@ export default function ProjectListPage() {
 
                             <div className="px-5 py-4 border-t border-gray-50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50 rounded-b-2xl flex items-center justify-between">
                                 <span className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                                    <Calendar className="h-3.5 w-3.5" /> Apr 12, 2024
+                                    <Calendar className="h-3.5 w-3.5" /> {project.startDate ? new Date(project.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
                                 </span>
                                 <button
                                     onClick={() => navigate(`/dashboard/projects/${project.id}`)}
