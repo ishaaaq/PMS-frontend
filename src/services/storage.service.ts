@@ -30,7 +30,7 @@ export const StorageService = {
     },
 
     /**
-     * Get a signed URL for a storage path with a 60-second expiry.
+     * Get a signed URL for a storage path with a 1-hour expiry.
      */
     async getSignedUrl(path: string, expiresIn = 3600): Promise<string> {
         const { data, error } = await supabase.storage
@@ -41,5 +41,20 @@ export const StorageService = {
             throw error
         }
         return data.signedUrl
+    },
+
+    /**
+     * List all files in a storage folder. Returns the file names (relative to the folder).
+     */
+    async listFiles(folderPath: string): Promise<{ name: string; metadata?: Record<string, string> }[]> {
+        const { data, error } = await supabase.storage
+            .from(BUCKET)
+            .list(folderPath)
+        if (error) {
+            logRpcError('storage.list', error)
+            return []
+        }
+        // Filter out folder placeholders (Supabase returns a ".emptyFolderPlaceholder" file)
+        return (data || []).filter(f => f.name !== '.emptyFolderPlaceholder')
     }
 }

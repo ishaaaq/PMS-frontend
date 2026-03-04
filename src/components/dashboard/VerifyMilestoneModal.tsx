@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { SubmissionsService } from '../../services/submissions.service';
 import { StorageService } from '../../services/storage.service';
+import { supabase } from '../../lib/supabase';
 
 
 interface MaterialUsage {
@@ -80,19 +81,19 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                     })));
                 }
 
-                // Fetch evidence
+                // Fetch evidence from database
                 const evidence = await SubmissionsService.getSubmissionEvidence(submissionId);
                 const imgs: string[] = [];
                 const docs: DocumentFile[] = [];
 
-                if (evidence) {
+                const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'heic', 'avif'];
+
+                if (evidence && evidence.length > 0) {
+                    // DB has evidence records — use them
                     for (const file of evidence) {
                         try {
                             const url = await StorageService.getSignedUrl(file.file_path);
-
-                            // Determine if image: use file_type if available, otherwise infer from extension
                             const ext = file.file_path.split('.').pop()?.toLowerCase() || '';
-                            const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'heic', 'avif'];
                             const isImage = file.file_type
                                 ? file.file_type.startsWith('image/')
                                 : imageExts.includes(ext);
@@ -110,7 +111,51 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                             console.error('Failed to sign URL for', file.file_path, e);
                         }
                     }
+                } else {
+                    // No DB records — fallback: list files directly from Supabase Storage
+                    // Resolve projectId and milestoneId from the submission or milestone props
+                    const milestoneId = submission?.milestoneId || submission?.milestone_id || milestone?.id;
+                    let projectId = submission?.projectId;
+
+                    // If projectId is not on the submission, look it up from the milestone
+                    if (!projectId && milestoneId) {
+                        try {
+                            const { data: msRow } = await supabase
+                                .from('milestones')
+                                .select('project_id')
+                                .eq('id', milestoneId)
+                                .single();
+                            projectId = msRow?.project_id;
+                        } catch { /* ignore */ }
+                    }
+
+                    if (projectId && milestoneId) {
+                        const folderPath = `project/${projectId}/milestone/${milestoneId}/submission/${submissionId}`;
+                        const files = await StorageService.listFiles(folderPath);
+
+                        for (const file of files) {
+                            try {
+                                const fullPath = `${folderPath}/${file.name}`;
+                                const url = await StorageService.getSignedUrl(fullPath);
+                                const ext = file.name.split('.').pop()?.toLowerCase() || '';
+                                const isImage = imageExts.includes(ext);
+
+                                if (isImage) {
+                                    imgs.push(url);
+                                } else {
+                                    docs.push({
+                                        name: file.name,
+                                        size: '—',
+                                        url: url
+                                    });
+                                }
+                            } catch (e) {
+                                console.error('Failed to sign URL for storage file', file.name, e);
+                            }
+                        }
+                    }
                 }
+
                 setImages(imgs);
                 setDocuments(docs);
             } catch (err) {
