@@ -11,6 +11,7 @@ const PASSWORD_RULES = [
     { id: 'upper', label: 'One uppercase letter (A-Z)', test: (p: string) => /[A-Z]/.test(p) },
     { id: 'lower', label: 'One lowercase letter (a-z)', test: (p: string) => /[a-z]/.test(p) },
     { id: 'number', label: 'One number (0-9)', test: (p: string) => /[0-9]/.test(p) },
+    { id: 'symbol', label: 'One special character (!@#$...)', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
 ];
 
 export default function InviteResolutionPage() {
@@ -349,22 +350,20 @@ export default function InviteResolutionPage() {
                             </div>
 
                             {/* Inline password rules checklist */}
-                            {passwordTouched && (
-                                <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">Password Requirements</p>
-                                    <div className="grid grid-cols-2 gap-1.5">
-                                        {PASSWORD_RULES.map(rule => {
-                                            const passed = rule.test(password);
-                                            return (
-                                                <div key={rule.id} className={`flex items-center text-xs ${passed ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
-                                                    {passed ? <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" /> : <XCircle className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />}
-                                                    {rule.label}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">Password Requirements</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {PASSWORD_RULES.map(rule => {
+                                        const passed = rule.test(password);
+                                        return (
+                                            <div key={rule.id} className={`flex items-center text-sm ${passed ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                {passed ? <CheckCircle2 className="h-4 w-4 mr-2 flex-shrink-0" /> : <XCircle className="h-4 w-4 mr-2 flex-shrink-0" />}
+                                                {rule.label}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                            )}
+                            </div>
                         </div>
 
                         {/* Submit */}
