@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getConsultants, type Consultant } from '../services/consultants';
+import { supabase } from '../lib/supabase';
 import { Search, Star, UserPlus, Filter, CheckCircle, Briefcase, MapPin, Mail, ChevronRight } from 'lucide-react';
 import InviteModal from '../components/dashboard/InviteModal';
 
@@ -13,12 +14,21 @@ export default function ConsultantListPage() {
     const [filterRegion, setFilterRegion] = useState<string>('All');
     const [filterStatus, setFilterStatus] = useState<string>('All');
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [activeProjectCount, setActiveProjectCount] = useState(0);
 
     useEffect(() => {
         getConsultants().then((data) => {
             setConsultants(data);
             setLoading(false);
         });
+        // Fetch real unique active project count
+        supabase
+            .from('projects')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'ACTIVE')
+            .then(({ count }) => {
+                setActiveProjectCount(count || 0);
+            });
     }, []);
 
     const filteredConsultants = consultants.filter((consultant) => {
@@ -99,7 +109,7 @@ export default function ConsultantListPage() {
                     </div>
                     <div>
                         <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {consultants.reduce((sum, c) => sum + c.activeProjects, 0)}
+                            {activeProjectCount}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Active Projects</p>
                     </div>
