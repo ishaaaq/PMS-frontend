@@ -27,10 +27,7 @@ export default function ConsultantDetailPage() {
                 if (data) {
                     supabase
                         .from('project_consultants')
-                        .select(`
-                            project_id,
-                            projects!inner ( id, title, status, budget_allocated, start_date, end_date )
-                        `)
+                        .select('project_id, projects!inner(id, title, status, budget_allocated, start_date, end_date)')
                         .eq('consultant_user_id', id)
                         .then(({ data: assignments, error }) => {
                             if (error) {
