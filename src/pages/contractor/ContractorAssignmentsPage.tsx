@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getContractorAssignments } from '../../services/contractor';
 import type { Assignment, Milestone } from '../../services/contractor';
 import ProgressReportModal from '../../components/contractor/ProgressReportModal';
@@ -17,23 +17,24 @@ export default function ContractorAssignmentsPage() {
     const [selectedMilestone, setSelectedMilestone] = useState<{ milestone: Milestone; projectTitle: string; projectId: string; isQueried: boolean } | null>(null);
     const [showSuccess, setShowSuccess] = useState(false);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
-            try {
-                const data = await getContractorAssignments();
-                setAssignments(data);
-                // Auto-expand first queried project
-                const queried = data.find(a => a.status === 'QUERIED');
-                if (queried) setExpandedProject(queried.id);
-            } catch (error) {
-                console.error('Failed to load assignments', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchData();
+    const fetchData = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const data = await getContractorAssignments();
+            setAssignments(data);
+            // Auto-expand first queried project
+            const queried = data.find(a => a.status === 'QUERIED');
+            if (queried) setExpandedProject(queried.id);
+        } catch (error) {
+            console.error('Failed to load assignments', error);
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const formatMoney = (amount: number) => {
         return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
@@ -71,10 +72,11 @@ export default function ContractorAssignmentsPage() {
         });
     };
 
-    const handleSubmitReport = () => {
+    const handleSubmitReport = async () => {
         setSelectedMilestone(null);
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
+        await fetchData();
     };
 
     if (isLoading) {

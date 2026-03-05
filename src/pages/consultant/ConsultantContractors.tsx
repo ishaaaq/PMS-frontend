@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ProjectsService } from '../../services/projects.service';
 import { Search, MapPin, Star, MoreVertical, UserPlus, Briefcase, Filter } from 'lucide-react';
 import AssignSectionModal from '../../components/consultant/AssignSectionModal';
@@ -45,11 +45,10 @@ export default function ConsultantContractors() {
             .catch(console.error);
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Fetch contractors when selectedProject changes
-    useEffect(() => {
-        if (selectedProject !== 'All Projects') {
-            setLoading(true); // eslint-disable-line react-hooks/set-state-in-effect
-            ProjectsService.getProjectContractors(selectedProject)
+    const fetchContractorsForProject = useCallback((projectId: string) => {
+        if (projectId !== 'All Projects') {
+            setLoading(true);
+            ProjectsService.getProjectContractors(projectId)
                 .then(data => {
                     setContractors((data as any[]).map((c: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
                         id: c.id,
@@ -59,7 +58,7 @@ export default function ConsultantContractors() {
                         location: c.location || 'N/A',
                         specialization: c.specialization || 'General',
                         rating: c.rating || 5.0,
-                        assignedProjects: [selectedProject],
+                        assignedProjects: [projectId],
                         sections: [],
                         status: c.status
                     })));
@@ -70,7 +69,12 @@ export default function ConsultantContractors() {
             setContractors([]);
             setLoading(false);
         }
-    }, [selectedProject]);
+    }, []);
+
+    // Fetch contractors when selectedProject changes
+    useEffect(() => {
+        fetchContractorsForProject(selectedProject);
+    }, [selectedProject, fetchContractorsForProject]);
 
 
     const filteredContractors = contractors.filter(c => {
@@ -231,6 +235,7 @@ export default function ConsultantContractors() {
             <AssignSectionModal
                 isOpen={assignModalOpen}
                 onClose={() => setAssignModalOpen(false)}
+                onSuccess={() => fetchContractorsForProject(selectedProject)}
                 projectId={selectedProject !== 'All Projects' ? selectedProject : undefined}
                 contractorName={selectedContractor?.name}
                 contractorId={selectedContractor?.id}

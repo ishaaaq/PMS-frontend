@@ -6,12 +6,13 @@ import { supabase } from '@/lib/supabase';
 interface AssignSectionModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onSuccess?: () => void;
     projectId?: string;
     contractorName?: string;
     contractorId?: string;
 }
 
-export default function AssignSectionModal({ isOpen, onClose, projectId, contractorName, contractorId }: AssignSectionModalProps) {
+export default function AssignSectionModal({ isOpen, onClose, onSuccess, projectId, contractorName, contractorId }: AssignSectionModalProps) {
     const [selectedSection, setSelectedSection] = useState('');
     const [sections, setSections] = useState<{ id: string; name: string }[]>([]);
     const [submitting, setSubmitting] = useState(false);
@@ -78,6 +79,7 @@ export default function AssignSectionModal({ isOpen, onClose, projectId, contrac
             setSuccess(true);
             setTimeout(() => {
                 onClose();
+                if (onSuccess) onSuccess();
             }, 1500);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to assign section. Please try again.');
