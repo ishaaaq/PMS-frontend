@@ -44,6 +44,7 @@ export default function ProgressReportModal({
     const [isDragging, setIsDragging] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
+    const [createdSubmissionId, setCreatedSubmissionId] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const accentColor = isQueried ? 'red' : 'indigo';
@@ -100,34 +101,51 @@ export default function ProgressReportModal({
         e.preventDefault();
         setIsSubmitting(true);
         setSubmitError(null);
-        try {
-            // Append materials to the comments if present
-            let finalDescription = comments;
-            if (materials.length > 0) {
-                const materialText = materials.map(m =>
-                    `- ${m.name}: ${m.quantity} ${m.unit}`
-                ).join('\n');
-                finalDescription = `${finalDescription}\n\n--- Material Usage ---\n${materialText}`;
+
+        let finalDescription = comments;
+        if (materials.length > 0) {
+            const materialText = materials.map(m =>
+                `- ${m.name}: ${m.quantity} ${m.unit}`
+            ).join('\n');
+            finalDescription = `${finalDescription}\n\n--- Material Usage ---\n${materialText}`;
+        }
+
+        let currentSubmissionId = createdSubmissionId;
+
+        // Step 1: Create submission record
+        if (!currentSubmissionId) {
+            try {
+                const newSubmissionId = await SubmissionsService.createSubmission(
+                    milestone.id,
+                    finalDescription
+                );
+                currentSubmissionId = String(newSubmissionId);
+                setCreatedSubmissionId(currentSubmissionId);
+            } catch (err) {
+                console.error('Submission creation failed:', err);
+                setSubmitError(
+                    err instanceof Error
+                        ? err.message
+                        : 'Submission failed. Please try again.'
+                );
+                setIsSubmitting(false);
+                return; // Stop if creation fails
             }
+        }
 
-            // 1. Create the submission record
-            const submissionId = await SubmissionsService.createSubmission(
-                milestone.id,
-                finalDescription
-            );
-
-            // 2. Upload each evidence file to Supabase Storage and link in database
-            if (files.length > 0 && submissionId) {
+        // Step 2: Upload evidence files
+        try {
+            if (files.length > 0 && currentSubmissionId) {
                 await Promise.all(
                     files.map(async (file) => {
                         const path = await StorageService.uploadEvidence(
                             projectId,
                             milestone.id,
-                            String(submissionId),
+                            String(currentSubmissionId),
                             file
                         );
                         await SubmissionsService.addSubmissionEvidence(
-                            String(submissionId),
+                            String(currentSubmissionId),
                             path,
                             file.size
                         );
@@ -135,7 +153,7 @@ export default function ProgressReportModal({
                 );
             }
 
-            // Call parent handler with the formatted data
+            // Call parent handler with the formatted data on complete success
             onSubmit({
                 milestoneId: milestone.id,
                 comments: finalDescription,
@@ -143,12 +161,8 @@ export default function ProgressReportModal({
                 materials
             });
         } catch (err) {
-            console.error('Submission failed:', err);
-            setSubmitError(
-                err instanceof Error
-                    ? err.message
-                    : 'Submission failed. Please try again.'
-            );
+            console.error('Evidence upload failed:', err);
+            setSubmitError('Submission created, but evidence upload failed. Retry upload.');
         } finally {
             setIsSubmitting(false);
         }

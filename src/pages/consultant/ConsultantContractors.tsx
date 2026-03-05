@@ -34,8 +34,10 @@ export default function ConsultantContractors() {
         ProjectsService.getMyProjects()
             .then(data => {
                 if (data) {
-                    setProjects((data as any[]).map((p: any) => ({ id: p.id, title: p.title }))); // eslint-disable-line @typescript-eslint/no-explicit-any
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    setProjects((data as any[]).map((p: any) => ({ id: p.id, title: p.title })));
                     if (data.length > 0 && selectedProject === 'All Projects') {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         setSelectedProject((data as any[])[0].id);
                     }
                 }
