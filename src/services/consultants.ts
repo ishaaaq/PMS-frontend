@@ -16,6 +16,7 @@ export interface Consultant {
     specialization?: string;
     joinedDate: string;
     status: 'Active' | 'Inactive' | 'On Leave';
+    assignedProjects?: { id: string; title: string; status: string; budget_allocated: number; start_date: string; end_date: string | null }[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -139,17 +140,27 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
 
     const consultant = mapConsultant(profile, cp, email);
 
-    // Fetch real project counts
+    // Fetch real project counts AND project list using FK join (proven to work)
     const { data: assignments } = await supabase
         .from('project_consultants')
-        .select('project_id, projects!inner(status)')
+        .select('project_id, projects!inner(id,title,status,budget_allocated,start_date,end_date)')
         .eq('consultant_user_id', id);
 
-    if (assignments) {
+    if (assignments && assignments.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        consultant.activeProjects = (assignments as any[]).filter(a => a.projects?.status === 'ACTIVE' || a.projects?.status === 'DRAFT').length;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        consultant.completedProjects = (assignments as any[]).filter(a => a.projects?.status === 'COMPLETED').length;
+        const typedAssignments = assignments as any[];
+        consultant.activeProjects = typedAssignments.filter(a => a.projects?.status === 'ACTIVE' || a.projects?.status === 'DRAFT').length;
+        consultant.completedProjects = typedAssignments.filter(a => a.projects?.status === 'COMPLETED').length;
+        consultant.assignedProjects = typedAssignments
+            .filter(a => a.projects)
+            .map(a => ({
+                id: a.projects.id || a.project_id,
+                title: a.projects.title || 'Untitled Project',
+                status: a.projects.status || 'UNKNOWN',
+                budget_allocated: a.projects.budget_allocated || 0,
+                start_date: a.projects.start_date || '',
+                end_date: a.projects.end_date || null,
+            }));
     }
 
     return consultant;

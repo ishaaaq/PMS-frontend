@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getConsultant, type Consultant } from '../services/consultants';
 import { ArrowLeft, Mail, Phone, MapPin, Star, Briefcase, Calendar, CheckCircle, MessageSquare, TrendingUp, Users, User, Building, FileText, DollarSign } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 
 export default function ConsultantDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -12,7 +11,6 @@ export default function ConsultantDetailPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('Overview');
     const [yearsWithCompany, setYearsWithCompany] = useState(0);
-    const [assignedProjects, setAssignedProjects] = useState<{ id: string; title: string; status: string; budget_allocated: number; start_date: string; end_date: string | null }[]>([]);
 
     useEffect(() => {
         if (id) {
@@ -22,47 +20,6 @@ export default function ConsultantDetailPage() {
                 if (data?.joinedDate) {
                     const years = Math.floor((Date.now() - new Date(data.joinedDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
                     setYearsWithCompany(years);
-                }
-                // Fetch assigned projects (two-step: get IDs, then fetch projects)
-                if (data) {
-                    (async () => {
-                        try {
-                            // Step 1: Get project IDs assigned to this consultant
-                            const { data: pcRows, error: pcErr } = await supabase
-                                .from('project_consultants')
-                                .select('project_id')
-                                .eq('consultant_user_id', id);
-
-                            if (pcErr || !pcRows || pcRows.length === 0) {
-                                if (pcErr) console.error('Failed to fetch project_consultants:', pcErr);
-                                return;
-                            }
-
-                            const projectIds = pcRows.map(r => r.project_id);
-
-                            // Step 2: Fetch full project details
-                            const { data: projects, error: projErr } = await supabase
-                                .from('projects')
-                                .select('id, title, status, budget_allocated, start_date, end_date')
-                                .in('id', projectIds);
-
-                            if (projErr || !projects) {
-                                if (projErr) console.error('Failed to fetch projects:', projErr);
-                                return;
-                            }
-
-                            setAssignedProjects(projects.map(p => ({
-                                id: p.id,
-                                title: p.title,
-                                status: p.status,
-                                budget_allocated: p.budget_allocated || 0,
-                                start_date: p.start_date,
-                                end_date: p.end_date,
-                            })));
-                        } catch (err) {
-                            console.error('Failed to load consultant projects:', err);
-                        }
-                    })();
                 }
                 setLoading(false);
             });
@@ -290,13 +247,13 @@ export default function ConsultantDetailPage() {
 
                     {activeTab === 'Projects' && (
                         <div className="space-y-4">
-                            {assignedProjects.length === 0 ? (
+                            {(consultant.assignedProjects || []).length === 0 ? (
                                 <div className="text-center py-8">
                                     <Briefcase className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                                     <p className="text-gray-500 dark:text-gray-400">No projects currently assigned.</p>
                                 </div>
                             ) : (
-                                assignedProjects.map(project => (
+                                (consultant.assignedProjects || []).map(project => (
                                     <div
                                         key={project.id}
                                         className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg gap-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -309,7 +266,7 @@ export default function ConsultantDetailPage() {
                                             <div>
                                                 <p className="font-bold text-gray-900 dark:text-white max-w-sm sm:max-w-md truncate" title={project.title}>{project.title}</p>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-tight font-medium mt-1">
-                                                    {new Date(project.start_date).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}
+                                                    {project.start_date ? new Date(project.start_date).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' }) : 'Start date TBD'}
                                                     {project.end_date && ` - ${new Date(project.end_date).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}`}
                                                 </p>
                                             </div>
