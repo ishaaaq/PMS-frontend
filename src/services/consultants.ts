@@ -143,7 +143,7 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
     // Fetch real project counts AND project list using FK join (proven to work)
     const { data: assignments } = await supabase
         .from('project_consultants')
-        .select('project_id, projects!inner(id,title,status,total_budget,created_at)')
+        .select('project_id, projects(*)')
         .eq('consultant_user_id', id);
 
     if (assignments && assignments.length > 0) {
