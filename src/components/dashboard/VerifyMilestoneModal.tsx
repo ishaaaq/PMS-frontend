@@ -113,8 +113,7 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                     }
                 } else {
                     // No DB records — fallback: list files directly from Supabase Storage
-                    // Resolve projectId and milestoneId from the submission or milestone props
-                    const milestoneId = submission?.milestoneId || submission?.milestone_id || milestone?.id;
+                    const milestoneId = submission?.milestoneId || submission?.milestone_id || submission?.milestone?.id || milestone?.id;
                     let projectId = submission?.projectId;
 
                     // If projectId is not on the submission, look it up from the milestone
