@@ -153,15 +153,18 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
         const projectIds = assignments.map(a => a.project_id);
         console.log('[ConsultantProjects] projectIds:', projectIds);
 
-        // Fetch full project details
-        const { data: projectRows, error: projError } = await supabase
-            .from('projects')
-            .select('id, title, status, budget_allocated, start_date, end_date')
-            .in('id', projectIds);
+        // Fetch project details individually (to avoid .in() 400 error)
+        const projectPromises = projectIds.map(pid =>
+            supabase.from('projects').select('id, title, status, budget_allocated, start_date, end_date').eq('id', pid).single()
+        );
+        const projectResults = await Promise.all(projectPromises);
+        const projectRows = projectResults
+            .filter(r => !r.error && r.data)
+            .map(r => r.data!);
 
-        console.log('[ConsultantProjects] projects query:', { projectRows, projError });
+        console.log('[ConsultantProjects] fetched projects:', projectRows);
 
-        if (projectRows) {
+        if (projectRows.length > 0) {
             consultant.activeProjects = projectRows.filter(p => p.status === 'ACTIVE' || p.status === 'DRAFT').length;
             consultant.completedProjects = projectRows.filter(p => p.status === 'COMPLETED').length;
             consultant.assignedProjects = projectRows.map(p => ({
