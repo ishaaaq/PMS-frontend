@@ -104,6 +104,10 @@ export const getAdminContractors = async (): Promise<AdminContractor[]> => {
 
     // Fallback: direct queries (no email available)
     console.warn('rpc_admin_list_contractors unavailable, falling back:', rpcErr?.message);
+    if (rpcErr) {
+        window.alert(`RPC FAILED: ${rpcErr.message}. The system is falling back to historical data (which displays 0 projects). Please make sure the SQL migration was executed without errors in Supabase.`);
+    }
+
     const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
