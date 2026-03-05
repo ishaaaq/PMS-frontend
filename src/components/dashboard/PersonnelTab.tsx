@@ -158,9 +158,9 @@ export default function PersonnelTab({ project, onProjectUpdated }: PersonnelTab
             setInviteLink(link);
 
             // Auto-open email client with pre-filled invite
-            const subject = encodeURIComponent(`You're invited to PTDF PMS as ${apiRole}`);
+            const subject = encodeURIComponent(`You're invited to PTDF ProMOS as ${apiRole}`);
             const body = encodeURIComponent(
-                `Hello,\n\nYou have been invited to join the PTDF Project Management System as a ${apiRole} for project "${project.title}".\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF PMS Team`
+                `Hello,\n\nYou have been invited to join the PTDF Project Management and Operation System (ProMOS) as a ${apiRole} for project "${project.title}".\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF ProMOS Team`
             );
             window.open(`https://mail.google.com/mail/?view=cm&to=${email}&su=${subject}&body=${body}`, '_blank');
             setEmail('');

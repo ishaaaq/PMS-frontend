@@ -42,10 +42,10 @@ export default function InviteContractorModal({ isOpen, onClose, projectId, proj
             setInviteLink(link);
 
             // Auto-open email client
-            const subject = encodeURIComponent(`You're invited to PTDF PMS as a Contractor`);
+            const subject = encodeURIComponent(`You're invited to PTDF ProMOS as a Contractor`);
             const projectText = projectName ? ` for project "${projectName}"` : '';
             const body = encodeURIComponent(
-                `Hello,\n\nYou have been invited to join the PTDF Project Management System as a CONTRACTOR${projectText}.\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF PMS Team`
+                `Hello,\n\nYou have been invited to join the PTDF Project Management and Operation System (ProMOS) as a CONTRACTOR${projectText}.\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF ProMOS Team`
             );
             window.open(`https://mail.google.com/mail/?view=cm&to=${inviteEmail}&su=${subject}&body=${body}`, '_blank');
             setInviteEmail('');

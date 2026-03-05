@@ -144,7 +144,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps = {}) 
                 <div className="flex-1 flex flex-col min-h-0">
                     <div className="flex items-center h-16 flex-shrink-0 px-6 border-b border-gray-100 dark:border-gray-800">
                         <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-ptdf-primary to-emerald-400">
-                            PTDF PMS
+                            PTDF ProMOS
                         </span>
                         {/* Close button - only visible on mobile */}
                         {onClose && (

@@ -7,7 +7,7 @@ export const MfaService = {
     async enroll() {
         const { data, error } = await supabase.auth.mfa.enroll({
             factorType: 'totp',
-            issuer: 'PTDF PMS',
+            issuer: 'PTDF ProMOS',
             friendlyName: 'Authenticator App'
         });
         if (error) throw error;

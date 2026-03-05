@@ -509,7 +509,7 @@ export const getContractorProfile = async (): Promise<ContractorProfile> => {
             email: profile?.email || user.email || '',
             phone: profile?.phone || 'Not provided',
             address: contractor?.zone ? `Zone: ${contractor.zone.replace('_', ' ')}` : 'Not provided',
-            description: `Contractor registered on the PTDF Project Management System.`,
+            description: `Contractor registered on the PTDF Project Management and Operation System (ProMOS).`,
             establishedYear: new Date(profile?.created_at || Date.now()).getFullYear(),
             employeeCount: 0,
             specializations: contractor?.zone ? [contractor.zone.replace('_', ' ')] : [],

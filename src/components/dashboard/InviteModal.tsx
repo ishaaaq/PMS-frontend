@@ -61,9 +61,9 @@ export default function InviteModal({ isOpen, onClose, projectId }: InviteModalP
             setInviteLink(link);
 
             // Auto-open email client with pre-filled invite
-            const subject = encodeURIComponent(`You're invited to PTDF PMS as ${role}`);
+            const subject = encodeURIComponent(`You're invited to PTDF ProMOS as ${role}`);
             const body = encodeURIComponent(
-                `Hello,\n\nYou have been invited to join the PTDF Project Management System as a ${role}.\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF PMS Team`
+                `Hello,\n\nYou have been invited to join the PTDF Project Management and Operation System (ProMOS) as a ${role}.\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF ProMOS Team`
             );
             window.open(`https://mail.google.com/mail/?view=cm&to=${email}&su=${subject}&body=${body}`, '_blank');
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
