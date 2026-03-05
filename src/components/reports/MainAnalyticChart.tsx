@@ -20,7 +20,7 @@ export default function MainAnalyticChart({ activeTab, statsData }: MainAnalytic
             });
         }
         if (activeTab === 'consultants') {
-            DashboardService.getTopContractors().then(data => {
+            DashboardService.getTopConsultants().then(data => {
                 if (data.length > 0) {
                     setConsultants(data.map(d => ({ name: d.name, rating: d.rating * 20 }))); // Assume rating out of 5, convert to %
                 } else {
