@@ -153,10 +153,14 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
         const projectIds = assignments.map(a => a.project_id);
         console.log('[ConsultantProjects] projectIds:', projectIds);
 
-        // Fetch project details individually (to avoid .in() 400 error)
-        const projectPromises = projectIds.map(pid =>
-            supabase.from('projects').select('id, title, status, budget_allocated, start_date, end_date').eq('id', pid).single()
-        );
+        // Fetch project details individually using select('*') like getProject does
+        const projectPromises = projectIds.map(async (pid) => {
+            const { data, error } = await supabase.from('projects').select('*').eq('id', pid).single();
+            if (error) {
+                console.error('[ConsultantProjects] Failed to fetch project', pid, error);
+            }
+            return { data, error };
+        });
         const projectResults = await Promise.all(projectPromises);
         const projectRows = projectResults
             .filter(r => !r.error && r.data)
