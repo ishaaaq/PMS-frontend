@@ -192,9 +192,41 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
     };
 
     // Derived data for display
+    // Parse material usage from description if no DB records exist
+    const rawDescription = submission?.description || submission?.work_description || submission?.workDescription || 'No description provided.';
+
+    const parsedFromDescription = (() => {
+        if (materialUsage.length > 0) return { cleanDescription: rawDescription, parsedMaterials: [] as MaterialUsage[] };
+
+        // Look for material usage embedded in description (e.g. "--- Material Usage ---- - Cement: 50 bags")
+        const materialSectionRegex = /-{2,}\s*Material\s*Usage\s*-{2,}([\s\S]*)/i;
+        const match = rawDescription.match(materialSectionRegex);
+
+        if (!match) return { cleanDescription: rawDescription, parsedMaterials: [] as MaterialUsage[] };
+
+        const cleanDescription = rawDescription.slice(0, match.index).replace(/\s+$/, '');
+        const materialBlock = match[1];
+
+        // Parse entries like "- Cement: 50 bags" or "Cement: 50 bags"
+        const entryRegex = /[-•]\s*([^:\n]+):\s*(.+)/g;
+        const parsedMaterials: MaterialUsage[] = [];
+        let entryMatch;
+        while ((entryMatch = entryRegex.exec(materialBlock)) !== null) {
+            parsedMaterials.push({
+                item: entryMatch[1].trim(),
+                quantity: entryMatch[2].trim(),
+                expected: 'N/A'
+            });
+        }
+
+        return { cleanDescription: cleanDescription || 'No description provided.', parsedMaterials };
+    })();
+
+    const displayMaterials = materialUsage.length > 0 ? materialUsage : parsedFromDescription.parsedMaterials;
+
     const displayData = {
         milestone: submission?.milestone || milestone?.title || 'Unknown Milestone',
-        description: submission?.description || submission?.work_description || submission?.workDescription || 'No description provided.',
+        description: parsedFromDescription.cleanDescription,
         contractor: submission?.contractor || 'Unknown Contractor',
         date: submission?.date || submission?.submitted || new Date(submission?.submitted_at || submission?.submittedRaw || Date.now()).toLocaleDateString(),
         location: submission?.location || 'Unknown Location'
@@ -353,14 +385,18 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                                 {/* Material Usage */}
                                 <div>
                                     <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Material Usage</h4>
-                                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2">
-                                        {materialUsage.map((item: MaterialUsage, idx: number) => (
-                                            <div key={idx} className="flex justify-between text-xs">
-                                                <span className="text-gray-600 dark:text-gray-400">{item.item}</span>
-                                                <span className="font-medium text-gray-900 dark:text-gray-200">{item.quantity}</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    {displayMaterials.length > 0 ? (
+                                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2">
+                                            {displayMaterials.map((item: MaterialUsage, idx: number) => (
+                                                <div key={idx} className="flex justify-between text-xs">
+                                                    <span className="text-gray-600 dark:text-gray-400">{item.item}</span>
+                                                    <span className="font-medium text-gray-900 dark:text-gray-200">{item.quantity}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-xs text-gray-400 text-center">No materials recorded</div>
+                                    )}
                                 </div>
 
                                 {/* Documents */}
