@@ -16,6 +16,7 @@ export interface Consultant {
     specialization?: string;
     joinedDate: string;
     status: 'Active' | 'Inactive' | 'On Leave';
+    assignedProjects?: { id: string; title: string; status: string; budget_allocated: number; start_date: string; end_date: string | null }[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -139,17 +140,33 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
 
     const consultant = mapConsultant(profile, cp, email);
 
-    // Fetch real project counts
+    // Fetch real project counts AND project list
     const { data: assignments } = await supabase
         .from('project_consultants')
-        .select('project_id, projects!inner(status)')
+        .select('project_id')
         .eq('consultant_user_id', id);
 
-    if (assignments) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        consultant.activeProjects = (assignments as any[]).filter(a => a.projects?.status === 'ACTIVE' || a.projects?.status === 'DRAFT').length;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        consultant.completedProjects = (assignments as any[]).filter(a => a.projects?.status === 'COMPLETED').length;
+    if (assignments && assignments.length > 0) {
+        const projectIds = assignments.map(a => a.project_id);
+
+        // Fetch full project details
+        const { data: projectRows } = await supabase
+            .from('projects')
+            .select('id, title, status, budget_allocated, start_date, end_date')
+            .in('id', projectIds);
+
+        if (projectRows) {
+            consultant.activeProjects = projectRows.filter(p => p.status === 'ACTIVE' || p.status === 'DRAFT').length;
+            consultant.completedProjects = projectRows.filter(p => p.status === 'COMPLETED').length;
+            consultant.assignedProjects = projectRows.map(p => ({
+                id: p.id,
+                title: p.title,
+                status: p.status,
+                budget_allocated: p.budget_allocated || 0,
+                start_date: p.start_date,
+                end_date: p.end_date,
+            }));
+        }
     }
 
     return consultant;
