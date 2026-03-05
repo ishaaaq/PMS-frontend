@@ -131,31 +131,35 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                     }
 
                     if (projectId && milestoneId) {
-                        const folderPath = `project/${projectId}/milestone/${milestoneId}/submission/${submissionId}`;
-                        const files = await StorageService.listFiles(folderPath);
+                        try {
+                            const folderPath = `project/${projectId}/milestone/${milestoneId}/submission/${submissionId}`;
+                            const files = await StorageService.listFiles(folderPath);
 
-                        if (files.length > 0) {
-                            const fullPaths = files.map(f => `${folderPath}/${f.name}`);
-                            const signedResults = await StorageService.getSignedUrls(fullPaths);
+                            if (files.length > 0) {
+                                const fullPaths = files.map(f => `${folderPath}/${f.name}`);
+                                const signedResults = await StorageService.getSignedUrls(fullPaths);
 
-                            for (let i = 0; i < files.length; i++) {
-                                const file = files[i];
-                                const signed = signedResults[i];
-                                if (!signed || signed.error || !signed.signedUrl) continue;
+                                for (let i = 0; i < files.length; i++) {
+                                    const file = files[i];
+                                    const signed = signedResults[i];
+                                    if (!signed || signed.error || !signed.signedUrl) continue;
 
-                                const ext = file.name.split('.').pop()?.toLowerCase() || '';
-                                const isImage = imageExts.includes(ext);
+                                    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+                                    const isImage = imageExts.includes(ext);
 
-                                if (isImage) {
-                                    imgs.push(signed.signedUrl);
-                                } else {
-                                    docs.push({
-                                        name: file.name,
-                                        size: '—',
-                                        url: signed.signedUrl
-                                    });
+                                    if (isImage) {
+                                        imgs.push(signed.signedUrl);
+                                    } else {
+                                        docs.push({
+                                            name: file.name,
+                                            size: '—',
+                                            url: signed.signedUrl
+                                        });
+                                    }
                                 }
                             }
+                        } catch (err) {
+                            console.error('Fallback storage fetch failed:', err);
                         }
                     }
                 }
