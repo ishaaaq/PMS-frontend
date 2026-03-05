@@ -23,8 +23,6 @@ export default function ContractorDetailPage() {
     const [contractor, setContractor] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
     const [projects, setProjects] = useState<ProjectHistory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [debugData, setDebugData] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
-    const [debugError, setDebugError] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
     const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'reviews'>('overview');
 
     useEffect(() => {
@@ -40,9 +38,6 @@ export default function ContractorDetailPage() {
                 if (found) {
                     const { data, error } = await supabase
                         .rpc('rpc_admin_contractor_projects', { p_contractor_user_id: id });
-
-                    setDebugData(data);
-                    setDebugError(error);
 
                     if (error) {
                         console.error('Failed to fetch contractor projects:', error);
@@ -146,18 +141,6 @@ export default function ContractorDetailPage() {
 
             {/* Header Card */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-
-                {/* Temporary Debug Log */}
-                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg mb-6 overflow-auto border border-red-200 dark:border-red-800">
-                    <h3 className="font-bold text-red-800 dark:text-red-400">DEBUG LOG - PLEASE SCREENSHOT THIS</h3>
-                    <pre className="text-xs text-red-600 dark:text-red-300 font-mono mt-2 whitespace-pre-wrap">
-                        ERROR: {JSON.stringify(debugError, null, 2)}
-                    </pre>
-                    <pre className="text-xs text-red-600 dark:text-red-300 font-mono mt-2 whitespace-pre-wrap">
-                        DATA: {JSON.stringify(debugData, null, 2)}
-                    </pre>
-                </div>
-
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                     <div className="flex items-start gap-4">
                         <div className="h-20 w-20 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
