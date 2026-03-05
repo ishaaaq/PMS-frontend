@@ -34,9 +34,9 @@ export default function ConsultantContractors() {
         ProjectsService.getMyProjects()
             .then(data => {
                 if (data) {
-                    setProjects(data.map((p: any) => ({ id: p.id, title: p.title }))); // eslint-disable-line @typescript-eslint/no-explicit-any
+                    setProjects((data as any[]).map((p: any) => ({ id: p.id, title: p.title }))); // eslint-disable-line @typescript-eslint/no-explicit-any
                     if (data.length > 0 && selectedProject === 'All Projects') {
-                        setSelectedProject(data[0].id);
+                        setSelectedProject((data as any[])[0].id);
                     }
                 }
             })
@@ -49,7 +49,7 @@ export default function ConsultantContractors() {
             setLoading(true); // eslint-disable-line react-hooks/set-state-in-effect
             ProjectsService.getProjectContractors(selectedProject)
                 .then(data => {
-                    setContractors(data.map((c: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+                    setContractors((data as any[]).map((c: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
                         id: c.id,
                         name: c.name,
                         email: c.email,

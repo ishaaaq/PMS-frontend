@@ -22,7 +22,7 @@ export default function ConsultantProjectList() {
     useEffect(() => {
         ProjectsService.getMyProjects()
             .then(data => {
-                setProjects((data || []) as ProjectRow[]);
+                setProjects((data as unknown as ProjectRow[]) || []);
             })
             .catch(err => console.error('Failed to fetch projects:', err))
             .finally(() => setIsLoading(false));
