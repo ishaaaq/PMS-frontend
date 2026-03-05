@@ -19,8 +19,15 @@ export interface Consultant {
     assignedProjects?: { id: string; title: string; status: string; total_budget: number; created_at: string }[];
 }
 
+export interface ConsultantMetrics {
+    projectCount?: number;
+    activeProjects?: number;
+    completedProjects?: number;
+    rating?: number;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mapConsultant = (p: any, cp: any, email: string): Consultant => {
+const mapConsultant = (p: any, cp: any, email: string, metrics?: ConsultantMetrics): Consultant => {
     return {
         id: p.user_id || p.id,
         name: p.full_name || 'Unknown Consultant',
@@ -29,9 +36,10 @@ const mapConsultant = (p: any, cp: any, email: string): Consultant => {
         company: 'PTDF',
         department: cp?.department || 'Not provided',
         region: cp?.region || 'Not provided',
-        activeProjects: 0,
-        completedProjects: 0,
-        rating: 0,
+        activeProjects: metrics?.activeProjects ? Number(metrics.activeProjects) : 0,
+        completedProjects: metrics?.completedProjects !== undefined ? Number(metrics.completedProjects) :
+            (metrics?.projectCount ? Number(metrics.projectCount) - Number(metrics.activeProjects || 0) : 0),
+        rating: metrics?.rating ? Number(metrics.rating) : 0,
         specialization: cp?.specialization || 'Not provided',
         joinedDate: p.created_at ? p.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
         status: p.is_active === false ? 'Inactive' : 'Active'
@@ -49,7 +57,12 @@ export async function getConsultants(): Promise<Consultant[]> {
         consultants = rpcData.map((r: any) => mapConsultant( // eslint-disable-line @typescript-eslint/no-explicit-any
             { user_id: r.user_id, full_name: r.full_name, role: r.role, phone: r.phone, is_active: r.is_active, created_at: r.created_at },
             { specialization: r.specialization, department: r.department, region: r.region },
-            r.email || ''
+            r.email || '',
+            {
+                projectCount: r.project_count,
+                activeProjects: r.active_projects,
+                rating: r.average_rating
+            }
         ));
     } else {
         // Fallback: direct queries
