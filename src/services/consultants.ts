@@ -140,49 +140,27 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
 
     const consultant = mapConsultant(profile, cp, email);
 
-    // Fetch real project counts AND project list
-    const { data: assignments, error: pcError } = await supabase
+    // Fetch real project counts AND project list using FK join (proven to work)
+    const { data: assignments } = await supabase
         .from('project_consultants')
-        .select('project_id')
+        .select('project_id, projects!inner(id,title,status,budget_allocated,start_date,end_date)')
         .eq('consultant_user_id', id);
 
-    console.log('[ConsultantProjects] consultant_user_id:', id);
-    console.log('[ConsultantProjects] project_consultants query:', { assignments, pcError });
-
     if (assignments && assignments.length > 0) {
-        const projectIds = assignments.map(a => a.project_id);
-        console.log('[ConsultantProjects] projectIds:', projectIds);
-
-        // Fetch project details individually using select('*') like getProject does
-        const projectPromises = projectIds.map(async (pid) => {
-            const { data, error } = await supabase.from('projects').select('*').eq('id', pid).single();
-            if (error) {
-                console.error('[ConsultantProjects] Failed to fetch project', pid, error);
-            }
-            return { data, error };
-        });
-        const projectResults = await Promise.all(projectPromises);
-        const projectRows = projectResults
-            .filter(r => !r.error && r.data)
-            .map(r => r.data!);
-
-        console.log('[ConsultantProjects] fetched projects:', projectRows);
-
-        if (projectRows.length > 0) {
-            consultant.activeProjects = projectRows.filter(p => p.status === 'ACTIVE' || p.status === 'DRAFT').length;
-            consultant.completedProjects = projectRows.filter(p => p.status === 'COMPLETED').length;
-            consultant.assignedProjects = projectRows.map(p => ({
-                id: p.id,
-                title: p.title,
-                status: p.status,
-                budget_allocated: p.budget_allocated || 0,
-                start_date: p.start_date,
-                end_date: p.end_date,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const typedAssignments = assignments as any[];
+        consultant.activeProjects = typedAssignments.filter(a => a.projects?.status === 'ACTIVE' || a.projects?.status === 'DRAFT').length;
+        consultant.completedProjects = typedAssignments.filter(a => a.projects?.status === 'COMPLETED').length;
+        consultant.assignedProjects = typedAssignments
+            .filter(a => a.projects)
+            .map(a => ({
+                id: a.projects.id || a.project_id,
+                title: a.projects.title || 'Untitled Project',
+                status: a.projects.status || 'UNKNOWN',
+                budget_allocated: a.projects.budget_allocated || 0,
+                start_date: a.projects.start_date || '',
+                end_date: a.projects.end_date || null,
             }));
-            console.log('[ConsultantProjects] assignedProjects set:', consultant.assignedProjects);
-        }
-    } else {
-        console.log('[ConsultantProjects] No assignments found for consultant');
     }
 
     return consultant;
