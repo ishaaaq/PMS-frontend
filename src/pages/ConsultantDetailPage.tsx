@@ -23,35 +23,46 @@ export default function ConsultantDetailPage() {
                     const years = Math.floor((Date.now() - new Date(data.joinedDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
                     setYearsWithCompany(years);
                 }
-                // Fetch assigned projects
+                // Fetch assigned projects (two-step: get IDs, then fetch projects)
                 if (data) {
-                    supabase
-                        .from('project_consultants')
-                        .select('project_id, projects!inner(id, title, status, budget_allocated, start_date, end_date)')
-                        .eq('consultant_user_id', id)
-                        .then(({ data: assignments, error }) => {
-                            if (error) {
-                                console.error('Failed to fetch consultant projects:', error);
+                    (async () => {
+                        try {
+                            // Step 1: Get project IDs assigned to this consultant
+                            const { data: pcRows, error: pcErr } = await supabase
+                                .from('project_consultants')
+                                .select('project_id')
+                                .eq('consultant_user_id', id);
+
+                            if (pcErr || !pcRows || pcRows.length === 0) {
+                                if (pcErr) console.error('Failed to fetch project_consultants:', pcErr);
                                 return;
                             }
-                            if (assignments && assignments.length > 0) {
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const mapped = (assignments as any[]).map(a => {
-                                    // Supabase may return `projects` as object or array depending on FK configuration
-                                    const proj = Array.isArray(a.projects) ? a.projects[0] : a.projects;
-                                    if (!proj) return null;
-                                    return {
-                                        id: proj.id,
-                                        title: proj.title,
-                                        status: proj.status,
-                                        budget_allocated: proj.budget_allocated || 0,
-                                        start_date: proj.start_date,
-                                        end_date: proj.end_date,
-                                    };
-                                }).filter((x): x is NonNullable<typeof x> => x !== null);
-                                setAssignedProjects(mapped);
+
+                            const projectIds = pcRows.map(r => r.project_id);
+
+                            // Step 2: Fetch full project details
+                            const { data: projects, error: projErr } = await supabase
+                                .from('projects')
+                                .select('id, title, status, budget_allocated, start_date, end_date')
+                                .in('id', projectIds);
+
+                            if (projErr || !projects) {
+                                if (projErr) console.error('Failed to fetch projects:', projErr);
+                                return;
                             }
-                        });
+
+                            setAssignedProjects(projects.map(p => ({
+                                id: p.id,
+                                title: p.title,
+                                status: p.status,
+                                budget_allocated: p.budget_allocated || 0,
+                                start_date: p.start_date,
+                                end_date: p.end_date,
+                            })));
+                        } catch (err) {
+                            console.error('Failed to load consultant projects:', err);
+                        }
+                    })();
                 }
                 setLoading(false);
             });
