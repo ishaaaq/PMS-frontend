@@ -1,7 +1,7 @@
 -- ============================================================
 -- 20_admin_contractors_metrics.sql
 -- Update RPC for admin to list contractors with active project counts, total projects, and rating
--- Fixed version: counts projects from section_assignments
+-- Fixed version: counts projects from section_assignments and removes missing performance_rating
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION rpc_admin_list_contractors()
@@ -47,17 +47,9 @@ BEGIN
                     WHERE sa.contractor_user_id = p.user_id AND pr.status = 'ACTIVE'
                 ), 0) as active_projects,
                 
-                -- Average rating and reviews are still from project_contractors pool
-                COALESCE((
-                    SELECT AVG(performance_rating) 
-                    FROM project_contractors pc 
-                    WHERE pc.contractor_user_id = p.user_id AND performance_rating IS NOT NULL
-                ), 0) as average_rating,
-                COALESCE((
-                    SELECT COUNT(*) 
-                    FROM project_contractors pc 
-                    WHERE pc.contractor_user_id = p.user_id AND performance_rating IS NOT NULL
-                ), 0) as total_reviews
+                -- Average rating and reviews (Currently unsupported in DB schema)
+                0 as average_rating,
+                0 as total_reviews
             FROM profiles p
             JOIN auth.users au ON au.id = p.user_id
             LEFT JOIN contractor_profiles cp ON cp.user_id = p.user_id

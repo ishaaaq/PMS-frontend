@@ -1,6 +1,7 @@
 -- ============================================================
 -- 21_admin_consultants_metrics.sql
 -- Update RPC for admin to list consultants with active project counts, total projects, and rating
+-- Fixed version: removed missing performance_rating column
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION rpc_admin_list_consultants()
@@ -36,11 +37,7 @@ BEGIN
                     JOIN projects pr ON pc.project_id = pr.id 
                     WHERE pc.consultant_user_id = p.user_id AND pr.status = 'ACTIVE'
                 ), 0) as active_projects,
-                COALESCE((
-                    SELECT AVG(performance_rating) 
-                    FROM project_consultants pc 
-                    WHERE pc.consultant_user_id = p.user_id AND performance_rating IS NOT NULL
-                ), 0) as average_rating
+                0 as average_rating
             FROM profiles p
             JOIN auth.users au ON au.id = p.user_id
             LEFT JOIN consultant_profiles cp ON cp.user_id = p.user_id
