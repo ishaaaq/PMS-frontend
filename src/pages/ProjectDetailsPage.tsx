@@ -13,6 +13,7 @@ import SubmissionHistoryTab from '../components/dashboard/SubmissionHistoryTab';
 import CommentsSection from '../components/dashboard/CommentsSection';
 import EditProjectModal from '../components/dashboard/EditProjectModal';
 import { updateProject, deleteProject } from '../services/projects';
+import { useAuth } from '../hooks/useAuth';
 import type { LucideIcon } from 'lucide-react';
 
 interface DetailRowProps {
@@ -31,6 +32,10 @@ export default function ProjectDetailsPage() {
     const [galleryImages, setGalleryImages] = useState<string[]>([]);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Auth context for Admin checks
+    const { user } = useAuth();
+    const isAdmin = user?.activeRole === 'ADMIN' || user?.role === 'ADMIN';
 
     useEffect(() => {
         if (id) {
@@ -204,27 +209,31 @@ export default function ProjectDetailsPage() {
                         </div>
                     </div>
                     <div className="flex gap-3 mt-4 md:mt-0">
-                        <button
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-700 shadow-lg shadow-green-100 dark:shadow-none flex items-center transition-all active:scale-95"
-                            onClick={() => alert('Disbursement Authorized!')}
-                        >
-                            <ShieldCheck className="h-4 w-4 mr-2" />
-                            Authorize
-                        </button>
-                        <button
-                            onClick={() => setIsEditModalOpen(true)}
-                            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
-                        >
-                            Manage
-                        </button>
-                        <button
-                            onClick={handleDeleteProject}
-                            disabled={isDeleting}
-                            className="bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-900/50 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition-all active:scale-95 flex items-center disabled:opacity-50"
-                        >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            {isDeleting ? 'Deleting...' : 'Delete'}
-                        </button>
+                        {isAdmin && (
+                            <>
+                                <button
+                                    className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-700 shadow-lg shadow-green-100 dark:shadow-none flex items-center transition-all active:scale-95"
+                                    onClick={() => alert('Disbursement Authorized!')}
+                                >
+                                    <ShieldCheck className="h-4 w-4 mr-2" />
+                                    Authorize
+                                </button>
+                                <button
+                                    onClick={() => setIsEditModalOpen(true)}
+                                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+                                >
+                                    Manage
+                                </button>
+                                <button
+                                    onClick={handleDeleteProject}
+                                    disabled={isDeleting}
+                                    className="bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-900/50 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition-all active:scale-95 flex items-center disabled:opacity-50"
+                                >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    {isDeleting ? 'Deleting...' : 'Delete'}
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 
