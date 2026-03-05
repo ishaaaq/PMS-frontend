@@ -1,6 +1,7 @@
 -- ============================================================
 -- 20_admin_contractors_metrics.sql
 -- Update RPC for admin to list contractors with active project counts, total projects, and rating
+-- Fixed version: counts projects from section_assignments
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION rpc_admin_list_contractors()
@@ -29,13 +30,24 @@ BEGIN
                 cp.company_name,
                 cp.registration_number,
                 cp.zone,
-                COALESCE((SELECT COUNT(*) FROM project_contractors pc WHERE pc.contractor_user_id = p.user_id), 0) as project_count,
+                -- Count unique projects they have assigned sections in
                 COALESCE((
-                    SELECT COUNT(*) 
-                    FROM project_contractors pc 
-                    JOIN projects pr ON pc.project_id = pr.id 
-                    WHERE pc.contractor_user_id = p.user_id AND pr.status = 'ACTIVE'
+                    SELECT COUNT(DISTINCT s.project_id) 
+                    FROM section_assignments sa
+                    JOIN sections s ON sa.section_id = s.id
+                    WHERE sa.contractor_user_id = p.user_id
+                ), 0) as project_count,
+                
+                -- Count active unique projects they have assigned sections in
+                COALESCE((
+                    SELECT COUNT(DISTINCT s.project_id) 
+                    FROM section_assignments sa 
+                    JOIN sections s ON sa.section_id = s.id 
+                    JOIN projects pr ON s.project_id = pr.id 
+                    WHERE sa.contractor_user_id = p.user_id AND pr.status = 'ACTIVE'
                 ), 0) as active_projects,
+                
+                -- Average rating and reviews are still from project_contractors pool
                 COALESCE((
                     SELECT AVG(performance_rating) 
                     FROM project_contractors pc 
