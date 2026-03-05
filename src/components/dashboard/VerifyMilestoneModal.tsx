@@ -71,52 +71,54 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
         const loadData = async () => {
             setIsLoading(true);
             try {
-                // Fetch materials
-                const materials = await SubmissionsService.getSubmissionMaterials(submissionId);
+                // Fetch materials and evidence in parallel
+                const [materials, evidence] = await Promise.all([
+                    SubmissionsService.getSubmissionMaterials(submissionId),
+                    SubmissionsService.getSubmissionEvidence(submissionId)
+                ]);
+
                 if (materials) {
                     setMaterialUsage(materials.map(m => ({
                         item: m.material_name,
                         quantity: `${m.quantity} ${m.unit}`,
-                        expected: 'N/A' // Not currently in DB
+                        expected: 'N/A'
                     })));
                 }
 
-                // Fetch evidence from database
-                const evidence = await SubmissionsService.getSubmissionEvidence(submissionId);
                 const imgs: string[] = [];
                 const docs: DocumentFile[] = [];
-
                 const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'heic', 'avif'];
 
                 if (evidence && evidence.length > 0) {
-                    // DB has evidence records — use them
-                    for (const file of evidence) {
-                        try {
-                            const url = await StorageService.getSignedUrl(file.file_path);
-                            const ext = file.file_path.split('.').pop()?.toLowerCase() || '';
-                            const isImage = file.file_type
-                                ? file.file_type.startsWith('image/')
-                                : imageExts.includes(ext);
+                    // DB has evidence records — batch sign all URLs in one call
+                    const paths = evidence.map(f => f.file_path);
+                    const signedResults = await StorageService.getSignedUrls(paths);
 
-                            if (isImage) {
-                                imgs.push(url);
-                            } else {
-                                docs.push({
-                                    name: file.file_path.split('/').pop() || 'Document',
-                                    size: formatSize(file.file_size || 0),
-                                    url: url
-                                });
-                            }
-                        } catch (e) {
-                            console.error('Failed to sign URL for', file.file_path, e);
+                    for (let i = 0; i < evidence.length; i++) {
+                        const file = evidence[i];
+                        const signed = signedResults[i];
+                        if (!signed || signed.error || !signed.signedUrl) continue;
+
+                        const ext = file.file_path.split('.').pop()?.toLowerCase() || '';
+                        const isImage = file.file_type
+                            ? file.file_type.startsWith('image/')
+                            : imageExts.includes(ext);
+
+                        if (isImage) {
+                            imgs.push(signed.signedUrl);
+                        } else {
+                            docs.push({
+                                name: file.file_path.split('/').pop() || 'Document',
+                                size: formatSize(file.file_size || 0),
+                                url: signed.signedUrl
+                            });
                         }
                     }
                 } else {
-                    // No DB records — fallback: list files directly from Supabase Storage
+                    // No DB records — fallback: list files from Supabase Storage, then batch sign
                     const milestoneId = submission?.milestoneId || submission?.milestone_id || submission?.milestone?.id || milestone?.id;
                     let projectId = submission?.projectId;
 
-                    // If projectId is not on the submission, look it up from the milestone
                     if (!projectId && milestoneId) {
                         try {
                             const { data: msRow } = await supabase
@@ -132,24 +134,27 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
                         const folderPath = `project/${projectId}/milestone/${milestoneId}/submission/${submissionId}`;
                         const files = await StorageService.listFiles(folderPath);
 
-                        for (const file of files) {
-                            try {
-                                const fullPath = `${folderPath}/${file.name}`;
-                                const url = await StorageService.getSignedUrl(fullPath);
+                        if (files.length > 0) {
+                            const fullPaths = files.map(f => `${folderPath}/${f.name}`);
+                            const signedResults = await StorageService.getSignedUrls(fullPaths);
+
+                            for (let i = 0; i < files.length; i++) {
+                                const file = files[i];
+                                const signed = signedResults[i];
+                                if (!signed || signed.error || !signed.signedUrl) continue;
+
                                 const ext = file.name.split('.').pop()?.toLowerCase() || '';
                                 const isImage = imageExts.includes(ext);
 
                                 if (isImage) {
-                                    imgs.push(url);
+                                    imgs.push(signed.signedUrl);
                                 } else {
                                     docs.push({
                                         name: file.name,
                                         size: '—',
-                                        url: url
+                                        url: signed.signedUrl
                                     });
                                 }
-                            } catch (e) {
-                                console.error('Failed to sign URL for storage file', file.name, e);
                             }
                         }
                     }
