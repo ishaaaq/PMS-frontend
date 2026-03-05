@@ -16,7 +16,7 @@ export interface Consultant {
     specialization?: string;
     joinedDate: string;
     status: 'Active' | 'Inactive' | 'On Leave';
-    assignedProjects?: { id: string; title: string; status: string; budget_allocated: number; start_date: string; end_date: string | null }[];
+    assignedProjects?: { id: string; title: string; status: string; total_budget: number; created_at: string }[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -143,7 +143,7 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
     // Fetch real project counts AND project list using FK join (proven to work)
     const { data: assignments } = await supabase
         .from('project_consultants')
-        .select('project_id, projects!inner(id,title,status,budget_allocated,start_date,end_date)')
+        .select('project_id, projects!inner(id,title,status,total_budget,created_at)')
         .eq('consultant_user_id', id);
 
     if (assignments && assignments.length > 0) {
@@ -157,9 +157,8 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
                 id: a.projects.id || a.project_id,
                 title: a.projects.title || 'Untitled Project',
                 status: a.projects.status || 'UNKNOWN',
-                budget_allocated: a.projects.budget_allocated || 0,
-                start_date: a.projects.start_date || '',
-                end_date: a.projects.end_date || null,
+                total_budget: a.projects.total_budget || 0,
+                created_at: a.projects.created_at || '',
             }));
     }
 

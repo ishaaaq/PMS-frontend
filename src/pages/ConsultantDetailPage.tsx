@@ -266,8 +266,7 @@ export default function ConsultantDetailPage() {
                                             <div>
                                                 <p className="font-bold text-gray-900 dark:text-white max-w-sm sm:max-w-md truncate" title={project.title}>{project.title}</p>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-tight font-medium mt-1">
-                                                    {project.start_date ? new Date(project.start_date).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' }) : 'Start date TBD'}
-                                                    {project.end_date && ` - ${new Date(project.end_date).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}`}
+                                                    {project.created_at ? new Date(project.created_at).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' }) : 'Date TBD'}
                                                 </p>
                                             </div>
                                         </div>
@@ -275,7 +274,7 @@ export default function ConsultantDetailPage() {
                                             <div className="text-left sm:text-right">
                                                 <p className="font-bold text-gray-900 dark:text-white flex items-center gap-1">
                                                     <DollarSign className="h-3.5 w-3.5" />
-                                                    {(project.budget_allocated || 0).toLocaleString('en-NG')}
+                                                    ₦{(project.total_budget || 0).toLocaleString('en-NG')}
                                                 </p>
                                             </div>
                                             <span className={`px-3 py-1 text-[10px] uppercase font-bold tracking-wider rounded-full ${project.status === 'COMPLETED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
