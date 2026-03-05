@@ -153,26 +153,22 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
 
     const consultant = mapConsultant(profile, cp, email);
 
-    // Fetch real project counts AND project list using FK join (proven to work)
+    // Fetch real project counts AND project list using RPC to bypass RLS blocks
     const { data: assignments } = await supabase
-        .from('project_consultants')
-        .select('project_id, projects(*)')
-        .eq('consultant_user_id', id);
+        .rpc('rpc_admin_consultant_projects', { p_consultant_user_id: id });
 
     if (assignments && assignments.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const typedAssignments = assignments as any[];
-        consultant.activeProjects = typedAssignments.filter(a => a.projects?.status === 'ACTIVE' || a.projects?.status === 'DRAFT').length;
-        consultant.completedProjects = typedAssignments.filter(a => a.projects?.status === 'COMPLETED').length;
-        consultant.assignedProjects = typedAssignments
-            .filter(a => a.projects)
-            .map(a => ({
-                id: a.projects.id || a.project_id,
-                title: a.projects.title || 'Untitled Project',
-                status: a.projects.status || 'UNKNOWN',
-                total_budget: a.projects.total_budget || 0,
-                created_at: a.projects.created_at || '',
-            }));
+        consultant.activeProjects = typedAssignments.filter(a => a.status === 'ACTIVE' || a.status === 'DRAFT').length;
+        consultant.completedProjects = typedAssignments.filter(a => a.status === 'COMPLETED').length;
+        consultant.assignedProjects = typedAssignments.map(a => ({
+            id: a.id,
+            title: a.title || 'Untitled Project',
+            status: a.status || 'UNKNOWN',
+            total_budget: a.total_budget || 0,
+            created_at: a.created_at || '',
+        }));
     }
 
     return consultant;
