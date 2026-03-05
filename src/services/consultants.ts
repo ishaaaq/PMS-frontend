@@ -141,19 +141,25 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
     const consultant = mapConsultant(profile, cp, email);
 
     // Fetch real project counts AND project list
-    const { data: assignments } = await supabase
+    const { data: assignments, error: pcError } = await supabase
         .from('project_consultants')
         .select('project_id')
         .eq('consultant_user_id', id);
 
+    console.log('[ConsultantProjects] consultant_user_id:', id);
+    console.log('[ConsultantProjects] project_consultants query:', { assignments, pcError });
+
     if (assignments && assignments.length > 0) {
         const projectIds = assignments.map(a => a.project_id);
+        console.log('[ConsultantProjects] projectIds:', projectIds);
 
         // Fetch full project details
-        const { data: projectRows } = await supabase
+        const { data: projectRows, error: projError } = await supabase
             .from('projects')
             .select('id, title, status, budget_allocated, start_date, end_date')
             .in('id', projectIds);
+
+        console.log('[ConsultantProjects] projects query:', { projectRows, projError });
 
         if (projectRows) {
             consultant.activeProjects = projectRows.filter(p => p.status === 'ACTIVE' || p.status === 'DRAFT').length;
@@ -166,7 +172,10 @@ export async function getConsultant(id: string): Promise<Consultant | undefined>
                 start_date: p.start_date,
                 end_date: p.end_date,
             }));
+            console.log('[ConsultantProjects] assignedProjects set:', consultant.assignedProjects);
         }
+    } else {
+        console.log('[ConsultantProjects] No assignments found for consultant');
     }
 
     return consultant;
