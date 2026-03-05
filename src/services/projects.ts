@@ -80,6 +80,16 @@ const mapProject = (p: any): Project => {
     const contractorName = projectContractors.length > 0 ? projectContractors[0].name : 'Unassigned';
     // const contractorId = projectContractors.length > 0 ? projectContractors[0].id : undefined;
 
+    // Calculate progress dynamically if milestones are present
+    let calculatedProgress = Number(p.progress || 0);
+    if (p.milestones && Array.isArray(p.milestones)) {
+        const total = p.milestones.length;
+        if (total > 0) {
+            const completed = p.milestones.filter((m: { status: string }) => m.status === 'COMPLETED').length;
+            calculatedProgress = Math.round((completed / total) * 100);
+        }
+    }
+
     return {
         id: p.id,
         title: p.title,
@@ -90,7 +100,7 @@ const mapProject = (p: any): Project => {
         approvedBudget: Number(p.approved_budget || p.total_budget || 0),
         amountSpent: Number(p.amount_spent || 0),
         status,
-        progress: Number(p.progress || 0),
+        progress: calculatedProgress,
         contractor: contractorName,
         consultant: consultantName,
         consultantId: consultantId,
@@ -108,6 +118,7 @@ export const getProjects = async (): Promise<Project[]> => {
         .from('projects')
         .select(`
             *,
+            milestones ( status ),
             project_consultants (
                 consultant_user_id,
                 profiles:consultant_user_id ( full_name )
@@ -143,6 +154,7 @@ export const getProject = async (id: string): Promise<Project | undefined> => {
         .from('projects')
         .select(`
             *,
+            milestones ( status ),
             project_consultants (
                 consultant_user_id,
                 profiles:consultant_user_id ( full_name )

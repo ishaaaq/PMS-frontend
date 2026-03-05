@@ -53,12 +53,26 @@ export const ProjectsService = {
     async getMyProjects() {
         const { data, error } = await supabase
             .from('projects')
-            .select('*')
+            .select('*, milestones(status)')
         if (error) {
             logRpcError('projects.select', error)
             throw error
         }
-        return data
+
+        return (data || []).map((p: { progress?: string | number, milestones?: { status: string }[] } & Record<string, unknown>) => {
+            let progress = Number(p.progress || 0);
+            if (p.milestones && Array.isArray(p.milestones)) {
+                const total = p.milestones.length;
+                if (total > 0) {
+                    const completed = p.milestones.filter((m: { status: string }) => m.status === 'COMPLETED').length;
+                    progress = Math.round((completed / total) * 100);
+                }
+            }
+            return {
+                ...p,
+                progress
+            };
+        });
     },
 
     async getProjectContractors(projectId: string) {

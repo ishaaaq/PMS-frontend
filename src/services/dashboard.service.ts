@@ -127,11 +127,30 @@ export const DashboardService = {
         try {
             const { data: projects } = await supabase
                 .from('projects')
-                .select('id, status')
+                .select('id, status, milestones(status)')
 
-            const total = projects?.length || 0
-            const active = projects?.filter(p => p.status === 'ACTIVE').length || 0
-            const completed = projects?.filter(p => p.status === 'COMPLETED').length || 0
+            const total = projects?.length || 0;
+            const active = projects?.filter(p => p.status === 'ACTIVE').length || 0;
+            const completed = projects?.filter(p => p.status === 'COMPLETED').length || 0;
+
+            // Calculate aggregate completion rate from milestones across all projects
+            let totalProgressSum = 0;
+            if (projects && projects.length > 0) {
+                projects.forEach(p => {
+                    let projProgress = 0;
+                    if (p.milestones && Array.isArray(p.milestones)) {
+                        const mTotal = p.milestones.length;
+                        if (mTotal > 0) {
+                            const mCompleted = p.milestones.filter((m: { status: string }) => m.status === 'COMPLETED' || m.status === 'VERIFIED').length;
+                            projProgress = (mCompleted / mTotal) * 100;
+                        }
+                    } else if (p.status === 'COMPLETED') {
+                        projProgress = 100;
+                    }
+                    totalProgressSum += projProgress;
+                });
+            }
+            const avgCompletionRate = total > 0 ? Math.round(totalProgressSum / total) : 0;
 
             const { count: consultantCount } = await supabase
                 .from('profiles')
@@ -150,7 +169,7 @@ export const DashboardService = {
                 completedProjects: completed,
                 activeConsultants: consultantCount || 0,
                 pendingSubmissions: pendingCount || 0,
-                completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+                completionRate: avgCompletionRate,
             }
         } catch (err) {
             console.error('DashboardService.getStats error', err)

@@ -177,7 +177,7 @@ export default function VerifyMilestoneModal({ milestone, submission, isOpen, on
         } else {
             loadData();
         }
-    }, [isOpen, submissionId, submission]);
+    }, [isOpen, submissionId, submission, milestone?.id]);
 
     const formatSize = (bytes: number) => {
         if (bytes === 0) return '0 B';

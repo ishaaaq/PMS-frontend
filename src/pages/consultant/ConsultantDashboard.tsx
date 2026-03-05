@@ -53,7 +53,10 @@ export default function ConsultantDashboard() {
                             id,
                             title,
                             location,
-                            status
+                            status,
+                            milestones (
+                                status
+                            )
                         )
                     `)
                     .eq('consultant_user_id', user.id);
@@ -62,14 +65,25 @@ export default function ConsultantDashboard() {
 
                 if (projData) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    setActiveProjects(projData.map((p: any) => ({
-                        id: p.projects.id,
-                        title: p.projects.title,
-                        location: p.projects.location,
-                        status: p.projects.status,
-                        progress: 0,
-                        nextMilestone: 'TBD'
-                    })));
+                    setActiveProjects(projData.map((p: any) => {
+                        let progress = 0;
+                        if (p.projects?.milestones && Array.isArray(p.projects.milestones)) {
+                            const total = p.projects.milestones.length;
+                            if (total > 0) {
+                                const completed = p.projects.milestones.filter((m: { status: string }) => m.status === 'COMPLETED').length;
+                                progress = Math.round((completed / total) * 100);
+                            }
+                        }
+
+                        return {
+                            id: p.projects.id,
+                            title: p.projects.title,
+                            location: p.projects.location,
+                            status: p.projects.status,
+                            progress: progress,
+                            nextMilestone: 'TBD'
+                        };
+                    }));
                 }
 
             } catch (error) {
