@@ -266,7 +266,7 @@ export default function ConsultantDetailPage() {
                                             <div>
                                                 <p className="font-bold text-gray-900 dark:text-white max-w-sm sm:max-w-md truncate" title={project.title}>{project.title}</p>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-tight font-medium mt-1">
-                                                    {new Date(project.start_date).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}
+                                                    {project.start_date ? new Date(project.start_date).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' }) : 'Start date TBD'}
                                                     {project.end_date && ` - ${new Date(project.end_date).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}`}
                                                 </p>
                                             </div>
