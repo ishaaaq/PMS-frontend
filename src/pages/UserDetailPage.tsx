@@ -15,6 +15,8 @@ interface ActivityLog {
     time: string;
 }
 
+import { AuditService } from '../services/audit.service';
+
 export default function UserDetailPage() {
     const { id } = useParams();
     const [user, setUser] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -23,6 +25,7 @@ export default function UserDetailPage() {
 
     useEffect(() => {
         async function loadUser() {
+            if (!id) return;
             setLoading(true);
             try {
                 // Try RPC first (returns email from auth.users + extended profile)
@@ -47,21 +50,40 @@ export default function UserDetailPage() {
                 }
 
                 // Fetch logs
-                const { data: logs, error: logsErr } = await supabase
-                    .from('audit_logs')
-                    .select('*')
-                    .eq('actor_user_id', id)
-                    .order('created_at', { ascending: false })
-                    .limit(5);
+                try {
+                    const logs = await AuditService.getUserRecentActivity(id, 15);
+                    setActivities(logs.map(l => {
+                        const actionFormatted = l.action.replace(/_/g, ' ');
 
-                if (!logsErr && logs) {
-                    setActivities(logs.map(l => ({
-                        id: l.id,
-                        action: l.action.replace(/_/g, ' '),
-                        text: l.details || `Performed ${l.action}`,
-                        icon: l.action.includes('LOGIN') ? 'LogIn' : l.action.includes('REPORT') ? 'FileText' : 'Activity',
-                        time: new Date(l.created_at).toLocaleString()
-                    })));
+                        // Extract human-readable text from metadata or fallback to generic text
+                        let text = `Performed ${actionFormatted.toLowerCase()}`;
+                        if (l.metadata) {
+                            if (typeof l.metadata.details === 'string') text = l.metadata.details;
+                            else if (typeof l.metadata.title === 'string') text = `Project: ${l.metadata.title}`;
+                            else if (typeof l.metadata.name === 'string') text = `Section: ${l.metadata.name}`;
+                            else if (typeof l.metadata.note === 'string') text = `Note: ${l.metadata.note}`;
+                            else if (l.action === 'CONTRACTOR_ASSIGNED' && l.metadata.contractor_user_id) {
+                                text = 'Assigned contractor to section';
+                            } else if (l.action === 'CONSULTANT_ASSIGNED' && l.metadata.consultant_user_id) {
+                                text = 'Assigned consultant to project';
+                            }
+                        }
+
+                        let icon = 'Activity';
+                        if (l.action.includes('LOGIN')) icon = 'LogIn';
+                        else if (l.action.includes('REPORT') || l.action.includes('SUBMISSION')) icon = 'FileText';
+                        else if (l.action.includes('CREATED')) icon = 'CheckCircle';
+
+                        return {
+                            id: l.id,
+                            action: actionFormatted,
+                            text,
+                            icon,
+                            time: new Date(l.created_at).toLocaleString()
+                        };
+                    }));
+                } catch (logsErr) {
+                    console.error("Failed to load audit logs:", logsErr);
                 }
 
             } catch (err) {

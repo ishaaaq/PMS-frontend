@@ -73,6 +73,7 @@ export default function ConsultantContractors() {
 
     // Fetch contractors when selectedProject changes
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchContractorsForProject(selectedProject);
     }, [selectedProject, fetchContractorsForProject]);
 

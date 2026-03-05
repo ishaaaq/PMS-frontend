@@ -163,9 +163,10 @@ export default function ProgressReportModal({
                                 path,
                                 file.size
                             );
-                        } catch (err: any) {
+                        } catch (err) {
                             console.error('Evidence link error for file', file.name, err);
-                            const errMsg = err?.message || err?.details || err?.hint || JSON.stringify(err);
+                            const errorObj = err as Record<string, unknown>;
+                            const errMsg = errorObj?.message || errorObj?.details || errorObj?.hint || JSON.stringify(err);
                             uploadErrors.push(`Failed to link ${file.name} in database (Backend Error: ${errMsg})`);
                         }
                     })
