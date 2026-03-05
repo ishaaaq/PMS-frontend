@@ -39,14 +39,7 @@ export default function ContractorDetailPage() {
                 // Fetch Project History
                 if (found) {
                     const { data, error } = await supabase
-                        .from('section_assignments')
-                        .select(`
-                            section_id,
-                            section:sections(
-                                project:projects(*)
-                            )
-                        `)
-                        .eq('contractor_user_id', id);
+                        .rpc('rpc_admin_contractor_projects', { p_contractor_user_id: id });
 
                     setDebugData(data);
                     setDebugError(error);
@@ -55,24 +48,16 @@ export default function ContractorDetailPage() {
                         console.error('Failed to fetch contractor projects:', error);
                     }
 
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const historyMap = new Map<string, any>();
+                    const history = (data || []).map((row: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+                        id: row.id,
+                        title: row.title,
+                        status: row.status,
+                        total_budget: row.total_budget || 0,
+                        created_at: row.created_at,
+                        rating: row.rating || 0
+                    }));
 
-                    (data || []).forEach((row: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-                        const proj = row.section?.project;
-                        if (proj && !historyMap.has(proj.id)) {
-                            historyMap.set(proj.id, {
-                                id: proj.id,
-                                title: proj.title,
-                                status: proj.status,
-                                total_budget: proj.total_budget || 0,
-                                created_at: proj.created_at,
-                                rating: 0
-                            });
-                        }
-                    });
-
-                    setProjects(Array.from(historyMap.values()));
+                    setProjects(history);
                 }
 
             } catch (error) {
