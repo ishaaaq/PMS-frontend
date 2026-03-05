@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
 
             // --- Multi-Role Computation ---
-            let roles: Set<UserRole> = new Set([data.role as UserRole]);
+            const roles: Set<UserRole> = new Set([data.role as UserRole]);
 
             // Check if they are a consultant
             if (data.role !== 'CONSULTANT') {

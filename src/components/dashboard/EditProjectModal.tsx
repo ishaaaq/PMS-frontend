@@ -46,8 +46,8 @@ export default function EditProjectModal({ project, isOpen, onClose, onSave }: E
                 department,
             });
             onClose();
-        } catch (err: any) {
-            setError(err.message || 'Failed to update project');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update project');
         } finally {
             setLoading(false);
         }

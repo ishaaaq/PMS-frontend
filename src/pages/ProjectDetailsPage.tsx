@@ -36,6 +36,7 @@ export default function ProjectDetailsPage() {
     // Auth context for Admin checks
     const { user } = useAuth();
     const isAdmin = user?.activeRole === 'ADMIN' || user?.role === 'ADMIN';
+    console.log('[ProjectDetailsPage] user object:', user, 'isAdmin:', isAdmin);
 
     useEffect(() => {
         if (id) {

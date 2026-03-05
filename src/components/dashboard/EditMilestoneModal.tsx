@@ -35,8 +35,8 @@ export default function EditMilestoneModal({ milestone, isOpen, onClose, onSave 
                 status,
             });
             onClose();
-        } catch (err: any) {
-            setError(err.message || 'Failed to update milestone');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update milestone');
         } finally {
             setLoading(false);
         }

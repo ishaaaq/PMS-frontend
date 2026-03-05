@@ -16,7 +16,7 @@ export default function MilestonesTab({ projectId }: { projectId: string }) {
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
     const currentRole = user?.activeRole || user?.role;
-    console.log('[MilestonesTab] currentRole:', currentRole);
+    console.log('[MilestonesTab] user object:', user, 'currentRole:', currentRole);
     const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
     const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
