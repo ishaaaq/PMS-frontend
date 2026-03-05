@@ -37,8 +37,16 @@ export const ZONE_LABELS: Record<GeographicZone, string> = {
     'SOUTH_SOUTH': 'South-South',
 };
 
+export interface ContractorMetrics {
+    projectCount?: number;
+    activeProjects?: number;
+    completedProjects?: number;
+    rating?: number;
+    totalReviews?: number;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mapContractor = (p: any, cp: any, email: string): AdminContractor => {
+const mapContractor = (p: any, cp: any, email: string, metrics?: ContractorMetrics): AdminContractor => {
     return {
         id: p.user_id || p.id,
         companyName: cp?.company_name || p.full_name || 'Unknown Company',
@@ -48,11 +56,12 @@ const mapContractor = (p: any, cp: any, email: string): AdminContractor => {
         logo: p.avatar_url,
         zone: (cp?.zone as GeographicZone) || 'NORTH_CENTRAL',
         status: p.is_active ? 'ACTIVE' as ContractorStatus : 'PENDING' as ContractorStatus,
-        rating: 0,
-        totalReviews: 0,
-        projectCount: 0,
-        activeProjects: 0,
-        completedProjects: 0,
+        rating: metrics?.rating ? Number(metrics.rating) : 0,
+        totalReviews: metrics?.totalReviews ? Number(metrics.totalReviews) : 0,
+        projectCount: metrics?.projectCount ? Number(metrics.projectCount) : 0,
+        activeProjects: metrics?.activeProjects ? Number(metrics.activeProjects) : 0,
+        completedProjects: metrics?.completedProjects !== undefined ? Number(metrics.completedProjects) :
+            (metrics?.projectCount ? Number(metrics.projectCount) - Number(metrics.activeProjects || 0) : 0),
         specializations: cp?.zone ? [cp.zone.replace('_', ' ')] : [],
         lastActiveAt: p.updated_at || new Date().toISOString(),
         joinedAt: p.created_at || new Date().toISOString(),
@@ -83,7 +92,13 @@ export const getAdminContractors = async (): Promise<AdminContractor[]> => {
         return rpcData.map((r: any) => mapContractor( // eslint-disable-line @typescript-eslint/no-explicit-any
             { user_id: r.user_id, full_name: r.full_name, role: r.role, phone: r.phone, is_active: r.is_active, created_at: r.created_at },
             { company_name: r.company_name, registration_number: r.registration_number, zone: r.zone },
-            r.email || ''
+            r.email || '',
+            {
+                projectCount: r.project_count,
+                activeProjects: r.active_projects,
+                rating: r.average_rating,
+                totalReviews: r.total_reviews
+            }
         ));
     }
 
