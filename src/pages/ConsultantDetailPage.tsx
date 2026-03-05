@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getConsultant, type Consultant } from '../services/consultants';
+import { supabase } from '../lib/supabase';
 import { ArrowLeft, Mail, Phone, MapPin, Star, Briefcase, Calendar, CheckCircle, MessageSquare, TrendingUp, Users, User, Building, FileText, DollarSign } from 'lucide-react';
 
 export default function ConsultantDetailPage() {
@@ -11,6 +12,8 @@ export default function ConsultantDetailPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('Overview');
     const [yearsWithCompany, setYearsWithCompany] = useState(0);
+    const [debugData, setDebugData] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const [debugError, setDebugError] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     useEffect(() => {
         if (id) {
@@ -21,6 +24,12 @@ export default function ConsultantDetailPage() {
                     const years = Math.floor((Date.now() - new Date(data.joinedDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
                     setYearsWithCompany(years);
                 }
+                // Fetch real project counts AND project list using RPC to bypass RLS blocks
+                supabase.rpc('rpc_admin_consultant_projects', { p_consultant_user_id: id }).then(({ data, error }: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                    setDebugData(data);
+                    setDebugError(error);
+                });
+
                 setLoading(false);
             });
         }
@@ -57,6 +66,17 @@ export default function ConsultantDetailPage() {
                 <ArrowLeft className="h-5 w-5" />
                 <span className="font-medium">Back to Directory</span>
             </button>
+
+            {/* Temporary Debug Log */}
+            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg mb-6 overflow-auto border border-red-200 dark:border-red-800">
+                <h3 className="font-bold text-red-800 dark:text-red-400">DEBUG LOG - PLEASE SCREENSHOT THIS</h3>
+                <pre className="text-xs text-red-600 dark:text-red-300 font-mono mt-2 whitespace-pre-wrap">
+                    ERROR: {JSON.stringify(debugError, null, 2)}
+                </pre>
+                <pre className="text-xs text-red-600 dark:text-red-300 font-mono mt-2 whitespace-pre-wrap">
+                    DATA: {JSON.stringify(debugData, null, 2)}
+                </pre>
+            </div>
 
             {/* Header Card */}
             <div className="glass-card rounded-xl p-6">
