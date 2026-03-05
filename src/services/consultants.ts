@@ -37,8 +37,7 @@ const mapConsultant = (p: any, cp: any, email: string, metrics?: ConsultantMetri
         department: cp?.department || 'Not provided',
         region: cp?.region || 'Not provided',
         activeProjects: metrics?.activeProjects ? Number(metrics.activeProjects) : 0,
-        completedProjects: metrics?.completedProjects !== undefined ? Number(metrics.completedProjects) :
-            (metrics?.projectCount ? Number(metrics.projectCount) - Number(metrics.activeProjects || 0) : 0),
+        completedProjects: metrics?.completedProjects !== undefined ? Number(metrics.completedProjects) : 0,
         rating: metrics?.rating ? Number(metrics.rating) : 0,
         specialization: cp?.specialization || 'Not provided',
         joinedDate: p.created_at ? p.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
@@ -61,6 +60,7 @@ export async function getConsultants(): Promise<Consultant[]> {
             {
                 projectCount: r.project_count,
                 activeProjects: r.active_projects,
+                completedProjects: r.completed_projects,
                 rating: r.average_rating
             }
         ));
