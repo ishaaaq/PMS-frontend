@@ -216,6 +216,53 @@ export const DashboardService = {
         }
     },
 
+    async getTopConsultants(): Promise<TopContractor[]> {
+        try {
+            const { data: consultants } = await supabase
+                .from('profiles')
+                .select('user_id, full_name')
+                .eq('role', 'CONSULTANT')
+                .eq('is_active', true)
+                .limit(10)
+
+            if (!consultants || consultants.length === 0) return []
+
+            const result: TopContractor[] = []
+            for (const c of consultants) {
+                // Count projects assigned to this consultant
+                const { data: assignments } = await supabase
+                    .from('project_consultants')
+                    .select('project_id')
+                    .eq('consultant_user_id', c.user_id)
+
+                const projectCount = assignments?.length || 0
+
+                // Count submissions reviewed by this consultant (approved vs total)
+                const { data: reviewedSubs } = await supabase
+                    .from('submissions')
+                    .select('status')
+                    .eq('reviewed_by_consultant_id', c.user_id)
+
+                const totalReviewed = reviewedSubs?.length || 0
+                const approved = reviewedSubs?.filter(s => s.status === 'APPROVED').length || 0
+                // Efficiency = approval rate (0-5 scale)
+                const efficiencyRating = totalReviewed > 0
+                    ? (approved / totalReviewed) * 5
+                    : 0
+
+                result.push({
+                    name: c.full_name || 'Unknown',
+                    rating: Math.round(efficiencyRating * 10) / 10,
+                    projectCount,
+                })
+            }
+            return result.sort((a, b) => b.rating - a.rating).slice(0, 5)
+        } catch (err) {
+            console.error('DashboardService.getTopConsultants error', err)
+            return []
+        }
+    },
+
     async getZoneClusters(): Promise<ZoneCluster[]> {
         try {
             const { data: projects } = await supabase

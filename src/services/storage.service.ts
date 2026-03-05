@@ -44,6 +44,22 @@ export const StorageService = {
     },
 
     /**
+     * Get signed URLs for multiple storage paths in a single API call.
+     * Returns an array of { path, signedUrl, error } in the same order as the input.
+     */
+    async getSignedUrls(paths: string[], expiresIn = 3600): Promise<{ path: string | null; signedUrl: string; error: string | null }[]> {
+        if (paths.length === 0) return []
+        const { data, error } = await supabase.storage
+            .from(BUCKET)
+            .createSignedUrls(paths, expiresIn)
+        if (error) {
+            logRpcError('storage.createSignedUrls', error)
+            return []
+        }
+        return data || []
+    },
+
+    /**
      * List all files in a storage folder. Returns the file names (relative to the folder).
      */
     async listFiles(folderPath: string): Promise<{ name: string; metadata?: Record<string, string> }[]> {

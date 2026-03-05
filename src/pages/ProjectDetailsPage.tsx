@@ -5,6 +5,7 @@ import { getProject, type Project, ProjectStatus } from '../services/projects';
 import { ChevronRight, ArrowLeft, Calendar, MapPin, DollarSign, Clock, Users, ShieldCheck, Star } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
+import { StorageService } from '../services/storage.service';
 import MilestonesTab from '../components/dashboard/MilestonesTab';
 import AnalyticsTab from '../components/dashboard/AnalyticsTab';
 import PersonnelTab from '../components/dashboard/PersonnelTab';
@@ -25,6 +26,7 @@ export default function ProjectDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('Details');
     const [dynamicProgress, setDynamicProgress] = useState(0);
+    const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
     useEffect(() => {
         if (id) {
@@ -43,6 +45,90 @@ export default function ProjectDetailsPage() {
                         setDynamicProgress(Math.round((completed / data.length) * 100));
                     }
                 });
+
+            // Fetch gallery images from approved submission evidence
+            (async () => {
+                try {
+                    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'avif'];
+
+                    // Get all milestones for this project
+                    const { data: milestones } = await supabase
+                        .from('milestones')
+                        .select('id')
+                        .eq('project_id', id);
+                    if (!milestones || milestones.length === 0) return;
+
+                    // Get approved submissions for those milestones
+                    let subs: { id: string }[] = [];
+                    const { data: approvedSubs } = await supabase
+                        .from('submissions')
+                        .select('id')
+                        .in('milestone_id', milestones.map(m => m.id))
+                        .eq('status', 'APPROVED');
+                    if (approvedSubs && approvedSubs.length > 0) {
+                        subs = approvedSubs;
+                    } else {
+                        // Fallback: try all submissions (not just approved)
+                        const { data: allSubs } = await supabase
+                            .from('submissions')
+                            .select('id')
+                            .in('milestone_id', milestones.map(m => m.id));
+                        if (!allSubs || allSubs.length === 0) return;
+                        subs = allSubs;
+                    }
+
+                    // Get evidence files for those submissions
+                    const { data: evidence } = await supabase
+                        .from('submission_evidence')
+                        .select('file_path')
+                        .in('submission_id', subs.map(s => s.id));
+
+                    if (evidence && evidence.length > 0) {
+                        // Filter for image files only
+                        const imagePaths = evidence
+                            .map(e => e.file_path)
+                            .filter(p => {
+                                const ext = p.split('.').pop()?.toLowerCase() || '';
+                                return imageExts.includes(ext);
+                            });
+
+                        if (imagePaths.length > 0) {
+                            const signed = await StorageService.getSignedUrls(imagePaths.slice(0, 4));
+                            setGalleryImages(signed.filter(s => s.signedUrl && !s.error).map(s => s.signedUrl));
+                            return;
+                        }
+                    }
+
+                    // Fallback: list files from storage for each submission
+                    const imgs: string[] = [];
+                    for (const sub of subs.slice(0, 3)) {
+                        // Find which milestone this submission belongs to
+                        const { data: subRow } = await supabase
+                            .from('submissions')
+                            .select('milestone_id')
+                            .eq('id', sub.id)
+                            .single();
+                        if (!subRow) continue;
+
+                        const folderPath = `project/${id}/milestone/${subRow.milestone_id}/submission/${sub.id}`;
+                        const files = await StorageService.listFiles(folderPath);
+                        const imageFiles = files.filter(f => {
+                            const ext = f.name.split('.').pop()?.toLowerCase() || '';
+                            return imageExts.includes(ext);
+                        });
+
+                        if (imageFiles.length > 0) {
+                            const paths = imageFiles.slice(0, 4 - imgs.length).map(f => `${folderPath}/${f.name}`);
+                            const signed = await StorageService.getSignedUrls(paths);
+                            imgs.push(...signed.filter(s => s.signedUrl && !s.error).map(s => s.signedUrl));
+                        }
+                        if (imgs.length >= 4) break;
+                    }
+                    if (imgs.length > 0) setGalleryImages(imgs);
+                } catch (err) {
+                    console.error('Failed to load gallery images', err);
+                }
+            })();
         }
     }, [id]);
 
@@ -178,8 +264,8 @@ export default function ProjectDetailsPage() {
                                 <a href="#" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">Full gallery</a>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
-                                {project.gallery && project.gallery.length > 0 ? (
-                                    project.gallery.map((img, idx) => (
+                                {galleryImages.length > 0 ? (
+                                    galleryImages.map((img, idx) => (
                                         <img key={idx} src={img} alt="Project" className="h-24 w-full object-cover rounded-md" />
                                     ))
                                 ) : (

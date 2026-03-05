@@ -91,8 +91,8 @@ export default function SubmissionHistoryTab({ projectId }: { projectId: string 
                         key={f}
                         onClick={() => setFilter(f)}
                         className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${filter === f
-                                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                                : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                            : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                             }`}
                     >
                         {f === 'ALL' ? 'All' : f === 'PENDING_APPROVAL' ? 'Pending' : f.charAt(0) + f.slice(1).toLowerCase()}
@@ -226,6 +226,7 @@ export default function SubmissionHistoryTab({ projectId }: { projectId: string 
                 submission={viewSubmission ? {
                     id: viewSubmission.id,
                     milestone: viewSubmission.milestone?.title,
+                    milestone_id: viewSubmission.milestone_id || viewSubmission.milestone?.id,
                     contractor: viewSubmission.contractor?.full_name || 'Unknown',
                     date: new Date(viewSubmission.submitted_at).toLocaleDateString(),
                     description: viewSubmission.work_description,
