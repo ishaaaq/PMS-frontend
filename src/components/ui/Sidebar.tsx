@@ -20,8 +20,8 @@ interface SidebarProps {
 export default function Sidebar({ isOpen = false, onClose }: SidebarProps = {}) {
     const location = useLocation();
     const sidebarRef = useRef<HTMLDivElement>(null);
-    const { user, logout } = useAuth();
-    const currentRole = user?.role || 'CONTRACTOR';
+    const { user, logout, switchRole } = useAuth();
+    const currentRole = user?.activeRole || user?.role || 'CONTRACTOR';
 
     const essentials = [
         { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['ADMIN'] },
@@ -197,7 +197,29 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps = {}) 
                         )}
                     </div>
 
-                    <div className="flex-shrink-0 flex border-t border-gray-200/50 dark:border-gray-700/30 p-4">
+                    <div className="flex-shrink-0 flex flex-col border-t border-gray-200/50 dark:border-gray-700/30 p-4">
+                        {user?.availableRoles && user.availableRoles.length > 1 && (
+                            <div className="mb-3 w-full border-b border-gray-100 dark:border-gray-800 pb-3">
+                                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-2 font-bold uppercase tracking-wider px-1">Switch View</p>
+                                <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                                    {user.availableRoles.map(role => (
+                                        <button
+                                            key={role}
+                                            onClick={() => switchRole?.(role)}
+                                            className={cn(
+                                                "flex-1 text-xs py-1.5 px-2 rounded-md font-medium transition-all",
+                                                currentRole === role
+                                                    ? "bg-white dark:bg-gray-700 shadow-sm text-ptdf-primary dark:text-emerald-400 font-bold"
+                                                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                            )}
+                                        >
+                                            {role === 'CONSULTANT' ? 'Consultant' : role === 'CONTRACTOR' ? 'Contractor' : role}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex w-full items-center justify-between">
                             <Link to="/dashboard/settings" className="flex-1 group block p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors mr-2">
                                 <div className="flex items-center">
@@ -206,7 +228,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps = {}) 
                                     </div>
                                     <div className="ml-3">
                                         <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white">{user?.full_name || 'User'}</p>
-                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{user?.role || 'Unknown'}</p>
+                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{currentRole}</p>
                                     </div>
                                 </div>
                             </Link>

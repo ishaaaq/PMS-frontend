@@ -177,3 +177,52 @@ export const getProject = async (id: string): Promise<Project | undefined> => {
 
     return mapProject(data);
 };
+
+export const updateProject = async (id: string, updates: Partial<Project>): Promise<Project | undefined> => {
+    // Map JS domain model back to DB snake_case model
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dbUpdates: any = {};
+    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+
+    // Handle location fields
+    if (updates.state !== undefined || updates.lga !== undefined) {
+        const newState = updates.state || '';
+        const newLga = updates.lga || '';
+        dbUpdates.location = [newState, newLga].filter(Boolean).join(', ');
+    }
+
+    if (updates.budgetTotal !== undefined) dbUpdates.total_budget = updates.budgetTotal;
+    if (updates.amountSpent !== undefined) dbUpdates.amount_spent = updates.amountSpent;
+    if (updates.approvedBudget !== undefined) dbUpdates.approved_budget = updates.approvedBudget;
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+    if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
+    if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
+    if (updates.department !== undefined) dbUpdates.department = updates.department;
+
+    const { error } = await supabase
+        .from('projects')
+        .update(dbUpdates)
+        .eq('id', id);
+
+    if (error) {
+        console.error('updateProject error:', error);
+        logRpcError('updateProject', error);
+        throw error;
+    }
+
+    // Fetch and return the updated project
+    return getProject(id);
+};
+
+export const deleteProject = async (id: string): Promise<boolean> => {
+    const { error } = await supabase.rpc('rpc_delete_project', { p_project_id: id });
+
+    if (error) {
+        console.error('deleteProject error:', error);
+        logRpcError('deleteProject', error);
+        throw error;
+    }
+    return true;
+};
+

@@ -43,10 +43,10 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 function RoleBasedRedirect() {
   const { user } = useAuth();
 
-  if (user?.role === 'CONSULTANT') {
+  if (user?.activeRole === 'CONSULTANT') {
     return <Navigate to="/dashboard/consultant" replace />;
   }
-  if (user?.role === 'CONTRACTOR') {
+  if (user?.activeRole === 'CONTRACTOR') {
     return <Navigate to="/dashboard/contractor" replace />;
   }
 

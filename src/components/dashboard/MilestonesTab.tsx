@@ -7,14 +7,19 @@ import { Badge } from '../ui/Badge';
 import { useAuth } from '../../hooks/useAuth';
 import SubmitMilestoneModal from './SubmitMilestoneModal';
 import VerifyMilestoneModal from './VerifyMilestoneModal';
+import EditMilestoneModal from './EditMilestoneModal';
+import { updateMilestone } from '../../services/milestones';
+import { Edit2 } from 'lucide-react';
 
 export default function MilestonesTab({ projectId }: { projectId: string }) {
     const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
     const currentRole = user?.role;
+    console.log('[MilestonesTab] currentRole:', currentRole);
     const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
     const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
 
     useEffect(() => {
@@ -58,6 +63,21 @@ export default function MilestonesTab({ projectId }: { projectId: string }) {
         setIsVerifyModalOpen(true);
     };
 
+    const handleAdminEdit = (milestone: Milestone) => {
+        setSelectedMilestone(milestone);
+        setIsEditModalOpen(true);
+    };
+
+    const handleSaveMilestone = async (updates: Partial<Milestone>) => {
+        if (!selectedMilestone) return;
+        await updateMilestone(selectedMilestone.id, updates);
+
+        // Optimistically update the UI
+        setMilestones(prev => prev.map(m =>
+            m.id === selectedMilestone.id ? { ...m, ...updates } : m
+        ));
+    };
+
     return (
         <div className="glass-card rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Project Milestones</h3>
@@ -82,6 +102,15 @@ export default function MilestonesTab({ projectId }: { projectId: string }) {
                                                 <Badge variant={getStatusColor(milestone.status)} className="ml-2">
                                                     {milestone.status}
                                                 </Badge>
+                                                {currentRole === 'ADMIN' && (
+                                                    <button
+                                                        onClick={() => handleAdminEdit(milestone)}
+                                                        className="ml-3 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                                                        title="Edit Milestone"
+                                                    >
+                                                        <Edit2 className="h-4 w-4 inline" />
+                                                    </button>
+                                                )}
                                             </p>
                                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{milestone.description}</p>
 
@@ -178,6 +207,19 @@ export default function MilestonesTab({ projectId }: { projectId: string }) {
                         // In a real app, this would make an API call
                         alert(`Milestone ${data.approved ? 'approved' : 'rejected'} successfully!`);
                     }}
+                />
+            )}
+
+            {/* Edit Milestone Modal */}
+            {isEditModalOpen && selectedMilestone && (
+                <EditMilestoneModal
+                    milestone={selectedMilestone}
+                    isOpen={isEditModalOpen}
+                    onClose={() => {
+                        setIsEditModalOpen(false);
+                        setSelectedMilestone(null);
+                    }}
+                    onSave={handleSaveMilestone}
                 />
             )}
         </div>

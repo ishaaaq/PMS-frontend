@@ -11,21 +11,21 @@ export interface Invitation {
     status: 'PENDING' | 'ACCEPTED' | 'EXPIRED';
 }
 export const InvitationsService = {
-    async createInvitation(email: string, role: string, projectId?: string, sectionId?: string) {
+    async createInvitation(email: string, role: string, projectId?: string) {
+        // We use the new smart invite RPC instead of standard create
         const { data, error } = await supabase.rpc(
-            'rpc_create_invitation',
+            'rpc_smart_invite',
             {
-                p_invitee_email: email,
+                p_email: email,
                 p_role: role,
-                p_project_id: projectId ?? null,
-                p_section_id: sectionId ?? null
+                p_project_id: projectId ?? null
             }
         )
         if (error) {
-            logRpcError('rpc_create_invitation', error)
+            logRpcError('rpc_smart_invite', error)
             throw error
         }
-        return data
+        return data as { is_new: boolean; invite_id?: string; user_id?: string; message: string; };
     },
 
     async getPendingInvitation(invitationId: string): Promise<Invitation> {

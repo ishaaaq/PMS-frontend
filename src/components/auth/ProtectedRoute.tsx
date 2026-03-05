@@ -47,7 +47,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
         return <Navigate to="/auth/login" state={{ from: location }} replace />;
     }
 
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
+    if (allowedRoles && !allowedRoles.includes(user.activeRole)) {
         // Redirect to dashboard if user doesn't have required role
         return <Navigate to="/dashboard" replace />;
     }

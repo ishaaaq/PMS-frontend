@@ -153,17 +153,27 @@ export default function PersonnelTab({ project, onProjectUpdated }: PersonnelTab
         setInviteError(null);
 
         try {
-            const inviteId = await InvitationsService.createInvitation(email, apiRole, project.id);
-            const link = `${window.location.origin}/invite/${inviteId}`;
-            setInviteLink(link);
+            const response = await InvitationsService.createInvitation(email, apiRole, project.id);
 
-            // Auto-open email client with pre-filled invite
-            const subject = encodeURIComponent(`You're invited to PTDF ProMOS as ${apiRole}`);
-            const body = encodeURIComponent(
-                `Hello,\n\nYou have been invited to join the PTDF Project Management and Operation System (ProMOS) as a ${apiRole} for project "${project.title}".\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF ProMOS Team`
-            );
-            window.open(`https://mail.google.com/mail/?view=cm&to=${email}&su=${subject}&body=${body}`, '_blank');
-            setEmail('');
+            if (!response.is_new) {
+                // User already existed, was assigned directly!
+                setToast({ type: 'success', message: response.message || 'Existing user assigned successfully!' });
+                setEmail('');
+                onProjectUpdated?.(); // Trigger reload
+            } else {
+                // Return link for new user
+                const inviteId = response.invite_id;
+                const link = `${window.location.origin}/invite/${inviteId}`;
+                setInviteLink(link);
+
+                // Auto-open email client with pre-filled invite
+                const subject = encodeURIComponent(`You're invited to PTDF ProMOS as ${apiRole}`);
+                const body = encodeURIComponent(
+                    `Hello,\n\nYou have been invited to join the PTDF Project Management and Operation System (ProMOS) as a ${apiRole} for project "${project.title}".\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF ProMOS Team`
+                );
+                window.open(`https://mail.google.com/mail/?view=cm&to=${email}&su=${subject}&body=${body}`, '_blank');
+                setEmail('');
+            }
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Invite Error:', err);
             setInviteError(err.message || 'Failed to send invitation.');

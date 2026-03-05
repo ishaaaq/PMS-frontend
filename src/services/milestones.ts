@@ -167,7 +167,30 @@ export const getProjectMilestones = async (projectId: string): Promise<Milestone
     return (data || []).map(mapMilestone);
 };
 
+export const updateMilestone = async (id: string, updates: Partial<Milestone>): Promise<void> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dbUpdates: any = {};
+
+    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.amount !== undefined) dbUpdates.budget = updates.amount;
+    if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate;
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+
+    const { error } = await supabase
+        .from('milestones')
+        .update(dbUpdates)
+        .eq('id', id);
+
+    if (error) {
+        console.error('updateMilestone error:', error);
+        logRpcError('updateMilestone', error);
+        throw error;
+    }
+};
+
 export const MilestonesService = {
     getAllMilestones,
-    getProjectMilestones
+    getProjectMilestones,
+    updateMilestone
 };

@@ -13,7 +13,9 @@ export interface AppUser {
     id: string;
     email: string;
     full_name: string;
-    role: UserRole;
+    role: UserRole; // Their primary registered role
+    activeRole: UserRole; // The role they are currently viewing the app as
+    availableRoles: UserRole[]; // All roles they have access to
 }
 
 export type MfaStatus = {
@@ -31,6 +33,7 @@ export interface AuthContextType {
     profileError: string | null;
     mfaStatus: MfaStatus | null;
     refreshMfa: () => Promise<void>;
+    switchRole: (role: UserRole) => void;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -80,14 +83,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
+            // --- Multi-Role Computation ---
+            let roles: Set<UserRole> = new Set([data.role as UserRole]);
+
+            // Check if they are a consultant
+            if (data.role !== 'CONSULTANT') {
+                const { data: cData } = await supabase.from('project_consultants').select('project_id').eq('consultant_user_id', session.user.id).limit(1);
+                if (cData && cData.length > 0) roles.add('CONSULTANT');
+            }
+
+            // Check if they are a contractor
+            if (data.role !== 'CONTRACTOR') {
+                const { data: ctData } = await supabase.from('project_contractors').select('project_id').eq('contractor_user_id', session.user.id).limit(1);
+                if (ctData && ctData.length > 0) roles.add('CONTRACTOR');
+
+                const { data: saData } = await supabase.from('section_assignments').select('section_id').eq('contractor_user_id', session.user.id).limit(1);
+                if (saData && saData.length > 0) roles.add('CONTRACTOR');
+            }
+
+            // If they are admin, they get everything mostly anyway, but we keep it clean.
+
+            const availableRoles = Array.from(roles);
+
+            // Determine active role based on saved preference or fallback to primary
+            const savedRole = localStorage.getItem('promos_active_role') as UserRole;
+            const activeRole = availableRoles.includes(savedRole) ? savedRole : (data.role as UserRole);
+
             setProfileError(null);
             setUser({
                 id: data.user_id,
                 email: session.user.email ?? '',
                 full_name: data.full_name,
                 role: data.role as UserRole,
+                activeRole,
+                availableRoles
             });
-            log('✓ User set:', data.role);
+            log('✓ User set:', data.role, 'Available:', availableRoles, 'Active:', activeRole);
         } catch (err) {
             log('✗ checkMfaAndProfile error:', err);
             if (!mountedRef.current) return;
@@ -200,8 +231,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         log('refreshMfa: done');
     };
 
+    // -----------------------------------------------------------------------
+    // switchRole: updates the active role in state and storage
+    // -----------------------------------------------------------------------
+    const switchRole = useCallback((newRole: UserRole) => {
+        if (!user || !user.availableRoles.includes(newRole)) return;
+        localStorage.setItem('promos_active_role', newRole);
+        setUser({ ...user, activeRole: newRole });
+        log('switchRole:', newRole);
+    }, [user]);
+
     return (
-        <AuthContext.Provider value={{ user, login, logout, isLoading, profileError, mfaStatus, refreshMfa }}>
+        <AuthContext.Provider value={{ user, login, logout, isLoading, profileError, mfaStatus, refreshMfa, switchRole }}>
             {children}
         </AuthContext.Provider>
     );

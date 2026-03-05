@@ -15,6 +15,8 @@ export default function InviteModal({ isOpen, onClose, projectId }: InviteModalP
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [inviteLink, setInviteLink] = useState<string | null>(null);
+    const [existingAssigned, setExistingAssigned] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     // Reset state when modal opens/closes
     useEffect(() => {
@@ -22,6 +24,8 @@ export default function InviteModal({ isOpen, onClose, projectId }: InviteModalP
             // Small delay so the close animation isn't jarring
             const timer = setTimeout(() => {
                 setInviteLink(null);
+                setExistingAssigned(false);
+                setSuccessMessage('');
                 setError(null);
                 setEmail('');
                 setRole('CONTRACTOR');
@@ -56,16 +60,25 @@ export default function InviteModal({ isOpen, onClose, projectId }: InviteModalP
         setError(null);
 
         try {
-            const inviteId = await InvitationsService.createInvitation(email, role, projectId);
-            const link = `${window.location.origin}/invite/${inviteId}`;
-            setInviteLink(link);
+            const response = await InvitationsService.createInvitation(email, role, projectId);
 
-            // Auto-open email client with pre-filled invite
-            const subject = encodeURIComponent(`You're invited to PTDF ProMOS as ${role}`);
-            const body = encodeURIComponent(
-                `Hello,\n\nYou have been invited to join the PTDF Project Management and Operation System (ProMOS) as a ${role}.\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF ProMOS Team`
-            );
-            window.open(`https://mail.google.com/mail/?view=cm&to=${email}&su=${subject}&body=${body}`, '_blank');
+            if (!response.is_new) {
+                // Instantly assigned!
+                setExistingAssigned(true);
+                setSuccessMessage(response.message || 'User assigned successfully!');
+            } else {
+                // Need to send normal invite link
+                const inviteId = response.invite_id;
+                const link = `${window.location.origin}/invite/${inviteId}`;
+                setInviteLink(link);
+
+                // Auto-open email client with pre-filled invite
+                const subject = encodeURIComponent(`You're invited to PTDF ProMOS as ${role}`);
+                const body = encodeURIComponent(
+                    `Hello,\n\nYou have been invited to join the PTDF Project Management and Operation System (ProMOS) as a ${role}.\n\nClick the link below to accept your invitation and set up your account:\n\n${link}\n\nThis link is unique to you. Do not share it with anyone else.\n\nBest regards,\nPTDF ProMOS Team`
+                );
+                window.open(`https://mail.google.com/mail/?view=cm&to=${email}&su=${subject}&body=${body}`, '_blank');
+            }
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Invite Error:', err);
             setError(err.message || 'Failed to send invitation. They might already be invited.');
@@ -76,6 +89,8 @@ export default function InviteModal({ isOpen, onClose, projectId }: InviteModalP
 
     const handleSendAnother = () => {
         setInviteLink(null);
+        setExistingAssigned(false);
+        setSuccessMessage('');
         setError(null);
         setEmail('');
         setCopied(false);
@@ -115,30 +130,36 @@ export default function InviteModal({ isOpen, onClose, projectId }: InviteModalP
                     </div>
 
                     {/* Success State */}
-                    {inviteLink ? (
+                    {inviteLink || existingAssigned ? (
                         <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5">
                             <div className="text-center py-4">
                                 <div className="mx-auto h-16 w-16 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-4">
                                     <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
                                 </div>
-                                <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Invitation Created!</h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Share this link with the {role.toLowerCase()}</p>
+                                <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                                    {existingAssigned ? 'Assignment Successful!' : 'Invitation Created!'}
+                                </h4>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    {existingAssigned ? successMessage : `Share this link with the ${role.toLowerCase()}`}
+                                </p>
                             </div>
 
-                            <div className="flex gap-2">
-                                <div className="flex-1 bg-gray-50 dark:bg-gray-700/50 rounded-xl px-4 py-3 text-xs font-mono text-gray-500 dark:text-gray-300 truncate border border-gray-100 dark:border-gray-600">
-                                    {inviteLink}
+                            {!existingAssigned && (
+                                <div className="flex gap-2">
+                                    <div className="flex-1 bg-gray-50 dark:bg-gray-700/50 rounded-xl px-4 py-3 text-xs font-mono text-gray-500 dark:text-gray-300 truncate border border-gray-100 dark:border-gray-600">
+                                        {inviteLink}
+                                    </div>
+                                    <button
+                                        onClick={copyLink}
+                                        className={`px-4 py-3 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-medium ${copied
+                                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400'
+                                            : 'bg-white dark:bg-gray-700 border-gray-100 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                            }`}
+                                    >
+                                        {copied ? <><Check className="h-4 w-4" /> Copied</> : <><Copy className="h-4 w-4" /> Copy</>}
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={copyLink}
-                                    className={`px-4 py-3 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-medium ${copied
-                                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400'
-                                        : 'bg-white dark:bg-gray-700 border-gray-100 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                                        }`}
-                                >
-                                    {copied ? <><Check className="h-4 w-4" /> Copied</> : <><Copy className="h-4 w-4" /> Copy</>}
-                                </button>
-                            </div>
+                            )}
 
                             <div className="flex gap-3 pt-2">
                                 <button

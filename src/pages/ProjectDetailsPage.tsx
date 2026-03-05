@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProject, type Project, ProjectStatus } from '../services/projects';
-import { ChevronRight, ArrowLeft, Calendar, MapPin, DollarSign, Clock, Users, ShieldCheck, Star } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Calendar, MapPin, DollarSign, Clock, Users, ShieldCheck, Star, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { StorageService } from '../services/storage.service';
@@ -11,6 +11,8 @@ import AnalyticsTab from '../components/dashboard/AnalyticsTab';
 import PersonnelTab from '../components/dashboard/PersonnelTab';
 import SubmissionHistoryTab from '../components/dashboard/SubmissionHistoryTab';
 import CommentsSection from '../components/dashboard/CommentsSection';
+import EditProjectModal from '../components/dashboard/EditProjectModal';
+import { updateProject, deleteProject } from '../services/projects';
 import type { LucideIcon } from 'lucide-react';
 
 interface DetailRowProps {
@@ -27,6 +29,8 @@ export default function ProjectDetailsPage() {
     const [activeTab, setActiveTab] = useState('Details');
     const [dynamicProgress, setDynamicProgress] = useState(0);
     const [galleryImages, setGalleryImages] = useState<string[]>([]);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -132,6 +136,33 @@ export default function ProjectDetailsPage() {
         }
     }, [id]);
 
+    const handleSaveProject = async (updates: Partial<Project>) => {
+        if (!id) return;
+        const updatedProject = await updateProject(id, updates);
+        if (updatedProject) {
+            setProject(updatedProject);
+        }
+    };
+
+    const handleDeleteProject = async () => {
+        if (!id || isDeleting) return;
+
+        const confirmed = window.confirm(
+            "Are you absolutely sure you want to delete this project? This action is permanent and will destroy all associated milestones, submissions, and comments."
+        );
+
+        if (confirmed) {
+            setIsDeleting(true);
+            try {
+                await deleteProject(id);
+                navigate('/dashboard/projects');
+            } catch (error) {
+                console.error("Failed to delete project:", error);
+                alert("Could not delete project. Check your permissions and connection.");
+                setIsDeleting(false);
+            }
+        }
+    };
 
     if (loading) {
         return (
@@ -178,10 +209,21 @@ export default function ProjectDetailsPage() {
                             onClick={() => alert('Disbursement Authorized!')}
                         >
                             <ShieldCheck className="h-4 w-4 mr-2" />
-                            Authorize Disbursement
+                            Authorize
                         </button>
-                        <button className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95">
-                            Manage Project
+                        <button
+                            onClick={() => setIsEditModalOpen(true)}
+                            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+                        >
+                            Manage
+                        </button>
+                        <button
+                            onClick={handleDeleteProject}
+                            disabled={isDeleting}
+                            className="bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-900/50 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition-all active:scale-95 flex items-center disabled:opacity-50"
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {isDeleting ? 'Deleting...' : 'Delete'}
                         </button>
                     </div>
                 </div>
@@ -311,6 +353,15 @@ export default function ProjectDetailsPage() {
             {/* Personnel Tab */}
             {activeTab === 'Personnel' && (
                 <PersonnelTab project={project} />
+            )}
+
+            {isEditModalOpen && (
+                <EditProjectModal
+                    project={project}
+                    isOpen={isEditModalOpen}
+                    onClose={() => setIsEditModalOpen(false)}
+                    onSave={handleSaveProject}
+                />
             )}
         </div>
     );
