@@ -29,20 +29,29 @@ export default function ConsultantDetailPage() {
                         .from('project_consultants')
                         .select(`
                             project_id,
-                            project:projects ( id, title, status, budget_allocated, start_date, end_date )
+                            projects!inner ( id, title, status, budget_allocated, start_date, end_date )
                         `)
                         .eq('consultant_user_id', id)
                         .then(({ data: assignments, error }) => {
-                            if (!error && assignments) {
+                            if (error) {
+                                console.error('Failed to fetch consultant projects:', error);
+                                return;
+                            }
+                            if (assignments && assignments.length > 0) {
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const mapped = (assignments as any[]).map(a => ({
-                                    id: a.project.id,
-                                    title: a.project.title,
-                                    status: a.project.status,
-                                    budget_allocated: a.project.budget_allocated || 0,
-                                    start_date: a.project.start_date,
-                                    end_date: a.project.end_date,
-                                }));
+                                const mapped = (assignments as any[]).map(a => {
+                                    // Supabase may return `projects` as object or array depending on FK configuration
+                                    const proj = Array.isArray(a.projects) ? a.projects[0] : a.projects;
+                                    if (!proj) return null;
+                                    return {
+                                        id: proj.id,
+                                        title: proj.title,
+                                        status: proj.status,
+                                        budget_allocated: proj.budget_allocated || 0,
+                                        start_date: proj.start_date,
+                                        end_date: proj.end_date,
+                                    };
+                                }).filter((x): x is NonNullable<typeof x> => x !== null);
                                 setAssignedProjects(mapped);
                             }
                         });
