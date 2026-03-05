@@ -136,21 +136,46 @@ export default function ProgressReportModal({
         // Step 2: Upload evidence files
         try {
             if (files.length > 0 && currentSubmissionId) {
+                const uploadErrors: string[] = [];
+
                 await Promise.all(
                     files.map(async (file) => {
-                        const path = await StorageService.uploadEvidence(
-                            projectId,
-                            milestone.id,
-                            String(currentSubmissionId),
-                            file
-                        );
-                        await SubmissionsService.addSubmissionEvidence(
-                            String(currentSubmissionId),
-                            path,
-                            file.size
-                        );
+                        let path = '';
+
+                        // 2a. Storage Upload
+                        try {
+                            path = await StorageService.uploadEvidence(
+                                projectId,
+                                milestone.id,
+                                String(currentSubmissionId),
+                                file
+                            );
+                        } catch (err) {
+                            console.error('Storage upload error for file', file.name, err);
+                            uploadErrors.push(`Failed to upload ${file.name}`);
+                            return; // Skip DB link if storage upload failed
+                        }
+
+                        // 2b. Database Link
+                        try {
+                            await SubmissionsService.addSubmissionEvidence(
+                                String(currentSubmissionId),
+                                path,
+                                file.size
+                            );
+                        } catch (err: any) {
+                            console.error('Evidence link error for file', file.name, err);
+                            const errMsg = err?.message || err?.details || err?.hint || JSON.stringify(err);
+                            uploadErrors.push(`Failed to link ${file.name} in database (Backend Error: ${errMsg})`);
+                        }
                     })
                 );
+
+                if (uploadErrors.length > 0) {
+                    setSubmitError(`Submission created, but some files had errors: ${uploadErrors.join(', ')}. Please retry upload.`);
+                    setIsSubmitting(false);
+                    return;
+                }
             }
 
             // Call parent handler with the formatted data on complete success
@@ -161,8 +186,8 @@ export default function ProgressReportModal({
                 materials
             });
         } catch (err) {
-            console.error('Evidence upload failed:', err);
-            setSubmitError('Submission created, but evidence upload failed. Retry upload.');
+            console.error('Unexpected error during evidence upload:', err);
+            setSubmitError('Submission created, but an unexpected error occurred during evidence upload. Retry upload.');
         } finally {
             setIsSubmitting(false);
         }
