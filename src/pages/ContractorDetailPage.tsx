@@ -5,16 +5,15 @@ import { supabase } from '../lib/supabase';
 import {
     ArrowLeft, Building2, MapPin, Phone, Mail, Calendar,
     Star, Briefcase, CheckCircle, Clock, Ban, TrendingUp,
-    Award, FileText, MessageSquare, Edit, MoreVertical
+    Award, FileText, MessageSquare, Edit, MoreVertical, DollarSign
 } from 'lucide-react';
 
 interface ProjectHistory {
     id: string;
     title: string;
     status: string;
-    budget_allocated: number;
-    start_date: string;
-    end_date: string | null;
+    total_budget: number;
+    created_at: string;
     rating?: number;
 }
 
@@ -42,19 +41,20 @@ export default function ContractorDetailPage() {
                         .select(`
                             project_id,
                             performance_rating,
-                            project:projects ( id, title, status, budget_allocated, start_date, end_date )
+                            project:projects(*)
                         `)
                         .eq('contractor_user_id', id);
 
-                    if (error) throw error;
+                    if (error) {
+                        console.error('Failed to fetch contractor projects:', error);
+                    }
 
                     const history = (data || []).map((row: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
                         id: row.project.id,
                         title: row.project.title,
                         status: row.project.status,
-                        budget_allocated: row.project.budget_allocated,
-                        start_date: row.project.start_date,
-                        end_date: row.project.end_date,
+                        total_budget: row.project.total_budget || 0,
+                        created_at: row.project.created_at,
                         rating: row.performance_rating
                     }));
                     setProjects(history);
@@ -106,10 +106,6 @@ export default function ContractorDetailPage() {
             }
         }
         return stars;
-    };
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
     };
 
     if (isLoading) {
@@ -199,8 +195,8 @@ export default function ContractorDetailPage() {
                         </div>
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Projects</span>
                     </div>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white">{contractor.projectCount || projects.length}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{projects.filter(p => !p.end_date).length} active, {projects.filter(p => p.end_date).length} completed</p>
+                    <p className="font-bold text-gray-900 dark:text-white">{projects.length}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{projects.filter(p => p.status === 'ACTIVE').length} active, {projects.filter(p => p.status === 'COMPLETED').length} completed</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
                     <div className="flex items-center gap-3 mb-3">
@@ -222,7 +218,7 @@ export default function ContractorDetailPage() {
                         </div>
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Value</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(projects.reduce((acc, p) => acc + (p.budget_allocated || 0), 0))}</p>
+                    <p className="font-bold text-gray-900 dark:text-white">₦{projects.reduce((sum, p) => sum + (p.total_budget || 0), 0).toLocaleString()}</p>
                     <p className="text-xs text-green-600 dark:text-green-400 mt-1">Historically Awarded</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
@@ -323,19 +319,21 @@ export default function ContractorDetailPage() {
                                         </div>
                                         <div>
                                             <p className="font-bold text-gray-900 dark:text-white max-w-sm sm:max-w-md truncate" title={project.title}>{project.title}</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-tight font-medium mt-1">
-                                                {new Date(project.start_date).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}
-                                                {project.end_date && ` - ${new Date(project.end_date).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })}`}
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-tight font-medium mt-1">
+                                                {project.created_at ? new Date(project.created_at).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' }) : 'Date TBD'}
                                             </p>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-auto w-full border-t sm:border-t-0 border-gray-200 dark:border-gray-600 pt-3 sm:pt-0">
-                                        <div className="text-left sm:text-right">
-                                            <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(project.budget_allocated || 0)}</p>
+                                        <div className="text-left sm:text-right hidden sm:block">
+                                            <p className="font-bold text-gray-900 dark:text-white flex items-center gap-1">
+                                                <DollarSign className="h-3.5 w-3.5" />
+                                                ₦{(project.total_budget || 0).toLocaleString('en-NG')}
+                                            </p>
                                             {project.rating && (
                                                 <div className="flex items-center gap-1 sm:justify-end mt-1">
                                                     <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
-                                                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400">{project.rating}</span>
+                                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{project.rating.toFixed(1)}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -380,7 +378,7 @@ export default function ContractorDetailPage() {
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
