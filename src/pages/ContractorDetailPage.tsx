@@ -37,11 +37,12 @@ export default function ContractorDetailPage() {
                 // Fetch Project History
                 if (found) {
                     const { data, error } = await supabase
-                        .from('project_contractors')
+                        .from('section_assignments')
                         .select(`
-                            project_id,
-                            performance_rating,
-                            project:projects(*)
+                            section_id,
+                            section:sections(
+                                project:projects(*)
+                            )
                         `)
                         .eq('contractor_user_id', id);
 
@@ -49,15 +50,24 @@ export default function ContractorDetailPage() {
                         console.error('Failed to fetch contractor projects:', error);
                     }
 
-                    const history = (data || []).map((row: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
-                        id: row.project.id,
-                        title: row.project.title,
-                        status: row.project.status,
-                        total_budget: row.project.total_budget || 0,
-                        created_at: row.project.created_at,
-                        rating: row.performance_rating
-                    }));
-                    setProjects(history);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const historyMap = new Map<string, any>();
+
+                    (data || []).forEach((row: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                        const proj = row.section?.project;
+                        if (proj && !historyMap.has(proj.id)) {
+                            historyMap.set(proj.id, {
+                                id: proj.id,
+                                title: proj.title,
+                                status: proj.status,
+                                total_budget: proj.total_budget || 0,
+                                created_at: proj.created_at,
+                                rating: 0
+                            });
+                        }
+                    });
+
+                    setProjects(Array.from(historyMap.values()));
                 }
 
             } catch (error) {
