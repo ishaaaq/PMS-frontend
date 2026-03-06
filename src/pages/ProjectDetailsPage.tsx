@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProject, type Project, ProjectStatus } from '../services/projects';
-import { ChevronRight, ArrowLeft, Calendar, MapPin, DollarSign, Clock, Users, ShieldCheck, Star, Trash2 } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Calendar, MapPin, DollarSign, Clock, Users, ShieldCheck, Star, Archive } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { StorageService } from '../services/storage.service';
@@ -12,7 +12,7 @@ import PersonnelTab from '../components/dashboard/PersonnelTab';
 import SubmissionHistoryTab from '../components/dashboard/SubmissionHistoryTab';
 import CommentsSection from '../components/dashboard/CommentsSection';
 import EditProjectModal from '../components/dashboard/EditProjectModal';
-import { updateProject, deleteProject } from '../services/projects';
+import { updateProject, archiveProject } from '../services/projects';
 import { useAuth } from '../hooks/useAuth';
 import type { LucideIcon } from 'lucide-react';
 
@@ -31,7 +31,7 @@ export default function ProjectDetailsPage() {
     const [dynamicProgress, setDynamicProgress] = useState(0);
     const [galleryImages, setGalleryImages] = useState<string[]>([]);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [isArchiving, setIsArchiving] = useState(false);
 
     // Auth context for Admin checks
     const { user } = useAuth();
@@ -150,22 +150,22 @@ export default function ProjectDetailsPage() {
         }
     };
 
-    const handleDeleteProject = async () => {
-        if (!id || isDeleting) return;
+    const handleArchiveProject = async () => {
+        if (!id || isArchiving) return;
 
         const confirmed = window.confirm(
-            "Are you absolutely sure you want to delete this project? This action is permanent and will destroy all associated milestones, submissions, and comments."
+            "Are you sure you want to archive this project? This will hide it from the active lists but preserve all data for audit purposes."
         );
 
         if (confirmed) {
-            setIsDeleting(true);
+            setIsArchiving(true);
             try {
-                await deleteProject(id);
+                await archiveProject(id);
                 navigate('/dashboard/projects');
             } catch (error) {
-                console.error("Failed to delete project:", error);
-                alert("Could not delete project. Check your permissions and connection.");
-                setIsDeleting(false);
+                console.error("Failed to archive project:", error);
+                alert("Could not archive project. Check your permissions and connection.");
+                setIsArchiving(false);
             }
         }
     };
@@ -226,12 +226,12 @@ export default function ProjectDetailsPage() {
                                     Manage
                                 </button>
                                 <button
-                                    onClick={handleDeleteProject}
-                                    disabled={isDeleting}
-                                    className="bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-900/50 px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition-all active:scale-95 flex items-center disabled:opacity-50"
+                                    onClick={handleArchiveProject}
+                                    disabled={isArchiving}
+                                    className="bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50 px-4 py-2 rounded-lg font-bold text-sm hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-all active:scale-95 flex items-center disabled:opacity-50"
                                 >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    {isDeleting ? 'Deleting...' : 'Delete'}
+                                    <Archive className="h-4 w-4 mr-2" />
+                                    {isArchiving ? 'Archiving...' : 'Archive'}
                                 </button>
                             </>
                         )}

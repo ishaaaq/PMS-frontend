@@ -54,6 +54,7 @@ export const ProjectsService = {
         const { data, error } = await supabase
             .from('projects')
             .select('*, milestones(status)')
+            .is('is_archived', false)
         if (error) {
             logRpcError('projects.select', error)
             throw error

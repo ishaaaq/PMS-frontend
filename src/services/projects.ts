@@ -128,6 +128,7 @@ export const getProjects = async (): Promise<Project[]> => {
                 profiles:contractor_user_id ( full_name )
             )
         `)
+        .is('is_archived', false)
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -215,14 +216,16 @@ export const updateProject = async (id: string, updates: Partial<Project>): Prom
     return getProject(id);
 };
 
-export const deleteProject = async (id: string): Promise<boolean> => {
-    const { error } = await supabase.rpc('rpc_delete_project', { p_project_id: id });
+export const archiveProject = async (id: string): Promise<boolean> => {
+    const { error } = await supabase
+        .from('projects')
+        .update({ is_archived: true })
+        .eq('id', id);
 
     if (error) {
-        console.error('deleteProject error:', error);
-        logRpcError('deleteProject', error);
+        console.error('archiveProject error:', error);
+        logRpcError('archiveProject', error);
         throw error;
     }
     return true;
 };
-
