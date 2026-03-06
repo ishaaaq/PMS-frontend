@@ -141,7 +141,7 @@ export default function CreateSectionPage() {
                 if (contractorMode === 'existing' && selectedContractor && sectionId) {
                     await SectionsService.assignContractor(String(sectionId), selectedContractor);
                 } else if (contractorMode === 'invite' && inviteEmail && sectionId) {
-                    await InvitationsService.createInvitation(inviteEmail, 'CONTRACTOR', id, String(sectionId));
+                    await InvitationsService.createInvitation(inviteEmail, 'CONTRACTOR', id);
                     invitesSent++;
                 }
             }
