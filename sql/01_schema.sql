@@ -243,3 +243,13 @@ create table invitations (
 create index idx_invitations_project on invitations(project_id);
 create index idx_invitations_email on invitations(invitee_email);
 
+-- ============================================================
+-- PROTRACK USERS MAP
+-- ============================================================
+
+create table protrack_users_map (
+  id uuid primary key default gen_random_uuid(),
+  protrack_user_id text unique not null,
+  supabase_user_id uuid not null,
+  created_at timestamp default now()
+);
