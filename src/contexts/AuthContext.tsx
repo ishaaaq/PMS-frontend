@@ -60,8 +60,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!mountedRef.current) return;
             setMfaStatus(status);
 
-            if (status.currentLevel !== 'aal2') {
-                log('Not AAL2 – skipping profile fetch');
+            // Check if the session was authenticated via SSO Magic Link
+            const amr = session.user.amr || [];
+            const isMagicLink = amr.some((a: any) => a.method === 'magiclink');
+
+            if (status.currentLevel !== 'aal2' && !isMagicLink) {
+                log('Not AAL2 and not SSO – skipping profile fetch');
                 setUser(null);
                 setProfileError(null);
                 return;
