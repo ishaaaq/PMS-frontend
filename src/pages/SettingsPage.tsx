@@ -7,6 +7,12 @@ import {
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
 import TotpSetup from '../components/auth/TotpSetup';
+const getInitials = (name?: string) => {
+    if (!name) return 'U';
+    const split = name.trim().split(/\s+/);
+    if (split.length === 1) return split[0].slice(0, 2).toUpperCase();
+    return (split[0][0] + split[split.length - 1][0]).toUpperCase();
+};
 
 export default function SettingsPage() {
     const { resolvedTheme, toggleTheme } = useTheme();
@@ -89,15 +95,15 @@ export default function SettingsPage() {
                                     <div className="flex items-center gap-6 mb-8">
                                         <div className="relative group">
                                             <div className="h-24 w-24 rounded-full bg-gradient-to-br from-ptdf-primary to-emerald-400 flex items-center justify-center text-3xl font-bold text-white shadow-xl">
-                                                IA
+                                                {getInitials(user?.full_name)}
                                             </div>
                                             <button className="absolute bottom-0 right-0 p-2 bg-white dark:bg-gray-800 rounded-full shadow-md border border-gray-200 dark:border-gray-700 text-gray-600 hover:text-ptdf-primary transition-colors">
                                                 <Camera className="h-4 w-4" />
                                             </button>
                                         </div>
                                         <div>
-                                            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Ishaq Abdullahi</h4>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">Super Administrator</p>
+                                            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{user?.full_name}</h4>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">{user?.role}</p>
                                         </div>
                                     </div>
 
@@ -108,7 +114,7 @@ export default function SettingsPage() {
                                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                                 <input
                                                     type="text"
-                                                    defaultValue="Ishaq Abdullahi"
+                                                    defaultValue={`${user?.full_name}`}
                                                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-ptdf-primary/20 focus:border-ptdf-primary transition-all"
                                                 />
                                             </div>
@@ -120,7 +126,7 @@ export default function SettingsPage() {
                                                 <input
                                                     type="email"
                                                     disabled
-                                                    value={user?.email || "i.abdullahi@ptdf.gov.ng"}
+                                                    value={user?.email || "name@ptdf.gov.ng"}
                                                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 cursor-not-allowed"
                                                 />
                                             </div>
@@ -131,7 +137,7 @@ export default function SettingsPage() {
                                                 <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                                 <input
                                                     type="tel"
-                                                    defaultValue="+234 803 123 4567"
+                                                    defaultValue={`${user?.phone || "Not provided"}`}
                                                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-ptdf-primary/20 focus:border-ptdf-primary transition-all"
                                                 />
                                             </div>

@@ -16,6 +16,7 @@ export interface AppUser {
     role: UserRole; // Their primary registered role
     activeRole: UserRole; // The role they are currently viewing the app as
     availableRoles: UserRole[]; // All roles they have access to
+    phone?: string;
 }
 
 export type MfaStatus = {
@@ -63,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Check if the session was authenticated via SSO Magic Link
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let amr = (session.user as any).amr || [];
-            
+
             // DIAGNOSTICS: Decode JWT directly to see what Supabase actually put in the amr claim
             let rawAmr = null;
             try {
@@ -82,12 +83,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.warn("session.user.amr: ", (session.user as any).amr);
             console.warn("Raw JWT Payload AMR Claim: ", rawAmr);
             console.warn("Session provider: ", session.user.app_metadata?.provider);
-            
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const isMagicLink = amr.some((a: any) => 
+            const isMagicLink = amr.some((a: any) =>
                 ['magiclink', 'otp', 'sso', 'recovery'].includes(a.method)
             );
-            
+
             console.warn("isMagicLink Evaluated to: ", isMagicLink);
             console.warn("MFA Status Evaluated to: ", status.currentLevel);
             console.warn("===========================================");
