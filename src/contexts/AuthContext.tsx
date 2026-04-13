@@ -64,7 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const amr = (session.user as any).amr || [];
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const isMagicLink = amr.some((a: any) => a.method === 'magiclink');
+            const isMagicLink = amr.some((a: any) => 
+                ['magiclink', 'otp', 'sso', 'recovery'].includes(a.method)
+            );
 
             if (status.currentLevel !== 'aal2' && !isMagicLink) {
                 log('Not AAL2 and not SSO – skipping profile fetch');
