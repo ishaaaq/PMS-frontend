@@ -61,7 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setMfaStatus(status);
 
             // Check if the session was authenticated via SSO Magic Link
-            const amr = session.user.amr || [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const amr = (session.user as any).amr || [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const isMagicLink = amr.some((a: any) => a.method === 'magiclink');
 
             if (status.currentLevel !== 'aal2' && !isMagicLink) {

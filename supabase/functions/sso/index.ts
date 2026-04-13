@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import jwt from "https://esm.sh/jsonwebtoken@9";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 serve(async (req: any) => {
   try {
     const url = new URL(req.url);
@@ -12,6 +13,7 @@ serve(async (req: any) => {
     }
 
     // 🔐 Verify ProTrack JWT
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let payload: any;
     try {
       payload = jwt.verify(token, Deno.env.get("SSO_SECRET")!);
@@ -79,6 +81,7 @@ serve(async (req: any) => {
     }
 
     // 5. Ensure profile exists + role = admin
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const profileData: Record<string, any> = {
       user_id: userId,
       role: "ADMIN",
