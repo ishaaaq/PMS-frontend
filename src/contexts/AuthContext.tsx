@@ -3,8 +3,8 @@ import { supabase } from '../lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 import { MfaService } from '../services/mfa.service';
 
-// Set to true temporarily to debug auth flow in the browser console
-const DEBUG_AUTH = import.meta.env.DEV;
+// Temporarily forced to true to debug SSO Vercel issues
+const DEBUG_AUTH = true;
 const log = (...args: unknown[]) => { if (DEBUG_AUTH) console.log('[Auth]', new Date().toISOString(), ...args); };
 
 export type UserRole = 'ADMIN' | 'CONSULTANT' | 'CONTRACTOR';
@@ -62,11 +62,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // Check if the session was authenticated via SSO Magic Link
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const amr = (session.user as any).amr || [];
+            let amr = (session.user as any).amr || [];
+            
+            // DIAGNOSTICS: Decode JWT directly to see what Supabase actually put in the amr claim
+            let rawAmr = null;
+            try {
+                const parts = session.access_token.split('.');
+                if (parts.length === 3) {
+                    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+                    const payload = JSON.parse(atob(base64));
+                    rawAmr = payload.amr;
+                    if (rawAmr && amr.length === 0) amr = rawAmr;
+                }
+            } catch (e) {
+                console.error("JWT Decode error: ", e);
+            }
+
+            console.warn("====== DIAGNOSTICS: MFA BYPASS CHECK ======");
+            console.warn("session.user.amr: ", (session.user as any).amr);
+            console.warn("Raw JWT Payload AMR Claim: ", rawAmr);
+            console.warn("Session provider: ", session.user.app_metadata?.provider);
+            
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const isMagicLink = amr.some((a: any) => 
                 ['magiclink', 'otp', 'sso', 'recovery'].includes(a.method)
             );
+            
+            console.warn("isMagicLink Evaluated to: ", isMagicLink);
+            console.warn("MFA Status Evaluated to: ", status.currentLevel);
+            console.warn("===========================================");
 
             if (status.currentLevel !== 'aal2' && !isMagicLink) {
                 log('Not AAL2 and not SSO – skipping profile fetch');
